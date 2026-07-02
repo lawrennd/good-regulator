@@ -293,6 +293,7 @@ in Section~4 of the original -- but stated without any need for $S$ or $A$
 to carry group structure at all.
 
 \begin{definition}[Lossy model]
+\label{def:lossy}
 $A$ is a \emph{lossy} (or \emph{homomorphic}) model of $S$ if
 \[
 H(A\mid S) = 0 \quad\text{but}\quad H(S\mid A) > 0.
@@ -506,15 +507,33 @@ optimality variable to condition on: its ``evidence'' is $Z$ itself, an
 outcome that actually occurs, and its objective is the ordinary Shannon
 entropy of that outcome, not a KL divergence to an exponentiated-reward
 posterior. There is no reward to exponentiate and no temperature to fix.
-If an inference-flavoured reading is still wanted, the closer relative is
-the surprise- or free-energy-minimisation literature (Friston, 2010),
-where the quantity being minimised is likewise the entropy of an outcome
-that is actually observed, rather than of a manufactured optimality
-signal. The good regulator theorem can be read as a considerably more
-elementary instance of that same idea, one that predates both control as
-inference and free-energy accounts by three decades, and inherits none of
-the reward-exponentiation baggage because it was never phrased in terms of
-reward to begin with.
+
+If an analogy is wanted at all, it is not to another inference framework
+but to a representational one: O'Regan's sensorimotor contingency theory
+(O'Regan, 1992; O'Regan and No\"e, 2001). That work argues, on entirely
+independent grounds, that perceiving does not require the nervous system
+to build and maintain a detailed internal replica of the scene; it
+requires mastery of the lawful contingencies linking action to the
+sensory consequences of action, with whatever the mapping does not need
+left in the world to be resampled through the loop rather than stored --
+O'Regan's phrase is that the world serves as ``an outside memory.''
+Theorem~\ref{thm:goodreg} and its Corollary say the same thing in entropy
+terms. The good regulator's action is a deterministic function of the
+sensed state, $A=h(S)$, but $h$ is generically many-to-one, so the
+regulator carries only the minimal sufficient statistic of $S$ needed to
+act, not a faithful copy of $S$ and certainly not of the disturbance $D$
+that produced it. What the theorem calls a lossy model
+(Definition~\ref{def:lossy}) is what O'Regan's account calls mastery of a
+sensorimotor contingency, and the two identifications need no
+exponentiated reward, no temperature, and no auxiliary optimality
+variable: the causal loop of Section~\ref{sec:causal},
+$D\to S\to A\to Z$, already gives $S$ and $A$ the sensory-state and action
+roles the analogy needs. The chronology also runs the opposite way from
+the usual story about this kind of idea: Conant and Ashby's theorem
+predates O'Regan's argument for the world as an outside memory by over
+twenty years, and O'Regan's argument in turn predates control as
+inference and the free-energy literature by well over a decade -- none of
+which this reading needs to borrow from.
 
 \section{Discussion}
 
@@ -550,10 +569,13 @@ extent that mapping is entropy-optimal it will exhibit $H(A\mid S)=0$: no
 randomness in the response beyond what the sensed state already
 determines. That is an empirically meaningful claim about neural
 variability, not only a metaphor, and it sits comfortably alongside later,
-independently motivated proposals -- efficient coding (Barlow, 1961),
-predictive coding, and the information bottleneck (Tishby, Pereira and
-Bialek, 1999) -- that arrive at similar demands for compressed,
-task-sufficient internal representations from different starting points.
+independently motivated proposals -- efficient coding (Barlow, 1961), the
+information bottleneck (Tishby, Pereira and Bialek, 1999), and
+sensorimotor contingency theory's argument that perception need not
+reconstruct the scene at all, only the action-contingent statistics of it
+(O'Regan and No\"e, 2001) -- that arrive at similar demands for
+compressed, task-sufficient internal representations from different
+starting points.
 
 \section*{References}
 
@@ -566,12 +588,16 @@ task-sufficient internal representations from different starting points.
   Systems Science}, 1(2):89--97.
 \item Cover, T.~M. and Thomas, J.~A. (2006). \emph{Elements of Information
   Theory}, 2nd edition. Wiley-Interscience.
-\item Friston, K. (2010). The free-energy principle: a unified brain
-  theory? \emph{Nature Reviews Neuroscience}, 11(2):127--138.
 \item Levine, S. (2018). Reinforcement learning and control as
   probabilistic inference: tutorial and review. \emph{arXiv:1805.00909}.
 \item MacKay, D.~J.~C. (2003). \emph{Information Theory, Inference, and
   Learning Algorithms}. Cambridge University Press.
+\item O'Regan, J.~K. (1992). Solving the ``real'' mystery of visual
+  perception: the world as an outside memory. \emph{Canadian Journal of
+  Psychology}, 46(3):461--488.
+\item O'Regan, J.~K. and No\"e, A. (2001). A sensorimotor account of
+  vision and visual consciousness. \emph{Behavioral and Brain Sciences},
+  24(5):939--973.
 \item Rawlik, K., Toussaint, M. and Vijayakumar, S. (2013). On stochastic
   optimal control and reinforcement learning by approximate inference. In
   \emph{Proceedings of Robotics: Science and Systems (RSS)}.
