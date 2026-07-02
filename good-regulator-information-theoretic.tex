@@ -1,0 +1,593 @@
+\documentclass[11pt]{article}
+
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage[margin=1in]{geometry}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\newcommand{\Dcal}{\mathcal{D}}
+\newcommand{\Scal}{\mathcal{S}}
+\newcommand{\Acal}{\mathcal{A}}
+\newcommand{\Zcal}{\mathcal{Z}}
+
+\title{Every Good Regulator of a System Must Be a Model of That System:\\
+\large An Information-Theoretic Reformulation}
+\author{Neil D. Lawrence}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Conant and Ashby's (1970) good regulator theorem is remembered mainly for its
+slogan. The paper itself buries the argument under Sommerhoff's five-set
+formalism and a long detour through group homomorphisms, machine
+isomorphisms, and ``Black Box'' equivalence. Yet the proof of the theorem
+proper is already, in essence, an entropy argument: Conant and Ashby adopt
+$H(Z)$, the entropy of the outcome, as their criterion of success, and the
+proof turns entirely on how the entropy of a mixture responds to
+concentrating probability mass. This note rewrites the paper end to end in
+the language of probability and information theory that would be familiar
+to anyone who has read MacKay (2003) or Cover and Thomas (2006): random
+variables in place of Sommerhoff's sets, conditional distributions --
+policies, in the language of reinforcement learning -- in place of Ashby's
+relations, and entropy, conditional entropy and mutual information in place
+of homomorphisms and isomorphisms. What falls out is a shorter derivation
+and a sharper statement of the theorem: an optimal regulator's action must
+have \emph{zero entropy conditioned on the state of the system it
+regulates}. That single condition is what it means, precisely and only,
+for a regulator to be a model of its system.
+\end{abstract}
+
+\section{Introduction}
+
+Regulation is the business of keeping some outcome close to a goal in the
+face of disturbance. Conant and Ashby's question was whether a regulator
+that succeeds at this must, of necessity, contain something that deserves
+to be called a model of the system it regulates -- not as a design choice,
+but as a logical consequence of being good at the job.
+
+Their answer was yes, and the proof is short once the right criterion of
+success is fixed. They fix it early: the entropy $H(Z)$ of the outcome
+variable is to be made as small as possible. Everything that follows in
+their paper, once this is granted, is a fact about how entropy behaves
+under mixtures -- except for a lengthy central section in which they try,
+and by their own admission fail, to pin down what ``model'' should mean by
+appeal to isomorphisms of groups and automata. That section is the one
+piece of the paper that is not really about information at all, and it is
+the piece we replace here.
+
+The version below keeps every substantive claim of the original but states
+the whole thing -- setting, success criterion, the error/cause-controlled
+distinction, the notion of a model, and the theorem's proof -- in terms of
+random variables and their entropies. We assume the reader already knows
+what entropy, conditional entropy, and mutual information are, together
+with their standard properties (the chain rule, non-negativity, and the
+data-processing inequality); see MacKay (2003) or Cover and Thomas (2006)
+for the definitions if a refresher is wanted. We leave the base of the
+logarithm unspecified, as Conant and Ashby do: nothing below depends on
+whether entropy is measured in bits or nats. One further notational
+choice: we write the regulator's action as $A$ rather than Ashby's $R$,
+both to match the state/action pairing familiar from reinforcement
+learning ($s$, $a$, $\pi(a\mid s)$) and to leave the symbol $r$ free for a
+reward function introduced in Section~\ref{sec:setup}.
+
+\section{Regulation as a Probabilistic System}
+\label{sec:setup}
+
+Sommerhoff's apparatus of five interacting sets $Z, G, R, S, D$ translates
+directly into four random variables and a goal set:
+
+\begin{itemize}
+\item $D$, taking values in a finite alphabet $\Dcal$: the disturbance --
+  the exogenous, unpredictable factor (weather, demand, the bird's flight
+  path) that regulation exists to counteract.
+\item $S$, taking values in $\Scal$: the state of the \emph{reguland}, the
+  part of the system other than the regulator (aircraft positions, fuel
+  levels; the dynamics of gun and bird) -- in reinforcement-learning terms,
+  simply the state of the environment.
+\item $A$, taking values in $\Acal$: the regulator's action (settings in
+  the control tower; the shot the hunter fires) -- the action, in
+  reinforcement-learning terms.
+\item $Z$, taking values in $\Zcal$: the outcome, determined jointly by $S$
+  and $A$ through a (possibly stochastic) channel $p(z\mid s,a)$. Where
+  convenient we take this channel to be a deterministic function
+  $z=\psi(s,a)$, as Conant and Ashby do; nothing below hinges on this,
+  since the argument goes through with $p(z\mid s,a)$ in place of
+  $\mathbb{1}[z=\psi(s,a)]$ throughout.
+\item $G\subset\Zcal$: the set of ``good'' outcomes.
+\end{itemize}
+
+A joint distribution $p(d,s,a,z)$ is assumed to exist, factorising
+according to the causal structure of the problem (Section~\ref{sec:causal}
+makes this concrete). Regulation is the choice of a conditional
+distribution over actions given state -- a \emph{policy}
+\[
+\pi(a\mid s) := p(a\mid s),
+\]
+to use the term the way reinforcement learning does (Sutton and Barto,
+1998) -- with $p(d)$ and hence $p(s)$ taken as given and fixed. Two
+features of this setting are not standard reinforcement learning, and are
+worth flagging before the analogy is pushed any further. First, there is
+no time index and no dynamics: this is a single decision, not a
+trajectory, so nothing here resembles a value function, a Bellman
+equation, or discounting. Second, and more importantly, there is not yet a
+reward -- only an outcome $Z$ whose entropy we are about to ask to be
+small. We return to the relationship between the two immediately below,
+and again in Section~\ref{sec:theorem}.
+
+\paragraph{From a goal set to an entropy.} Sommerhoff's own criterion of
+success is set membership: regulation succeeds when $Z\in G$ with
+probability~1. This is also the natural point at which to define a
+reward, in the reinforcement-learning sense:
+\[
+r(z) := \mathbb{1}[z\in G], \qquad\text{so that}\qquad \mathbb{E}[r(Z)] = \Pr(Z\in G),
+\]
+and the standard reinforcement-learning objective would be to choose
+$\pi(a\mid s)$ to maximise $\mathbb{E}[r(Z)]$. A weaker, numerical version
+of Sommerhoff's criterion asks instead that some scalar loss have small
+root-mean-square. Conant and Ashby's own choice -- and ours -- is neither
+of these but entropy: regulation succeeds to the extent that $H(Z)$ is
+small, and \emph{optimal} regulation is regulation that minimises $H(Z)$
+given $p(s)$ and the channel $p(z\mid s,a)$.
+
+This is a different, and in general strictly stronger, criterion than
+reward maximisation. Maximising $\mathbb{E}[r(Z)]$ only asks that $Z$ land
+in $G$ with high probability; it says nothing about which outcome within
+$G$, or within its complement, results, nor how reliably. Minimising
+$H(Z)$ asks that the whole distribution of $Z$ be as concentrated as the
+channel $p(z\mid s,a)$ allows, wherever it is concentrated. The two
+criteria coincide exactly when some policy can place all its mass on a
+single outcome inside $G$; whenever the achievable floor of $H(Z)$ is
+strictly positive, reward maximisation is silent about how that residual
+uncertainty is distributed, while the entropy criterion pins it down
+completely. We return to this gap, and to why we do not close it by
+exponentiating $r$, in Section~\ref{sec:theorem}.
+
+The entropy criterion's advantage over both alternatives is that it is
+defined whenever $\Zcal$ is a set of classes, with no need for $\Zcal$ to
+carry a metric or an additive structure -- Conant and Ashby's examples are
+species of fish caught in trawling and amino-acid chains produced by a
+ribosome, neither of which supports a root-mean-square.
+
+We write
+\[
+H(Z) := -\sum_{z\in\Zcal} p(z)\log p(z),
+\]
+and use $H(\cdot\mid\cdot)$ and $I(\cdot\,;\cdot)$ for conditional entropy
+and mutual information throughout.
+
+\section{Two Channels From Disturbance to Regulator}
+\label{sec:causal}
+
+Conant and Ashby distinguish \emph{cause-controlled} regulation, in which
+the regulator responds directly to the disturbance $D$, from
+\emph{error-controlled} regulation, in which it responds only to the
+state $S$ that the disturbance has already partly corrupted. The
+distinction is a statement about which Markov chain the joint distribution
+respects, and the consequence is a direct application of the data
+processing inequality.
+
+\paragraph{Cause-controlled.} Here $S$ and $A$ are separate, possibly
+stochastic, functions of the common cause $D$:
+\[
+p(d,s,a,z) = p(d)\,p(s\mid d)\,p(a\mid d)\,p(z\mid s,a).
+\]
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.6cm, >=stealth]
+\node (D) {$D$};
+\node (S) [above right=8mm and 18mm of D] {$S$};
+\node (A) [below right=8mm and 18mm of D] {$A$};
+\node (Z) [right=32mm of D] {$Z$};
+\draw[->] (D) -- (S);
+\draw[->] (D) -- (A);
+\draw[->] (S) -- (Z);
+\draw[->] (A) -- (Z);
+\end{tikzpicture}
+\end{center}
+
+Here $A$ has direct access to $D$, so $I(D;A)$ can in principle be as large
+as $H(D)$: if $A$ is a sufficient statistic of $D$ for $Z$'s purposes,
+$H(Z)$ can be driven all the way to its floor, $H(Z\mid D)$ -- in the
+favourable case where $\psi$ makes that floor zero, regulation can be made
+perfect.
+
+\paragraph{Error-controlled.} Here $A$ has no direct channel to $D$; it
+sees only $S$, which has already been shaped by $D$:
+\[
+p(d,s,a,z) = p(d)\,p(s\mid d)\,p(a\mid s)\,p(z\mid s,a),
+\]
+i.e.\ $D\to S\to A$ is a Markov chain.
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.6cm, >=stealth]
+\node (D) {$D$};
+\node (S) [right=22mm of D] {$S$};
+\node (A) [below=10mm of S] {$A$};
+\node (Z) [right=22mm of S] {$Z$};
+\draw[->] (D) -- (S);
+\draw[->] (S) -- (A);
+\draw[->] (S) -- (Z);
+\draw[->] (A) -- (Z);
+\end{tikzpicture}
+\end{center}
+
+By the data processing inequality applied to $D\to S\to A$,
+\begin{equation}
+I(D;A) \;\le\; I(D;S).
+\label{eq:dpi}
+\end{equation}
+The regulator can never know more about the disturbance than the state $S$
+already reveals -- and $S$, being the very variable whose fluctuation
+regulation is meant to suppress, has typically already let some of that
+disturbance through into $Z$ by the time $A$ acts on it. Conant and
+Ashby's example is the cow: an error-controlled thermoregulatory reflex
+only fires once blood temperature has already fallen, because the
+reflex's channel to the cause (cold air) runs entirely through the effect
+(temperature) it is trying to prevent. A cause-controlled system -- a
+temperature sensor on the animal's skin, reacting to the cold air stream
+itself -- can in principle correct before any temperature drop occurs at
+all. Inequality \eqref{eq:dpi} is the general reason error control is, as
+Conant and Ashby put it, ``a primitive and demonstrably inferior method of
+regulation'': whatever the residual $H(Z\mid D)$ available to cause
+control, error control can only ever access an amount of information about
+$D$ bounded by what already leaked into $S$, so its achievable $H(Z)$ is
+bounded away from that floor in general.
+
+From here on, following Conant and Ashby, we consider regulation of the
+more general kind in which $\pi(a\mid s)$ is free to be chosen without
+restriction -- this covers cause control as a special case (via $D\to S$
+and $D\to A$ jointly determining an effective $\pi(a\mid s)$) and includes
+error control as the case actually analysed in the theorem below.
+
+\section{What Is a Model? An Entropy Account}
+\label{sec:models}
+
+Conant and Ashby spend the middle third of their paper trying to fix a
+notion of ``model'' by appeal to isomorphism, working through finite-group
+homomorphisms, Hartmanis and Stearns' machine homomorphisms, and Black-Box
+equivalence, only to conclude that there are about as many possible
+definitions of isomorphism as there are of model, with no natural boundary
+between the two. Their retreat is to define a model \emph{operationally},
+via the mapping $h$ that falls out of the theorem itself.
+
+We can do better than retreat, because entropy gives a non-arbitrary family
+of definitions with a built-in ordering, and the theorem (Section
+\ref{sec:theorem}) will then tell us exactly which member of the family is
+forced by optimality.
+
+\begin{definition}[Model]
+$A$ is a \emph{model} of $S$ if $A$ is a deterministic function of $S$:
+\[
+H(A\mid S) = 0.
+\]
+\end{definition}
+
+$H(A\mid S)=0$ is precisely the statement that there exists a function
+$h:\Scal\to\Acal$ with $A=h(S)$ almost surely -- so this recovers Conant
+and Ashby's ``mapping $h:S\to R$'' language, but as a \emph{consequence} of
+a condition on entropy rather than as a primitive assumption borrowed from
+group theory.
+
+\begin{definition}[Faithful model]
+$A$ is a \emph{faithful} (or \emph{lossless}) model of $S$ if
+\[
+H(A\mid S) = H(S\mid A) = 0,
+\]
+equivalently $I(A;S) = H(A) = H(S)$.
+\end{definition}
+
+A faithful model is invertible: $S$ and $A$ carry exactly the same
+information, related by a bijection $h$. This is the information-theoretic
+counterpart of the group-theoretic isomorphism Conant and Ashby start from
+in Section~4 of the original -- but stated without any need for $S$ or $A$
+to carry group structure at all.
+
+\begin{definition}[Lossy model]
+$A$ is a \emph{lossy} (or \emph{homomorphic}) model of $S$ if
+\[
+H(A\mid S) = 0 \quad\text{but}\quad H(S\mid A) > 0.
+\]
+\end{definition}
+
+Here $h$ is many-to-one: several states $s$ collapse onto the same action
+$a$. This is the counterpart of Conant and Ashby's machine homomorphism --
+a structure-preserving map that discards some detail -- again recovered
+without any appeal to algebraic structure, purely from the size of
+$H(S\mid A)$.
+
+\begin{remark}
+The three definitions above sit inside a single one-parameter family
+indexed by $H(A\mid S)\ge 0$, running from a model at one end
+($H(A\mid S)=0$) through arbitrarily loose statistical association at the
+other ($H(A\mid S)$ close to $H(A)$, i.e.\ $A$ nearly independent of $S$).
+This is exactly the continuum Conant and Ashby worried about when they
+observed that homomorphism definitions could be weakened indefinitely with
+``no natural boundary dividing model from non-model.'' Fixing $H(A\mid
+S)=0$ as \emph{the} definition of model looks, on its own, like one more
+arbitrary point on that continuum. What removes the arbitrariness is the
+theorem of Section~\ref{sec:theorem}: optimality in the sense of minimal
+$H(Z)$ forces $H(A\mid S)=0$ exactly, not approximately and not as a matter
+of degree. The boundary Conant and Ashby went looking for among
+isomorphism definitions was never going to be found there; it is a
+consequence of the regulation problem, not a property of any particular
+mapping.
+\end{remark}
+
+\begin{remark}[Connection to sufficient statistics]
+A lossy model $A=h(S)$ that nonetheless preserves everything about $S$
+relevant to some downstream variable $Z$ -- i.e.\ $I(A;Z)=I(S;Z)$ while
+$H(A\mid S)=0$ -- is precisely a \emph{sufficient statistic} of $S$ for
+$Z$, in Fisher's classical sense. Seeking the coarsest (lowest-entropy)
+such $A$ is the same problem addressed, in a Lagrangian relaxation, by the
+information bottleneck method (Tishby, Pereira and Bialek, 1999): minimise
+$I(A;S)$ subject to a constraint on $I(A;Z)$. The good regulator theorem
+below is the limiting case of that trade-off in which the relevance
+constraint is non-negotiable ($H(Z)$ must be at its minimum) and only
+simplicity is optimised subject to it.
+\end{remark}
+
+\section{The Good Regulator Theorem}
+\label{sec:theorem}
+
+We now state and prove the theorem in entropy form. The setting is that of
+Section~\ref{sec:setup}: finite alphabets $\Scal,\Acal,\Zcal$, a fixed
+distribution $p(s)$, a fixed (for now, deterministic) outcome map
+$\psi:\Scal\times\Acal\to\Zcal$, and a free choice of policy $\pi(a\mid
+s)$. Write
+\[
+\Pi := \operatorname*{arg\,min}_{\pi(a\mid s)} H(Z)
+\]
+for the class of optimal policies. As in the original, we set aside the
+possibility of several distinct optimal marginals $p(z)$ tying for the
+minimum $H(Z)$; this is a genuine possibility but complicates the proof
+without changing its content, so we assume every member of $\Pi$ induces
+the same $p(z)$.
+
+\begin{lemma}[Concentration lemma]
+\label{lem:concentration}
+For every $\pi(a\mid s)\in\Pi$ and every $s$ with $p(s)>0$,
+\[
+H(Z\mid S=s) = 0.
+\]
+Equivalently: for every optimal policy, all actions $a$ with
+$\pi(a\mid s)>0$ satisfy $\psi(s,a)=z^\ast(s)$ for a single outcome
+$z^\ast(s)$ depending on $s$ alone.
+\end{lemma}
+
+\begin{proof}
+Suppose, for contradiction, that some $\pi(a\mid s)\in\Pi$ and some $s$
+with $p(s)>0$ admit $a_1\ne a_2$ with $\pi(a_1\mid s)>0$, $\pi(a_2\mid
+s)>0$, and $\psi(s,a_1)=z_1\ne z_2=\psi(s,a_2)$.
+
+Consider transferring probability $\alpha$ from the pair $(s,a_1)$ to the
+pair $(s,a_2)$, holding $\pi(a\mid s')$ fixed for every $s'\ne s$ and every
+other value of $a$ at $s$ fixed. This changes only the marginal
+probabilities of $z_1$ and $z_2$, replacing $(p(z_1),p(z_2))=(u,v)$ by
+$(u-\alpha,\,v+\alpha)$, for $\alpha$ ranging over an interval containing
+$0$ in its interior (since $\pi(a_1\mid s),\pi(a_2\mid s)>0$). All other
+terms of $H(Z)$ are unaffected. The two affected terms are
+\[
+g(\alpha) = -(u-\alpha)\log(u-\alpha) - (v+\alpha)\log(v+\alpha),
+\]
+a strictly concave function of $\alpha$
+($g''(\alpha) = -\tfrac{1}{u-\alpha}-\tfrac{1}{v+\alpha} < 0$), maximised
+uniquely at $\alpha^\ast = (u-v)/2$. Since $\alpha=0$ lies in the interior
+of the admissible interval, either $\alpha=0=\alpha^\ast$, in which case
+\emph{any} admissible nonzero $\alpha$ strictly decreases $g$, or
+$\alpha=0\ne\alpha^\ast$, in which case moving $\alpha$ further away from
+$\alpha^\ast$ (which remains admissible for small enough moves) strictly
+decreases $g$. Either way there is an admissible perturbation that
+strictly decreases $H(Z)$, contradicting optimality of the original
+$\pi(a\mid s)$. Hence no such $a_1,a_2$ exist, which is exactly the claim.
+\end{proof}
+
+\begin{theorem}[Good regulator theorem, entropy form]
+\label{thm:goodreg}
+There exists an optimal policy $\pi(a\mid s)\in\Pi$ that is a
+\emph{model} of $S$ in the sense of Section~\ref{sec:models}:
+\[
+H(A\mid S) = 0.
+\]
+Equivalently, there is a function $h:\Scal\to\Acal$ such that setting
+$A=h(S)$ achieves the minimal outcome entropy $H(Z)$.
+\end{theorem}
+
+\begin{proof}
+Take any $\pi(a\mid s)\in\Pi$. By Lemma~\ref{lem:concentration}, for each
+$s$ with $p(s)>0$ every $a$ with $\pi(a\mid s)>0$ maps, together with $s$,
+to the same outcome $z^\ast(s)$. Choose, for each such $s$, one particular
+such $a$ and call it $h(s)$. Define $\pi'(a\mid s) := \mathbb{1}[a=h(s)]$.
+
+Because every $a$ with $\pi(a\mid s)>0$ under the original policy already
+produced $z^\ast(s)$, redistributing all of that mass onto the single
+value $h(s)$ leaves $p(z^\ast(s))$, and hence the entire marginal $p(z)$,
+unchanged. So $\pi'(a\mid s)$ induces the same $H(Z)$ as the policy we
+started from, and therefore $\pi'(a\mid s)\in\Pi$. By construction
+$H'(A\mid S)=0$, since $A$ is exactly the deterministic function $h$ of
+$S$ -- a deterministic policy, in reinforcement-learning terms.
+\end{proof}
+
+\begin{corollary}
+The theorem's regulator is, in general, a \emph{lossy} model of $S$ rather
+than a faithful one: any two states $s,s'$ with $z^\ast(s)=z^\ast(s')$ that
+admit a common suitable response can be assigned the same $h(s)=h(s')$
+without affecting $H(Z)$. The coarsest such $h$ -- merging every pair of
+states that require the same regulatory response -- is the minimal
+sufficient statistic of $S$ for the regulation task, in the sense of the
+remark closing Section~\ref{sec:models}.
+\end{corollary}
+
+\subsection*{Remarks}
+
+\begin{itemize}
+\item \textbf{Unnecessary complexity has a name.} Lemma~\ref{lem:concentration}
+holds for \emph{every} member of $\Pi$, not only the deterministic one
+constructed in the proof: every optimal policy already has
+$H(Z\mid S)=0$. What it need not already have is $H(A\mid S)=0$: a policy
+can be optimal while carrying extra randomness in $A$ that varies without
+ever changing which $z^\ast(s)$ results. That surplus, $H(A\mid S)$
+itself, is a direct entropy measure of the ``unnecessary complexity''
+Conant and Ashby gesture at informally. Not every optimal regulator is a
+model of its reguland; the ones that are not are exactly the ones
+carrying positive $H(A\mid S)$ that the task does not require.
+
+\item \textbf{The search space collapses.} Once Theorem~\ref{thm:goodreg}
+is granted, searching for a good regulator is a search over deterministic
+functions $h:\Scal\to\Acal$, not over conditional distributions
+$\pi(a\mid s)$ -- a search over $|\Acal|^{|\Scal|}$ candidates rather than
+a continuum.
+
+\item \textbf{Cause- versus error-controlled regulation revisited.} In the
+error-controlled setting of Section~\ref{sec:causal}, $A$'s only input is
+$S$, and the theorem applies directly: $A=h(S)$. In the cause-controlled
+setting, $S$ and $A$ are both functions of the shared cause $D$
+($S=\phi(D)$, $A=\rho(D)$ in the deterministic case), so the theorem's
+$h$ must additionally satisfy $h(\phi(d))=\rho(d)$ for all $d$ -- $h$ and
+$\rho$ must \emph{agree through} $\phi$. This is a strictly stronger
+demand: not only must $A$ be recoverable from $S$, but the particular
+recovering function $h$ must coincide with $A$'s own direct route from
+$D$. It is the information-theoretic reading of Conant and Ashby's remark
+that Fig.~1's regulator ``must be a homo- or isomorph of $S$,'' where
+Fig.~2's need only be $A=h(S)$.
+
+\item \textbf{Time-varying regulands.} If $p(s)$ drifts slowly, the
+argument holds over any window in which $p(s)$ is effectively constant,
+with $h$ tracking the drift. The regulator is then an adaptive, rather
+than a fixed, model of the reguland -- exactly the situation of online
+estimation or filtering, where a sufficient statistic must itself be
+updated as the underlying distribution changes.
+\end{itemize}
+
+\subsection*{Reward, inference, and control}
+
+Section~\ref{sec:setup} defined a reward $r(z):=\mathbb{1}[z\in G]$ purely
+so that the standard reinforcement-learning objective,
+$\max_\pi\mathbb{E}[r(Z)]=\max_\pi\Pr(Z\in G)$, would be available for
+comparison. It is not what Theorem~\ref{thm:goodreg} optimises, and the
+gap between the two objectives is informative rather than incidental.
+Maximising $\mathbb{E}[r(Z)]$ only asks that $Z$ land in $G$ with high
+probability; it is silent about which outcome within $G$ (or within its
+complement) results, and how reliably. Minimising $H(Z)$ asks for the
+stronger thing established by Lemma~\ref{lem:concentration}: that wherever
+the outcome distribution sits, it be as concentrated as the channel
+$p(z\mid s,a)$ allows. The two objectives agree exactly when some policy
+can put all its probability mass on a single outcome in $G$; whenever the
+achievable floor of $H(Z)$ is strictly positive, reward maximisation has
+nothing further to say about how that residual uncertainty is shaped,
+while the entropy criterion pins it down completely.
+
+This is close in spirit to, but should not be confused with, the
+\emph{control as inference} framework (Todorov, 2008; Toussaint, 2009;
+Rawlik, Toussaint and Vijayakumar, 2013; Levine, 2018, gives a careful
+tutorial). That framework also turns control into an inference problem,
+but does so by introducing an auxiliary binary ``optimality'' variable $O$
+with an exponentiated-reward observation model,
+$p(O=1\mid s,a)\propto\exp\!\big(r(s,a)/\alpha\big)$, and then computing
+$p(a\mid s, O=1)$. The construction works, but it has known costs: the
+exponential transform and the temperature $\alpha$ are modelling choices
+with no derivation behind them, and under stochastic dynamics the
+resulting policy can be systematically optimistic, effectively taking
+credit for good luck in transitions it does not control, unless the
+inference is carried out carefully (Levine, 2018, \S5).
+
+None of that machinery is needed here, and it is worth being explicit
+about why. The good regulator theorem never introduces an auxiliary
+optimality variable to condition on: its ``evidence'' is $Z$ itself, an
+outcome that actually occurs, and its objective is the ordinary Shannon
+entropy of that outcome, not a KL divergence to an exponentiated-reward
+posterior. There is no reward to exponentiate and no temperature to fix.
+If an inference-flavoured reading is still wanted, the closer relative is
+the surprise- or free-energy-minimisation literature (Friston, 2010),
+where the quantity being minimised is likewise the entropy of an outcome
+that is actually observed, rather than of a manufactured optimality
+signal. The good regulator theorem can be read as a considerably more
+elementary instance of that same idea, one that predates both control as
+inference and free-energy accounts by three decades, and inherits none of
+the reward-exponentiation baggage because it was never phrased in terms of
+reward to begin with.
+
+\section{Discussion}
+
+Section~\ref{sec:models} left a genuine puzzle unresolved: entropy gives a
+whole family of candidate definitions of ``model,'' ordered by
+$H(A\mid S)$, and nothing internal to that family picks out one point as
+special. Theorem~\ref{thm:goodreg} is what picks it out. It is not that
+$H(A\mid S)=0$ is a reasonable place to draw the line; it is that
+minimising $H(Z)$ \emph{forces} $H(A\mid S)$ to zero, exactly, for at least
+one member of every optimal class. Where Conant and Ashby's original
+Section~4 left ``model'' underdetermined by algebra, the theorem
+overdetermines it by information: a good regulator's action, in the
+optimal case, does not merely resemble the reguland's state -- it is a
+deterministic (generally lossy) readout of it, in precisely the sense that
+$A$ carries zero residual uncertainty once $S$ is known.
+
+This changes model-building from an optional design choice to a logical
+consequence of optimal regulation, in exactly the sense Conant and Ashby
+intended: a controller, a Kalman filter, or a reinforcement-learning
+policy $\pi(a\mid s)$ that succeeds at minimising the entropy of some
+outcome variable it does not fully control has, whether its designer
+intended it or not, come to encode a compressed, deterministic function of
+the state of the system it is acting on. It has done so for
+information-theoretic reasons, not because anyone told it to.
+
+For the study of the brain, this reading of the theorem sharpens rather
+than only repeats Conant and Ashby's own conclusion. The claim is not the
+qualitative one that the brain probably models its environment, nor even
+that it must model its environment in some loose isomorphism-flavoured
+sense; it is the quantitative one that whatever mapping from sensory state
+to motor or physiological action the nervous system settles on, to the
+extent that mapping is entropy-optimal it will exhibit $H(A\mid S)=0$: no
+randomness in the response beyond what the sensed state already
+determines. That is an empirically meaningful claim about neural
+variability, not only a metaphor, and it sits comfortably alongside later,
+independently motivated proposals -- efficient coding (Barlow, 1961),
+predictive coding, and the information bottleneck (Tishby, Pereira and
+Bialek, 1999) -- that arrive at similar demands for compressed,
+task-sufficient internal representations from different starting points.
+
+\section*{References}
+
+\begin{itemize}
+\item Barlow, H.~B. (1961). Possible principles underlying the
+  transformations of sensory messages. In \emph{Sensory Communication},
+  ed.\ W.~Rosenblith, MIT Press.
+\item Conant, R.~C. and Ashby, W.~R. (1970). Every good regulator of a
+  system must be a model of that system. \emph{International Journal of
+  Systems Science}, 1(2):89--97.
+\item Cover, T.~M. and Thomas, J.~A. (2006). \emph{Elements of Information
+  Theory}, 2nd edition. Wiley-Interscience.
+\item Friston, K. (2010). The free-energy principle: a unified brain
+  theory? \emph{Nature Reviews Neuroscience}, 11(2):127--138.
+\item Levine, S. (2018). Reinforcement learning and control as
+  probabilistic inference: tutorial and review. \emph{arXiv:1805.00909}.
+\item MacKay, D.~J.~C. (2003). \emph{Information Theory, Inference, and
+  Learning Algorithms}. Cambridge University Press.
+\item Rawlik, K., Toussaint, M. and Vijayakumar, S. (2013). On stochastic
+  optimal control and reinforcement learning by approximate inference. In
+  \emph{Proceedings of Robotics: Science and Systems (RSS)}.
+\item Sommerhoff, G. (1950). \emph{Analytical Biology}. Oxford University
+  Press.
+\item Sutton, R.~S. and Barto, A.~G. (1998). \emph{Reinforcement Learning:
+  An Introduction}. MIT Press.
+\item Tishby, N., Pereira, F.~C. and Bialek, W. (1999). The information
+  bottleneck method. In \emph{Proceedings of the 37th Annual Allerton
+  Conference on Communication, Control, and Computing}, pp.~368--377.
+\item Todorov, E. (2008). General duality between optimal control and
+  estimation. In \emph{Proceedings of the 47th IEEE Conference on
+  Decision and Control (CDC)}.
+\item Toussaint, M. (2009). Robot trajectory optimization using
+  approximate inference. In \emph{Proceedings of the 26th International
+  Conference on Machine Learning (ICML)}.
+\end{itemize}
+
+\end{document}
