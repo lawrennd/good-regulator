@@ -41,10 +41,13 @@ variables in place of Sommerhoff's sets, conditional distributions --
 policies, in the language of reinforcement learning -- in place of Ashby's
 relations, and entropy, conditional entropy and mutual information in place
 of homomorphisms and isomorphisms. What falls out is a shorter derivation
-and a sharper statement of the theorem: an optimal regulator's action must
-have \emph{zero entropy conditioned on the state of the system it
-regulates}. That single condition is what it means, precisely and only,
-for a regulator to be a model of its system.
+and a sharper statement of the theorem: among all optimal regulators there
+exists a \emph{simplest} one, in Conant and Ashby's own phrase, whose
+action has \emph{zero entropy conditioned on the state of the system it
+regulates}. Zero conditional entropy is also, in this weak mapping sense,
+what it takes for a regulator to count as a model of its system -- not a
+claim that every successful regulator already is one, but that an equally
+successful one always exists that is.
 \end{abstract}
 
 \section{Introduction}
@@ -100,9 +103,12 @@ directly into four random variables and a goal set:
 \item $Z$, taking values in $\Zcal$: the outcome, determined jointly by $S$
   and $A$ through a (possibly stochastic) channel $p(z\mid s,a)$. Where
   convenient we take this channel to be a deterministic function
-  $z=\psi(s,a)$, as Conant and Ashby do; nothing below hinges on this,
-  since the argument goes through with $p(z\mid s,a)$ in place of
-  $\mathbb{1}[z=\psi(s,a)]$ throughout.
+  $z=\psi(s,a)$, as Conant and Ashby do. This is not a free simplification:
+  Section~\ref{sec:theorem} shows that a deterministic optimal policy
+  exists whichever kind of channel we have, but the sharper conclusion
+  proved there -- that \emph{every} optimal policy drives $H(Z\mid S=s)$
+  to zero -- genuinely needs $\psi$ to be deterministic, and is false in
+  general otherwise.
 \item $G\subset\Zcal$: the set of ``good'' outcomes.
 \end{itemize}
 
@@ -236,12 +242,19 @@ reflex's channel to the cause (cold air) runs entirely through the effect
 (temperature) it is trying to prevent. A cause-controlled system -- a
 temperature sensor on the animal's skin, reacting to the cold air stream
 itself -- can in principle correct before any temperature drop occurs at
-all. Inequality \eqref{eq:dpi} is the general reason error control is, as
-Conant and Ashby put it, ``a primitive and demonstrably inferior method of
-regulation'': whatever the residual $H(Z\mid D)$ available to cause
-control, error control can only ever access an amount of information about
-$D$ bounded by what already leaked into $S$, so its achievable $H(Z)$ is
-bounded away from that floor in general.
+all. Inequality \eqref{eq:dpi} is the formal core of why Conant and Ashby
+call error control ``a primitive and demonstrably inferior method of
+regulation'': the regulator's information about $D$ can never exceed what
+$S$ already carries. Turning this into a strict inequality between the two
+achievable $H(Z)$'s takes a further step that \eqref{eq:dpi} alone does
+not supply, since it bounds mutual information, not outcome entropy; it
+additionally requires that the information $S$ fails to carry about $D$
+actually matter to $Z$ through $\psi$, rather than happening to be
+irrelevant to the outcome. Under that mild proviso -- which holds unless
+$\psi$ is specially arranged to discard exactly what error control is
+missing -- the achievable $H(Z)$ for error control sits strictly above the
+cause-controlled floor $H(Z\mid D)$; but this is a further claim about the
+channel $\psi$, not a restatement of \eqref{eq:dpi}.
 
 From here on, following Conant and Ashby, we consider regulation of the
 more general kind in which $\pi(a\mid s)$ is free to be chosen without
@@ -266,6 +279,7 @@ of definitions with a built-in ordering, and the theorem (Section
 forced by optimality.
 
 \begin{definition}[Model]
+\label{def:model}
 $A$ is a \emph{model} of $S$ if $A$ is a deterministic function of $S$:
 \[
 H(A\mid S) = 0.
@@ -277,6 +291,21 @@ $h:\Scal\to\Acal$ with $A=h(S)$ almost surely -- so this recovers Conant
 and Ashby's ``mapping $h:S\to R$'' language, but as a \emph{consequence} of
 a condition on entropy rather than as a primitive assumption borrowed from
 group theory.
+
+\begin{remark}[A deliberately weak definition]
+Definition~\ref{def:model} is satisfied even by a constant regulator,
+$A=h(S)\equiv a_0$: a constant function is trivially deterministic, so
+$H(A\mid S)=0$ regardless of $I(A;S)$, which is itself zero in this case.
+Nothing in the definition requires $A$ to carry any information about $S$
+at all. What rules the constant map out is not the definition but
+optimality: the $h$ produced by Theorem~\ref{thm:goodreg} must actually
+minimise $H(Z)$, and a constant action only does that if a single fixed
+response is already best regardless of state -- a special case, not the
+rule. The definition of model used throughout is therefore intentionally
+weak: a deterministic, possibly wholly uninformative, mapping from state
+to action. It is the theorem, not the definition, that in practice forces
+the mapping to be informative as well.
+\end{remark}
 
 \begin{definition}[Faithful model]
 $A$ is a \emph{faithful} (or \emph{lossless}) model of $S$ if
@@ -400,7 +429,10 @@ There exists an optimal policy $\pi(a\mid s)\in\Pi$ that is a
 H(A\mid S) = 0.
 \]
 Equivalently, there is a function $h:\Scal\to\Acal$ such that setting
-$A=h(S)$ achieves the minimal outcome entropy $H(Z)$.
+$A=h(S)$ achieves the minimal outcome entropy $H(Z)$. Not every optimal
+policy has this property -- see ``Unnecessary complexity has a name''
+below -- only some optimal policy does, and it is this one Conant and
+Ashby would call the \emph{simplest} optimal regulator.
 \end{theorem}
 
 \begin{proof}
@@ -417,6 +449,36 @@ started from, and therefore $\pi'(a\mid s)\in\Pi$. By construction
 $H'(A\mid S)=0$, since $A$ is exactly the deterministic function $h$ of
 $S$ -- a deterministic policy, in reinforcement-learning terms.
 \end{proof}
+
+\begin{remark}[Stochastic channels]
+\label{rem:stochastic}
+Both Lemma~\ref{lem:concentration} and the theorem above assume a
+deterministic outcome map $z=\psi(s,a)$, and the assumption is doing real
+work in the lemma, not just holding a place for convenience. If
+$p(z\mid s,a)$ is genuinely stochastic, the existence of a deterministic
+optimal policy still holds, by a shorter and more general argument that
+does not go through the lemma at all: for fixed $p(s)$, the marginal
+$p(z)=\sum_s p(s)\sum_a \pi(a\mid s)\,p(z\mid s,a)$ is a linear function of
+the policy $(\pi(a\mid s))_{s,a}$, which ranges over a polytope -- the
+product, over $s$, of probability simplices on $\Acal$ -- whose extreme
+points are exactly the deterministic policies $A=h(S)$. Since $H(Z)$ is
+concave in $p(z)$, minimising it over this polytope is minimising a
+concave function over a compact convex set, and such a minimum is always
+attained at an extreme point. A deterministic optimal policy therefore
+exists whether or not the channel is deterministic.
+
+What does \emph{not} survive for a stochastic channel is the lemma's
+stronger conclusion, $H(Z\mid S=s)=0$ at every optimal policy. Take
+$\Scal=\{s\}$ and $\Acal=\{a\}$, both singletons, so the unique policy is
+trivially optimal, and let $Z\sim\mathrm{Bernoulli}(1/2)$ independently of
+$S,A$: then $H(Z\mid S=s)=1$ bit, not zero, for the only policy there is.
+Optimality forces the \emph{policy} to be realizable deterministically
+wherever the channel permits it, but it cannot force the \emph{outcome} to
+be deterministic when the channel itself supplies irreducible noise.
+Concentration, in the strong sense of Lemma~\ref{lem:concentration}, is a
+genuine consequence of a deterministic $\psi$; the weaker existence claim
+in Theorem~\ref{thm:goodreg} is not.
+\end{remark}
 
 \begin{corollary}
 The theorem's regulator is, in general, a \emph{lossy} model of $S$ rather
@@ -487,6 +549,20 @@ achievable floor of $H(Z)$ is strictly positive, reward maximisation has
 nothing further to say about how that residual uncertainty is shaped,
 while the entropy criterion pins it down completely.
 
+This gap is worth taking seriously rather than smoothing over: minimising
+$H(Z)$ is happy to settle on a perfectly predictable outcome that is not
+in $G$ at all, since nothing in the entropy criterion privileges $G$ over
+its complement. That is not a defect in Theorem~\ref{thm:goodreg} so much
+as a reminder that the word ``good'' carries normative content the entropy
+criterion alone does not supply. Two repairs are available without
+touching anything proved above: a lexicographic objective that first
+maximises $\Pr(Z\in G)$ and only minimises $H(Z)$ among the policies that
+achieve that maximum, or a reformulation in which $Z$ is itself defined as
+an error or deviation variable whose zero value already \emph{is} the
+goal, so that low entropy and goal achievement are aligned by construction
+rather than by coincidence. Conant and Ashby's own running examples --
+blood-sugar deviation, aiming error -- are implicitly of this second kind.
+
 This is close in spirit to, but should not be confused with, the
 \emph{control as inference} framework (Todorov, 2008; Toussaint, 2009;
 Rawlik, Toussaint and Vijayakumar, 2013; Levine, 2018, gives a careful
@@ -509,31 +585,104 @@ entropy of that outcome, not a KL divergence to an exponentiated-reward
 posterior. There is no reward to exponentiate and no temperature to fix.
 
 If an analogy is wanted at all, it is not to another inference framework
-but to a representational one: O'Regan's sensorimotor contingency theory
-(O'Regan, 1992; O'Regan and No\"e, 2001). That work argues, on entirely
-independent grounds, that perceiving does not require the nervous system
-to build and maintain a detailed internal replica of the scene; it
-requires mastery of the lawful contingencies linking action to the
-sensory consequences of action, with whatever the mapping does not need
-left in the world to be resampled through the loop rather than stored --
-O'Regan's phrase is that the world serves as ``an outside memory.''
-Theorem~\ref{thm:goodreg} and its Corollary say the same thing in entropy
-terms. The good regulator's action is a deterministic function of the
-sensed state, $A=h(S)$, but $h$ is generically many-to-one, so the
-regulator carries only the minimal sufficient statistic of $S$ needed to
-act, not a faithful copy of $S$ and certainly not of the disturbance $D$
-that produced it. What the theorem calls a lossy model
-(Definition~\ref{def:lossy}) is what O'Regan's account calls mastery of a
-sensorimotor contingency, and the two identifications need no
-exponentiated reward, no temperature, and no auxiliary optimality
-variable: the causal loop of Section~\ref{sec:causal},
-$D\to S\to A\to Z$, already gives $S$ and $A$ the sensory-state and action
-roles the analogy needs. The chronology also runs the opposite way from
-the usual story about this kind of idea: Conant and Ashby's theorem
-predates O'Regan's argument for the world as an outside memory by over
-twenty years, and O'Regan's argument in turn predates control as
-inference and the free-energy literature by well over a decade -- none of
-which this reading needs to borrow from.
+but to a representational one -- and here the theorem and the analogy
+pull in opposite directions before they agree. O'Regan's sensorimotor
+contingency theory (O'Regan, 1992; O'Regan and No\"e, 2001) argues, on
+entirely independent grounds, that perceiving does not require the
+nervous system to build and maintain any stored internal replica of the
+scene; what is needed is mastery of the lawful contingencies linking
+action to the sensory consequences of action, exercised in real time,
+with whatever the task does not need left in the world rather than
+represented -- O'Regan's phrase is that the world serves as ``an outside
+memory.'' Taken at face value this looks like a direct conflict with
+Theorem~\ref{thm:goodreg}: Ashby's claim is that a good regulator
+\emph{must} be a model; O'Regan's is that perception needs \emph{no}
+stored model at all.
+
+The conflict dissolves once the theorem's actual commitment is separated
+from a stronger one it is often read as making. The proof requires only
+that $A$ be a \emph{deterministic function of $S$}; it says nothing about
+whether that function is computed once and stored, or reconstructed from
+scratch on the current occasion. $S$ itself is free in the causal loop of
+Section~\ref{sec:causal}, $D\to S\to A\to Z$: nothing prevents $S$ from
+already being the product of a cheap, exploratory engagement with the
+current situation -- probing it, getting a ``feel'' for it, and folding
+the result into $S$ -- rather than a single passive reading. If it is,
+$h$ can be realized fresh each time, on the spot, by that engagement, with
+no persistent representation of $D$ ever built or stored between
+occasions, consistent with the Corollary's point that $h$ need only
+preserve a minimal sufficient statistic of $S$, not a faithful copy of $S$
+or of $D$. This satisfies the theorem, whose only requirement is the
+existence of \emph{some} deterministic dependence however it is
+instantiated, and it satisfies O'Regan, whose objection is to
+\emph{stored} models, not to the theorem's much weaker existence claim.
+The good regulator theorem survives; only a stronger reading of it, in
+which the model must be a persisted, world-mirroring object, does not.
+None of this reconciliation is a further mathematical consequence of
+Theorem~\ref{thm:goodreg}; it is an interpretive gloss on what the
+theorem does and does not commit to, offered because the word ``model''
+invites a stronger reading than the proof actually supports.
+
+The chronology, incidentally, runs the opposite way from the usual story
+about this kind of idea: Conant and Ashby's theorem predates O'Regan's
+argument for the world as an outside memory by over twenty years, and
+O'Regan's argument in turn predates control as inference and the
+free-energy literature by well over a decade.
+
+This reconciliation, once made, sorts a familiar range of
+reinforcement-learning architectures along a single axis: where is the
+deterministic dependence the theorem requires actually fixed?
+
+\begin{itemize}
+\item \textbf{Persistent policy model.} Vanilla policy-gradient methods,
+  and the deployed policy of an actor-critic or GRPO-trained system
+  (Sutton and Barto, 1998; Shao et al., 2024), fix $h$ once, during
+  training, as the weights of a policy network $\pi_\theta(a\mid s)$; at
+  decision time there is no rollout at all, only a forward pass. Strictly,
+  $\pi_\theta(a\mid s)$ is itself a distribution rather than the
+  deterministic $h$ the theorem produces, unless decoding is greedy or
+  zero-temperature; the point in the text applies to that deterministic
+  reading of the deployed policy, not to sampling from it. This is
+  Ashby's classical reading, unmodified: the regulator's model is the
+  policy itself.
+\item \textbf{Persistent consequence model, mental rollout.} World
+  models (Ha and Schmidhuber, 2018; Hafner et al., 2020) and
+  model-predictive control learn or are given a forward model
+  $\hat p(z\mid s,a)$ and search over imagined trajectories at decision
+  time. This still carries a stored, persistent representation between
+  occasions -- it has simply moved from a model of the optimal action to
+  a model of the action's consequences. It is a relocation of Ashby's
+  model, not an escape from it.
+\item \textbf{No persistent value model, real rollout as baseline.} GRPO's
+  own training signal (Shao et al., 2024) needs no critic or value
+  network: the baseline an actor-critic method would store is instead
+  recomputed at each update from a group of real samples of the policy's
+  own behaviour, scored and compared on the spot. This is narrower than
+  ``no persistent model'' in the broad sense -- the policy model itself
+  persists exactly as in the first bucket, and GRPO's reward is typically
+  supplied by a persistent reward model or verifier as well. What is
+  genuinely absent, and what actually cashes out the reconciliation above,
+  is the return-\emph{predictor}: nothing about the value of future
+  behaviour is stored between occasions, because the comparison a critic
+  would otherwise memorise is regenerated from real interaction with the
+  current instance every time it is needed.
+\end{itemize}
+
+The categories are not watertight, and the seams are informative. An
+actor-critic whose critic is consulted only during training sits in the
+first bucket at deployment, but one whose critic scores candidate actions
+online sits in the second; GRPO's deployed policy is read the first way
+even though its own training update is an instance of the third. The
+split runs along the axis the reconciliation identifies -- stored versus
+reconstructed on the spot -- not along algorithm names.
+
+One further remark for readers who want the ``rollout folded into $S$''
+idea made precise rather than gestured at: its natural formal home is the
+POMDP belief state, where $S$ becomes exactly a sufficient statistic of
+the interaction history rather than a single observation. Making that
+precise would reintroduce the time index and dynamics that
+Section~\ref{sec:setup} deliberately set aside, so it is left here as a
+pointer rather than developed.
 
 \section{Discussion}
 
@@ -554,21 +703,25 @@ This changes model-building from an optional design choice to a logical
 consequence of optimal regulation, in exactly the sense Conant and Ashby
 intended: a controller, a Kalman filter, or a reinforcement-learning
 policy $\pi(a\mid s)$ that succeeds at minimising the entropy of some
-outcome variable it does not fully control has, whether its designer
-intended it or not, come to encode a compressed, deterministic function of
-the state of the system it is acting on. It has done so for
-information-theoretic reasons, not because anyone told it to.
+outcome variable it does not fully control can always be replaced, with
+no loss of performance, by one that encodes a compressed, deterministic
+function of the state of the system it is acting on -- whether or not the
+policy actually in hand already is one. That replacement is available for
+information-theoretic reasons, not because anyone designed it in.
 
 For the study of the brain, this reading of the theorem sharpens rather
 than only repeats Conant and Ashby's own conclusion. The claim is not the
 qualitative one that the brain probably models its environment, nor even
 that it must model its environment in some loose isomorphism-flavoured
-sense; it is the quantitative one that whatever mapping from sensory state
-to motor or physiological action the nervous system settles on, to the
-extent that mapping is entropy-optimal it will exhibit $H(A\mid S)=0$: no
-randomness in the response beyond what the sensed state already
-determines. That is an empirically meaningful claim about neural
-variability, not only a metaphor, and it sits comfortably alongside later,
+sense; it is the quantitative one that among the mappings from sensory
+state to motor or physiological action available to the nervous system,
+at least one exhibits $H(A\mid S)=0$ -- no randomness in the response
+beyond what the sensed state already determines -- and any mapping the
+nervous system actually uses that carries strictly more conditional
+entropy than that is carrying unnecessary complexity in exactly the sense
+of ``Unnecessary complexity has a name'' above. That is an empirically
+meaningful constraint on neural variability, not only a metaphor, and it
+sits comfortably alongside later,
 independently motivated proposals -- efficient coding (Barlow, 1961), the
 information bottleneck (Tishby, Pereira and Bialek, 1999), and
 sensorimotor contingency theory's argument that perception need not
@@ -588,6 +741,11 @@ starting points.
   Systems Science}, 1(2):89--97.
 \item Cover, T.~M. and Thomas, J.~A. (2006). \emph{Elements of Information
   Theory}, 2nd edition. Wiley-Interscience.
+\item Ha, D. and Schmidhuber, J. (2018). World models.
+  \emph{arXiv:1803.10122}.
+\item Hafner, D., Lillicrap, T., Ba, J. and Norouzi, M. (2020). Dream to
+  control: learning behaviors by latent imagination. In \emph{International
+  Conference on Learning Representations (ICLR)}.
 \item Levine, S. (2018). Reinforcement learning and control as
   probabilistic inference: tutorial and review. \emph{arXiv:1805.00909}.
 \item MacKay, D.~J.~C. (2003). \emph{Information Theory, Inference, and
@@ -601,6 +759,9 @@ starting points.
 \item Rawlik, K., Toussaint, M. and Vijayakumar, S. (2013). On stochastic
   optimal control and reinforcement learning by approximate inference. In
   \emph{Proceedings of Robotics: Science and Systems (RSS)}.
+\item Shao, Z., Wang, P., Zhu, Q., Xu, R., Song, J., Zhang, M., Li,
+  Y.~K., Wu, Y. and Guo, D. (2024). DeepSeekMath: pushing the limits of
+  mathematical reasoning in open language models. \emph{arXiv:2402.03300}.
 \item Sommerhoff, G. (1950). \emph{Analytical Biology}. Oxford University
   Press.
 \item Sutton, R.~S. and Barto, A.~G. (1998). \emph{Reinforcement Learning:
