@@ -1,0 +1,629 @@
+\documentclass[11pt]{article}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} % clear default header/footer
+\fancyhead[C]{LLM Gist Draft---Proofs/Claims Not Verified}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,urlcolor=blue!55!black]{hyperref}
+\usepackage{natbib}
+
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\newcommand{\Acal}{\mathcal A}
+\newcommand{\Ocal}{\mathcal O}
+\newcommand{\Scal}{\mathcal S}
+\newcommand{\Zcal}{\mathcal Z}
+\newcommand{\Ycal}{\mathcal Y}
+\newcommand{\Rcal}{\mathcal R}
+\newcommand{\E}{\mathbb E}
+\newcommand{\1}{\mathbb 1}
+\newcommand{\dd}{\mathrm d}
+\newcommand{\given}{\,\middle|\,}
+
+\title{Action-Sufficient Representation:
+  Regulation, Sensorimotor Contingencies, and Latent World Models\\
+\Large \textbf{LLM Gist Draft---Proofs/Claims Not Verified}}
+\author{Neil D. Lawrence}
+\date{Draft of \today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Two influential views of adaptive behaviour appear, at first sight, to pull in opposite directions. The good regulator principle says that every successful regulator must be a model of the system it regulates. Sensorimotor accounts of perception deny that intelligent behaviour requires a stored internal replica of the world, emphasizing instead the lawful contingencies between action and sensory change. This paper argues that the conflict is only apparent. A regulator need not represent the world faithfully; it must preserve those distinctions that matter for the consequences of its available actions on the variables it regulates. We call such a representation \emph{action-sufficient}. The resulting framework is deliberately sparse. We begin with observations, actions, represented states, and regulated outcomes. A representation is action-sufficient when, for the purposes of predicting or selecting action consequences, the raw observation contains no additional relevant information once the representation is known. This yields a taxonomy of control architectures: policy models store the response directly, consequence models store action-conditioned dynamics and recover the response by planning, interaction models reconstruct task-relevant structure on the fly, and representation learners shape state spaces so that these computations become possible. The mathematical core makes one structural connection explicit: Conant and Ashby's entropy-minimisation argument and the classical MDP result that a deterministic optimal policy exists share the same mechanism---a concave objective minimised over the compact polytope of policies is minimised at an extreme point, and the extreme points are the deterministic policies. The objectives differ (entropy vs.\ expected return), but the conclusion and its proof mechanism are the same. Neither result is new; the bridge between them is. The same principle explains why inverse-dynamics-regularized latent world models learn compact sensorimotor state \citep{Ivashkov-smwm26}: forward prediction asks what actions will do, while inverse prediction prevents collapse by requiring action-relevant distinctions to remain recoverable. The paper concludes by relating this view to modern reinforcement learning, including policy learning, model-based control, latent world models, inverse dynamics, and reward-free representation learning.
+\end{abstract}
+
+\section{Introduction: an old tension}
+
+In the British cybernetic tradition, regulation and perception were never entirely separate topics. W. Ross Ashby and Donald M. MacKay both participated in the Ratio Club, the post-war group in which engineers, neurophysiologists, mathematicians, and psychologists discussed the mechanisation of mind, brain, and adaptive behaviour \citep{Husbands-ratio08}. Ashby's mature contribution to this tradition was the claim, with Conant, that every good regulator of a system must be a model of that system \citep{Conant-good70}; his earlier foundational work on cybernetics and self-regulating systems~\citep{Ashby-introduction56} provides the conceptual background. Their argument is already, in essence, an entropy argument: Conant and Ashby adopt the entropy $H(Z)$ of the regulated outcome as their criterion of success, and the proof turns on how the entropy of a mixture responds to concentrating probability mass. MacKay's work, by contrast, repeatedly emphasized active selection, meaning, and the information supplied by an organism's own mode of engagement with the world \citep{MacKay-space62,MacKay-information69}.
+
+A generation later, O'Regan's slogan that the world can serve as an ``outside memory'' sharpened a nearby point: perception need not consist in constructing and maintaining an internal replica of the external scene \citep{ORegan-real92}. O'Regan explicitly credits Donald MacKay with an analogy used in that paper, and O'Regan and No\"e's later sensorimotor account of vision places the mastery of action--sensation regularities at the centre of perception \citep{ORegan-sensorimotor01}. The historical line should not be overstated: O'Regan's theory has several sources, including Gibsonian and enactive traditions. But it is fair to see MacKay's active, information-theoretic treatment of perception as part of the background against which the sensorimotor view becomes natural.
+
+The result is an apparent contradiction.
+\begin{quote}
+The good regulator view says: to act well, the system must contain a model.
+
+The sensorimotor view says: to perceive and act well, the system need not store a model-like replica of the world.
+\end{quote}
+
+This paper argues that the contradiction dissolves once the word \emph{model} is weakened to the form actually required for action. A model need not be a picture, reconstruction, simulator of everything, or faithful copy. It need only preserve the distinctions that matter for the consequences of available actions on the variables the system must regulate.
+
+Call such a representation \emph{action-sufficient}. The thesis is:
+\begin{quote}
+An agent does not need to represent the world in full. It needs to preserve those distinctions in the world that make a difference to the consequences of its available actions.
+\end{quote}
+
+This statement is intended to be narrower and less encumbered than many existing vocabularies. It does not begin from a theory of inference, cognition, consciousness, or biological value. It is inspired by the two cybernetic traditions outlined above and it begins from the minimal ingredients of control: observations, actions, represented states, and outcomes.
+
+This paper is inspired by recent work on sensorimotor world models. \citet{Ivashkov-smwm26} provides a concrete machine-learning demonstration: combining forward latent prediction with inverse dynamics regularization produces compact representations that track the action-relevant structure of an environment, prevent representational collapse, and filter out variation that is neither predictable from actions nor useful for recovering them. The action-sufficiency framework developed here can be read as an attempt to state the general principle behind that phenomenon and to connect it to the older cybernetic question of what kind of model a good regulator requires. Sensorimotor world models are not merely an application of the framework; they are a source of intuition.
+
+The rest of the paper develops this idea mathematically and then uses it to organise modern reinforcement learning and world-model methods.
+
+\paragraph{Contributions.}
+The paper makes four claims.
+\begin{enumerate}[leftmargin=*]
+\item The good regulator principle and sensorimotor accounts are compatible once ``model'' is understood as a generally lossy, task-relative, action-sufficient representation rather than a stored faithful replica.
+\item Conant and Ashby's entropy-minimisation argument and the classical MDP result that a deterministic optimal policy exists share the same mechanism: a concave (or linear) objective minimised over the policy polytope is minimised at a vertex, and the vertices are deterministic policies. The objectives differ; the structural mechanism and conclusion are the same. This connection does not appear to have been made explicit before.
+\item Forward and inverse dynamics provide complementary pressures for learning action-sufficient representations: forward prediction preserves consequence-relevant structure, while inverse prediction prevents collapse by preserving action-relevant distinctions.
+\item Modern RL architectures can be classified by where they place action-relevant structure: in a policy, in a consequence model, in online interaction, or in a learned representation used by one of the others.
+\end{enumerate}
+
+\section{Variables, representations, and outcomes}
+\label{sec:vars}
+
+We consider an agent interacting with a system. At a single decision point, let
+\[
+O \in \Ocal
+\]
+be an observation,
+\[
+S \in \Scal
+\]
+a state of the reguland, possibly hidden,
+\[
+A \in \Acal
+\]
+an action, and
+\[
+Y \in \Ycal
+\]
+an outcome. The outcome may be an error variable, a goal-relative state, a sensory consequence, a physical state, or any other quantity whose variability matters to the system.
+
+The agent need not act on the raw observation. It may form a representation
+\[
+R = f(O), \qquad R \in \Rcal.
+\]
+In a fully observed idealisation we may write $R=f(S)$. In a partially observed setting $R$ may be a belief state, a recurrent hidden state, or a sufficient statistic of an interaction history.
+
+The consequence channel is the formal core of regulation. Behind it lies a causal structure: a \emph{disturbance} $D$ acts on the system and the regulator must counteract it. Conant and Ashby distinguish two cases depending on whether the regulator has direct access to $D$ or only to the state $S$ that $D$ has already partly shaped.
+
+\paragraph{Cause-controlled regulation.} The regulator observes the disturbance directly, so $S$ and $A$ are separate functions of the common cause: $D\to S$ and $D\to A$ independently, with $Z$ determined jointly by $S$ and $A$.
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.6cm, >=stealth, every node/.style={font=\small}]
+\node (D) {$D$};
+\node (S) [above right=8mm and 18mm of D] {$S$};
+\node (A) [below right=8mm and 18mm of D] {$A$};
+\node (Z) [right=32mm of D] {$Z$};
+\draw[->] (D) -- (S);
+\draw[->] (D) -- (A);
+\draw[->] (S) -- (Z);
+\draw[->] (A) -- (Z);
+\end{tikzpicture}
+\end{center}
+
+\paragraph{Error-controlled regulation.} The regulator observes only $S$, through which $D$ has already acted: $D\to S\to A$ forms a Markov chain. By the data-processing inequality~\citep{Cover-elements06,MacKay-information03},
+\begin{equation}
+    I(D;A) \;\le\; I(D;S),
+    \label{eq:dpi}
+\end{equation}
+so the regulator can never recover more information about the disturbance than $S$ already carries. Conant and Ashby describe error control as ``a primitive and demonstrably inferior method of regulation'' because the regulator's channel to the cause runs entirely through the effect it is trying to prevent; it can act only once some disturbance has already passed into $S$.
+
+\begin{center}
+\begin{tikzpicture}[node distance=1.6cm, >=stealth, every node/.style={font=\small}]
+\node (D) {$D$};
+\node (S) [right=22mm of D] {$S$};
+\node (A) [below=10mm of S] {$A$};
+\node (Z) [right=22mm of S] {$Z$};
+\draw[->] (D) -- (S);
+\draw[->] (S) -- (A);
+\draw[->] (S) -- (Z);
+\draw[->] (A) -- (Z);
+\end{tikzpicture}
+\end{center}
+
+From here on we consider the general setting in which $\pi(a\mid s)$ is chosen freely. This covers the error-controlled case directly. In the cause-controlled case, the regulator has direct access to $D$; writing $\pi(a\mid s)$ still applies if $S$ is understood as the full information available to the regulator at decision time, which in cause control includes $D$ itself.
+
+The key object is the action-conditioned consequence channel
+\begin{equation}
+    p(y\mid s,a),
+    \label{eq:consequence-channel}
+\end{equation}
+or, when the agent has only observations,
+\begin{equation}
+    p(y\mid o,a).
+\end{equation}
+A representation is useful for control not because it preserves $O$ or $S$ as such, but because it preserves the information needed to evaluate or choose action consequences.
+
+\begin{definition}[Action sufficiency]
+\label{def:action-sufficiency}
+A representation $R=f(O)$ is \emph{action-sufficient} for outcome $Y$ if, for all relevant $o$ and $a$,
+\begin{equation}
+    p(y\mid o,a) = p(y\mid f(o),a).
+    \label{eq:action-sufficiency-observation}
+\end{equation}
+Equivalently,
+\begin{equation}
+    Y \perp\!\!\!\perp O \mid R,A.
+\end{equation}
+In the state-based case, $R=f(S)$ is action-sufficient if
+\begin{equation}
+    p(y\mid s,a) = p(y\mid f(s),a)
+    \label{eq:action-sufficiency-state}
+\end{equation}
+for all relevant $s,a$.
+\end{definition}
+
+This definition is deliberately relative to $Y$ and $A$. A representation may be sufficient for reaching a target but insufficient for reconstructing a scene; sufficient for grasping an object but insufficient for naming its material; sufficient for controlling body temperature but insufficient for predicting the weather.
+
+\begin{definition}[Consequence equivalence]
+\label{def:consequence-equivalence}
+Two states $s,s'\in\Scal$ are consequence-equivalent for outcome $Y$ if
+\begin{equation}
+    p(y\mid s,a)=p(y\mid s',a)
+    \qquad \text{for all } a\in\Acal.
+    \label{eq:consequence-equivalence}
+\end{equation}
+The equivalence class of $s$ is denoted $[s]_Y$.
+\end{definition}
+
+The quotient $\Scal/{\sim_Y}$ is the coarsest state representation that preserves all action-conditioned consequences for $Y$. Any finer representation may be useful for other outcomes, but it is not required for this one.
+
+\begin{remark}[Relation to bisimulation]
+The equivalence relation $\sim_Y$ is structurally similar to bisimulation equivalence for MDPs. Bisimulation, introduced for probabilistic systems by Larsen and Skou~\citep{Larsen-bisimulation91} and adapted to MDPs by Givan, Dean, and Greig~\citep{Givan-equivalence03}, identifies states whose action-conditioned distributions over both reward and next-state are identical; Ferns, Panangaden, and Precup~\citep{Ferns-metrics04} extend this to a bisimulation metric that quantifies near-equivalence. Recent work has approximated bisimulation metrics in deep latent spaces as a representation-learning objective~\citep{Zhang-learning21,Castro-mico21}. The present definition differs in one key respect: consequence equivalence is \emph{outcome-specific}. States are identified only relative to a nominated regulated variable $Y$, not with respect to the full reward and transition structure. This makes the partition finer or coarser than standard bisimulation depending on which distinctions matter for the task.
+\end{remark}
+
+\section{Regulation and entropy}
+\label{sec:regulation}
+
+Now let the outcome to be regulated be denoted by
+\[
+Z\in\Zcal.
+\]
+$Z$ is a specific instance of the general outcome variable $Y$ from Section~\ref{sec:vars}: it is the particular quantity whose entropy the policy is to minimise. The consequence-equivalence relation of Definition~\ref{def:consequence-equivalence} with $Y=Z$ then gives the relevant notion of state indistinguishability for the regulation task.
+A policy is a conditional distribution
+\[
+\pi(a\mid s)=p(a\mid s).
+\]
+For the moment assume finite alphabets and a deterministic outcome map
+\begin{equation}
+    z = \psi(s,a).
+    \label{eq:deterministic-outcome-map}
+\end{equation}
+The induced marginal distribution of $Z$ under $p(s)$ and $\pi(a\mid s)$ is
+\begin{equation}
+    p_\pi(z)=\sum_{s,a}p(s)\pi(a\mid s)\1\{\psi(s,a)=z\}.
+\end{equation}
+
+Following Conant and Ashby, we take success to be measured by concentration of the regulated outcome:
+\begin{equation}
+    \min_{\pi} H_\pi(Z).
+    \label{eq:min-entropy-objective}
+\end{equation}
+This is Conant and Ashby's own criterion, not an addition of ours. Its merit is that it is defined whenever $\Zcal$ is a set of classes, with no requirement for $Z$ to carry a metric or an additive structure; their own examples are species of fish caught in trawling and amino-acid chains produced by a ribosome, neither of which supports a root-mean-square error. It is not a theory of value. Low entropy means reliable outcome, not necessarily good outcome. The variable $Z$ must already encode what the regulator cares about: for example, deviation from a target, membership in a safe set, or some other task-relative outcome. Entropy then measures residual variability in that outcome.
+
+The entropy criterion differs from reward maximisation in a way worth making explicit. Maximising $\mathbb{E}[r(Z)]$ for some reward $r$ asks only that $Z$ land in a target set with high probability; it is silent about which outcome within that set results and how reliably. Minimising $H(Z)$ asks for the distribution of $Z$ to be as concentrated as the channel allows, wherever it is concentrated. The two coincide exactly when some policy can place all its mass on a single outcome in the target set. Whenever the achievable floor of $H(Z)$ is strictly positive, reward maximisation has nothing further to say about how that residual uncertainty is shaped, while the entropy criterion pins it down. The gap does not favour one criterion over the other; it reveals that they measure different things. Setting $Z$ as an error or deviation variable whose zero value encodes the goal---as Conant and Ashby's own examples do (blood-sugar deviation, aiming error)---aligns entropy minimisation with goal achievement by construction rather than by coincidence.
+
+The main point is that, under this objective, unnecessary response randomness can be removed. Before stating the main result we fix precisely what it means for a regulator to count as a model.
+
+\begin{definition}[Model of a reguland]
+\label{def:model}
+The action $A$ is a \emph{model} of the state $S$ if $A$ is a deterministic function of $S$:
+\[
+H(A\mid S) = 0.
+\]
+A model is \emph{faithful} (or \emph{lossless}) if additionally $H(S\mid A) = 0$, making $h$ a bijection and $I(A;S)=H(S)$. A model is \emph{lossy} (or \emph{homomorphic}) if $H(A\mid S)=0$ but $H(S\mid A)>0$: then $h$ is many-to-one, collapsing states that produce the same outcome.
+\end{definition}
+
+This definition is deliberately weak. A constant regulator $A\equiv a_0$ satisfies $H(A\mid S)=0$ regardless of what $S$ is; it is not ruled out by the definition but by optimality. The theorem below forces $H(A\mid S)=0$, but it is the task---not the definition of model---that determines whether the resulting $h$ is faithful or lossy.
+
+\begin{lemma}[No consequential randomisation at optimum]
+\label{lem:no-consequential-randomisation}
+Assume finite $\Scal,\Acal,\Zcal$ and deterministic $z=\psi(s,a)$. Let $\pi$ minimize $H_\pi(Z)$. Then for every $s$ with $p(s)>0$, all actions in the support of $\pi(\cdot\mid s)$ produce the same outcome:
+\begin{equation}
+    \pi(a\mid s)>0,\ \pi(a'\mid s)>0
+    \quad \Rightarrow \quad
+    \psi(s,a)=\psi(s,a').
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Suppose not. Then for some $s$ with $p(s)>0$ there exist $a_1,a_2$ in the support of $\pi(\cdot\mid s)$ with $\psi(s,a_1)=z_1$ and $\psi(s,a_2)=z_2\ne z_1$. Shift a small mass $\alpha$ from $(s,a_1)$ to $(s,a_2)$, leaving all other conditional probabilities fixed. Only the marginal probabilities of $z_1$ and $z_2$ change. If their original probabilities are $u$ and $v$, the affected part of the entropy becomes
+\begin{equation}
+    g(\alpha)=-(u-\alpha)\log(u-\alpha)-(v+\alpha)\log(v+\alpha).
+\end{equation}
+This function is strictly concave on its admissible interval, since
+\begin{equation}
+    g''(\alpha)= -\frac{1}{u-\alpha}-\frac{1}{v+\alpha}<0.
+\end{equation}
+A strictly concave function cannot have an interior minimum. Since $\alpha=0$ is interior for sufficiently small shifts in both directions, some admissible perturbation strictly lowers $H(Z)$, contradicting optimality. Therefore all actions used at a given state must be consequence-equivalent for $Z$.
+\end{proof}
+
+\begin{theorem}[Simplest entropy-optimal regulator]
+\label{thm:simplest-regulator}
+Under the assumptions of Lemma~\ref{lem:no-consequential-randomisation}, there exists an entropy-optimal policy that is a model of $S$ in the sense of Definition~\ref{def:model}: a deterministic policy $A=h(S)$ with $H(A\mid S)=0$.
+\end{theorem}
+
+\begin{proof}
+Take any entropy-minimizing policy $\pi$. By Lemma~\ref{lem:no-consequential-randomisation}, for each state $s$ with $p(s)>0$, all actions used by $\pi(\cdot\mid s)$ produce the same outcome. Choose one such action and call it $h(s)$. Define the deterministic policy
+\begin{equation}
+    \pi'(a\mid s)=\1\{a=h(s)\}.
+\end{equation}
+Because the redistributed probability mass at each $s$ remains on an action producing the same outcome as before, the induced marginal $p(z)$ is unchanged. Hence $H_{\pi'}(Z)=H_\pi(Z)$ and $\pi'$ is also optimal. Since $A=h(S)$ under $\pi'$, $H(A\mid S)=0$.
+\end{proof}
+
+The theorem should be read carefully. It does not say that every optimal regulator is deterministic. An optimal policy may randomise among actions that have identical consequences for $Z$. It says that such randomisation is unnecessary for the regulated outcome and can be removed. The simplest optimal regulator is a deterministic, generally lossy, function of state.
+
+\begin{corollary}[Lossy model]
+The deterministic regulator $h$ need not be invertible. If several states require the same action, or if several states are consequence-equivalent for the regulated outcome, they may be mapped to the same response. So the regulator is generally a lossy model of the reguland, not a faithful copy. The coarsest such $h$---merging every pair of states that are consequence-equivalent---is the minimal sufficient statistic of $S$ for the regulation task. It is also the only choice of $h$ that does not depend on $p(s)$: the quotient $\Scal/{\sim_Z}$ is determined entirely by the consequence channel $p(z\mid s,a)$ and is invariant to distributional shift.
+\end{corollary}
+
+\begin{remark}[Unnecessary complexity]
+Lemma~\ref{lem:no-consequential-randomisation} holds for \emph{every} member of the optimal class, not only the deterministic one constructed in the proof: every optimal policy already satisfies $H(Z\mid S)=0$ in the deterministic-channel case. What an optimal policy need not satisfy is $H(A\mid S)=0$. A policy can randomise among actions that produce the same outcome at every state, carrying surplus action randomness that makes no difference to $Z$. That surplus, $H(A\mid S)$ itself, is a direct entropy measure of the unnecessary complexity Conant and Ashby describe informally. Not every optimal regulator is a model of its reguland; the ones that are not are exactly the ones carrying positive $H(A\mid S)$ that the task does not require.
+\end{remark}
+
+\begin{remark}[Connection to sufficient statistics and the information bottleneck]
+The lossy model $A=h(S)$ that preserves all consequence-relevant distinctions while collapsing consequence-equivalent states is precisely a \emph{sufficient statistic} of $S$ for the regulation task: $I(A;Z)=I(S;Z)$ while $H(A\mid S)=0$. This connects to earlier information-theoretic ideas: Barlow's efficient coding hypothesis~\citep{Barlow-possible61} argued that neural representations should remove redundancy and compress the input while preserving signal-relevant information---the same trade-off, now made explicit with respect to the regulation task. Seeking the coarsest such $A$ is the limit of the information bottleneck problem~\citep{Tishby-information99}: minimise $I(A;S)$ subject to preserving $I(A;Z)$. The good regulator result is the non-negotiable-relevance end of that trade-off, where $H(Z)$ must reach its minimum and only simplicity is optimised subject to that constraint.
+\end{remark}
+
+\subsection{The stochastic-channel case}
+
+The preceding concentration lemma uses the deterministic map $z=\psi(s,a)$. If the environment contains irreducible stochasticity,
+\begin{equation}
+    p(z\mid s,a)
+\end{equation}
+may have positive entropy even for a fixed $s,a$. Then it is false in general that $H(Z\mid S=s)=0$ at optimum. A one-state, one-action system with $Z\sim \mathrm{Bernoulli}(1/2)$ is already a counterexample.
+
+But a weaker and useful statement survives.
+
+\begin{proposition}[Deterministic optimum for stochastic channels]
+\label{prop:stochastic-deterministic}
+Let $\Scal,\Acal,\Zcal$ be finite and let $p(z\mid s,a)$ be fixed. There exists a deterministic policy minimizing $H(Z)$.
+\end{proposition}
+
+\begin{proof}
+The set of policies $\pi(a\mid s)$ is a product of simplexes and hence a compact convex polytope. The induced marginal
+\begin{equation}
+    p_\pi(z)=\sum_{s,a}p(s)\pi(a\mid s)p(z\mid s,a)
+\end{equation}
+is an affine function of $\pi$. Shannon entropy $H(p_\pi)$ is concave in $p_\pi$ and therefore concave in $\pi$. A concave function on a compact polytope attains its minimum at an extreme point. The extreme points of the policy polytope are deterministic policies, one action per state. Hence a deterministic entropy-minimizing policy exists.
+\end{proof}
+
+Proposition~\ref{prop:stochastic-deterministic} keeps the main architectural message but avoids overclaiming. The simplest optimum can be deterministic, but the outcome itself may remain uncertain because the world is noisy.
+
+\begin{remark}[Shared structure with classical MDP results]
+The existence of a deterministic optimal policy in a finite MDP is a classical result~\citep{Bellman-dynamic57,Puterman-markov94,Sutton-reinforcement18}. The standard proof via reward maximisation and the proof above via entropy minimisation are not the same argument: reward maximisation is linear in the state--action occupancy measure (its optimum is at a vertex of an LP feasible set), while entropy minimisation is concave-min over an affine image of the policy polytope. What the two share is the structural conclusion and its mechanism: a concave (or linear) objective minimised over a compact polytope of policies is minimised at an extreme point, and the extreme points are the deterministic policies. The present proof makes that shared mechanism explicit in Conant and Ashby's own entropy-minimisation setting. The two communities did not connect their arguments; the disconnect likely reflects disciplinary siloing rather than chronology, since the relevant MDP results~\citep{Bellman-dynamic57} predate Conant and Ashby by over a decade.
+\end{remark}
+
+\section{The apparent conflict with sensorimotor theory}
+
+We can now return to the historical tension.
+
+Theorem~\ref{thm:simplest-regulator} says that a successful regulator can be made into a deterministic mapping from state to action. In this precise sense---$H(A\mid S)=0$, Definition~\ref{def:model}---it is a model: a deterministic function from state to action. Whether it is faithful, distinguishing all states, or lossy, collapsing consequence-equivalent ones, is determined by the task, not by the theorem.
+
+The sensorimotor view denies that perception requires a stored internal replica of the world. It emphasizes that perception depends on mastery of the lawful relations between actions and sensory changes. The world can be sampled again when needed; not every detail must be maintained internally.
+
+The conflict dissolves once the theorem's actual commitment is read carefully. The proof requires only that $A$ be a deterministic function of $S$---that $H(A\mid S)=0$---and says nothing about whether that function is computed once and stored or reconstructed from scratch at each decision point. The state $S$ itself is free: nothing prevents it from being the product of active, real-time engagement with the current situation rather than a single passive reading. If so, $h$ can be realised fresh on each occasion, with no persistent representation of the disturbance built or stored between encounters. This satisfies the theorem, whose only requirement is the existence of some deterministic dependence however it is instantiated, and it satisfies the sensorimotor view, whose objection is to stored replicas, not to the theorem's weaker existence claim.
+
+These claims are therefore compatible because the regulator's model is weaker than a replica. It may be:
+\begin{itemize}[leftmargin=*]
+\item lossy rather than faithful;
+\item task-relative rather than global;
+\item action-conditioned rather than pictorial;
+\item transient or reconstructed online rather than stored permanently;
+\item distributed across body, environment, and controller rather than contained wholly inside the agent.
+\end{itemize}
+
+The common core is action sufficiency. A system must preserve or recover the distinctions that determine what its actions do to the variables that matter. It need not preserve the rest. Neuroscience provides independent support for this separation: Goodale and Milner~\citep{Goodale-separate92} showed that the primate visual system maintains distinct dorsal and ventral pathways, one oriented toward action guidance and one toward object recognition, consistent with the view that action-relevant representation is structurally distinct from perceptual fidelity.
+
+In this reading, the good regulator principle and the sensorimotor view are two sides of one claim. The former says that effective regulation requires a state-to-response dependency. The latter says that this dependency need not be an internal world replica; it can be grounded in the agent's practical access to sensorimotor contingencies.
+
+\section{Learning action-sufficient representations}
+
+Recent work on sensorimotor world models provides the concrete machine-learning instantiation of the action-sufficiency idea \citep{Ivashkov-smwm26}. The central finding is that coupling forward latent prediction with inverse dynamics regularization produces representations that track the action-relevant structure of the environment: they prevent collapse, filter uncontrollable variation, and retain the geometry of action-conditioned change. Action sufficiency names the general principle behind that finding. The following formalises the mechanism.
+
+Suppose we have offline transitions
+\begin{equation}
+    \mathcal D=\{(o_t,a_t,o_{t+1})\}.
+\end{equation}
+An encoder maps observations to latent states,
+\begin{equation}
+    z_t=f_\theta(o_t),\qquad z_{t+1}=f_\theta(o_{t+1}),
+\end{equation}
+and a forward model predicts the next latent state from the current latent state and action,
+\begin{equation}
+    \hat z_{t+1}=g_\phi(z_t,a_t).
+\end{equation}
+The forward loss is
+\begin{equation}
+    \mathcal L_{\mathrm{fwd}}
+    =
+    \E_{(o_t,a_t,o_{t+1})\sim\mathcal D}
+    \left[
+    \|g_\phi(f_\theta(o_t),a_t)-f_\theta(o_{t+1})\|_2^2
+    \right].
+    \label{eq:fwd-loss}
+\end{equation}
+
+Forward prediction alone can collapse: if $f_\theta(o)=z^\star$ for every observation and $g_\phi(z,a)=z^\star$, the prediction loss may be zero while the representation contains no useful state information.
+
+An inverse dynamics model predicts the action from the represented transition:
+\begin{equation}
+    \hat a_t=q_\psi(z_t,z_{t+1}),
+\end{equation}
+with loss
+\begin{equation}
+    \mathcal L_{\mathrm{inv}}
+    =
+    \E_{(o_t,a_t,o_{t+1})\sim\mathcal D}
+    \left[
+    \|q_\psi(f_\theta(o_t),f_\theta(o_{t+1}))-a_t\|_2^2
+    \right].
+    \label{eq:inv-loss}
+\end{equation}
+The combined objective is
+\begin{equation}
+    \mathcal L
+    =
+    \mathcal L_{\mathrm{fwd}}+
+    \lambda \mathcal L_{\mathrm{inv}}.
+    \label{eq:combined-loss}
+\end{equation}
+
+\begin{proposition}[Inverse prediction as anti-collapse]
+\label{prop:anti-collapse}
+Assume squared loss. If $f_\theta$ is collapsed so that $f_\theta(o)=z^\star$ for all $o$, then the optimal inverse predictor is constant:
+\begin{equation}
+    q_\psi(z^\star,z^\star)=\E[A],
+\end{equation}
+and the minimum inverse risk is
+\begin{equation}
+    \E\|A-\E[A]\|_2^2.
+\end{equation}
+Therefore, any inverse risk below this constant-predictor baseline requires the represented transition $(z_t,z_{t+1})$ to contain information about $a_t$.
+\end{proposition}
+
+\begin{proof}
+When the encoder is collapsed, the inverse model receives the same input for every transition. Hence it can output only a constant vector $c$. The squared-loss minimizer over constants is $c=\E[A]$, with risk $\E\|A-\E[A]\|_2^2$. Achieving lower risk requires different transitions to map to different inverse-model inputs in a way predictive of $A$.
+\end{proof}
+
+The interpretation is direct. The forward loss asks: what must the latent state preserve so that action consequences can be predicted? The inverse loss asks: what must the latent transition preserve so that the action causing it can be recovered? Their intersection is the action-relevant structure of the environment.
+
+\section{Active data collection and the exploration gap}
+\label{sec:exploration}
+
+Proposition~\ref{prop:anti-collapse} relies on a silent assumption: the training data $\mathcal{D}$ already contains varied actions from each state. Without action-diverse trajectories, the inverse loss carries no signal and the encoder learns nothing about consequence-relevant distinctions. Obtaining such data requires a data-collection policy chosen to expose those distinctions. The framework as written does not say how to choose it.
+
+\paragraph{The framework-native exploration quantity.}
+The channel $p(z\mid s,a)$ is already the central object of Definition~\ref{def:consequence-equivalence}: it determines which state pairs are consequence-equivalent and which are not. The same channel yields a natural exploration objective, the outcome-conditional mutual information
+\begin{equation}
+    I(A;Z\mid S=s) = H(Z\mid S=s) - H(Z\mid A,S=s).
+    \label{eq:exploration-mi}
+\end{equation}
+This is task-relative empowerment~\citep{Klyubin-empowerment05} --- empowerment conditioned on the nominated outcome $Z$ rather than on the unconditional next state $S'$. Maximising it directs exploration toward states where action choices produce differentiated consequences for the regulated variable.
+
+\begin{remark}[Exploration and consequence-equivalence collapse]
+For any policy with full support on $\Acal$, $I(A;Z\mid S=s)=0$ if and only if all actions are consequence-equivalent at $s$: $p(z\mid s,a)=p(z\mid s,a')$ for all $a,a'\in\Acal$. This is exactly the condition that the local consequence partition (Definition~\ref{def:consequence-equivalence}) at $s$ is trivial. States that need no further exploration are precisely those where $I(A;Z\mid S=s)=0$. States where it is positive are those where the inverse dynamics loss~\eqref{eq:inv-loss} still carries a learning signal: actions are not yet recoverable from $(z_t,z_{t+1})$ because the encoder has not learned to separate consequence-distinct outcomes. The exploration objective and the representation-learning objective read the same channel from opposite directions.
+\end{remark}
+
+\paragraph{Why policy entropy is not the right substitute.}
+The standard response in max-entropy reinforcement learning and control-as-inference~\citep{Levine-reinforcement18} is to add an entropy bonus on $H(A\mid S)$, the entropy of the policy itself. This is a poor fit here. Policy entropy that spreads mass \emph{within} a consequence-equivalence class at $s$ produces no further signal for the inverse loss and no information about $Z$; it is exactly the surplus randomness that Theorem~\ref{thm:simplest-regulator} says optimal regulators can discard. Policy entropy that spreads mass \emph{across} equivalence classes does generate a useful signal, but it actively works against the regulatory objective: placing weight on consequence-distinct actions increases $H(Z)$ rather than minimising it. The quantity $H(A\mid S)$ is not wrong --- it is simply not the quantity the theory is built around, and importing it from generic practice conflates the policy's internal indecision with genuine consequence-relevant variation in the environment.
+
+\paragraph{Novelty and scope.}
+Unconditional empowerment $I(A;S'\mid S)$~\citep{Klyubin-empowerment05} and outcome-conditioned mutual-information exploration objectives of the form~\eqref{eq:exploration-mi} are established tools in the intrinsic-motivation literature. We do not claim the quantity is new. The observation is narrower: $I(A;Z\mid S)$ is not imported into the framework from outside but derived from the consequence channel already central to the paper's core definitions, and the consequence-equivalence remark above does not require concepts external to the paper. This closes a specific internal gap --- the passive-data assumption of Proposition~\ref{prop:anti-collapse} --- by an argument the framework already contains. Whether this observation warrants a dedicated section or a remark is a matter of taste; we include it to make the theory's internal consistency explicit.
+
+\paragraph{The reward-free case.}
+When the outcome $Z$ is not yet fixed, \eqref{eq:exploration-mi} is not directly computable. The natural fallback is unconditional empowerment $I(A;S'\mid S)$, which maximises action-influence over all next-state distinctions without nominating an outcome. This is a principled proxy, but it reintroduces a tension the framework was designed to dissolve: preserving action-influence over \emph{all} future state distinctions, rather than only the task-relevant ones, sits in tension with the discard-what-is-irrelevant principle. An agent following $I(A;S'\mid S)$ may preferentially visit states with many controllable but consequence-irrelevant degrees of freedom, wasting representational capacity on distinctions that will not matter for the eventual regulated outcome. We surface this as a limitation of the reward-free case rather than a resolved problem.
+
+\section{Equivariance and latent intervention}
+
+When a physical action $a$ transforms an observation $o$ into $a(o)$, a learned representation and latent dynamics model should approximately satisfy
+\begin{equation}
+    f(a(o)) \approx g_a(f(o)),
+    \label{eq:equivariance}
+\end{equation}
+where $g_a(z)=g(z,a)$. This is an equivariance condition: encoding after acting should agree with acting in latent space after encoding.
+
+If actions compose, equivariance implies that latent interventions compose.
+
+\begin{theorem}[Composition of latent interventions]
+Let $\Acal$ be a semigroup acting on observations, and suppose exact equivariance holds:
+\begin{equation}
+    f(a(o))=g_a(f(o))
+\end{equation}
+for all $a\in\Acal$ and $o\in\Ocal$. Then for all $a_1,a_2\in\Acal$ and $z\in f(\Ocal)$,
+\begin{equation}
+    g_{a_2\circ a_1}(z)=g_{a_2}(g_{a_1}(z)).
+\end{equation}
+Thus $a\mapsto g_a$ is a homomorphism on the encoded data manifold.
+\end{theorem}
+
+\begin{proof}
+Let $z=f(o)$. Then
+\begin{align}
+    g_{a_2\circ a_1}(z)
+    &= g_{a_2\circ a_1}(f(o)) \\
+    &= f((a_2\circ a_1)(o)) \\
+    &= f(a_2(a_1(o))) \\
+    &= g_{a_2}(f(a_1(o))) \\
+    &= g_{a_2}(g_{a_1}(f(o))) \\
+    &= g_{a_2}(g_{a_1}(z)).
+\end{align}
+\end{proof}
+
+In many simple continuous-control systems, a particularly economical solution is approximately translational:
+\begin{equation}
+    z_{t+1}-z_t \approx \rho(a_t).
+    \label{eq:latent-translation}
+\end{equation}
+If $\rho$ is injective on the action support, inverse prediction can recover $a_t$ from the latent displacement. The inverse loss does not force translational structure, but it makes it a low-complexity way of satisfying action recoverability.
+
+\section{Controllable and consequential variables}
+
+Action sufficiency is not identical to controllability.
+
+A variable controlled by the agent usually matters, because it changes the consequences of action. But an uncontrollable variable can also matter if it changes what actions will do. Wind is not controlled by an aircraft, but it matters for flight. A moving obstacle is not controlled by a robot, but it matters for navigation.
+
+The correct criterion is consequence relevance:
+\begin{quote}
+A variable should be preserved if it changes the predicted consequence of available actions for the regulated outcome.
+\end{quote}
+
+This explains why inverse-dynamics-regularized world models can ignore random distractors that are neither predictable from action nor useful for action recovery, while preserving the position, orientation, or configuration variables that structure controllable change. It also explains why biased data can cause failure: if a distractor is spuriously correlated with action under the data-collecting policy, the inverse objective may preserve it even though it is not causally relevant.
+
+\section{A taxonomy of action-sufficient architectures}
+
+The framework classifies architectures by where they place action-relevant structure (Table~\ref{tab:taxonomy}).
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+Architecture & Stored structure & Online computation \\
+\midrule
+Policy model & $a=h(z)$ & Direct response \\
+Consequence model & $z'=g(z,a)$ & Planning/search over actions \\
+Interaction model & Partial or temporary structure & Real or imagined probing \\
+Representation learner & $z=f(o)$ shaped by objectives & Enables policy or planning \\
+\bottomrule
+\end{tabular}
+\caption{Four placements of action-relevant structure.}
+\label{tab:taxonomy}
+\end{table}
+
+\paragraph{Policy models.}
+A policy model stores the response directly:
+\begin{equation}
+    a=h(z).
+\end{equation}
+At deployment, action selection is cheap. The representation must preserve the distinctions needed to choose the action. Standard policy-gradient methods, actor networks, imitation policies, and deployed model-free controllers fall primarily in this class.
+
+\paragraph{Consequence models.}
+A consequence model stores action-conditioned dynamics:
+\begin{equation}
+    z_{t+1}=g(z_t,a_t).
+\end{equation}
+The policy is reconstructed online by planning. Model predictive control, latent world models~\citep{Ha-world18}, Dreamer-like systems~\citep{Hafner-dream19,Hafner-dream20}, TD-MPC-like systems~\citep{Hansen-tdmpc22}, and JEPA-style action-conditioned predictors~\citep{LeCun-path22} belong here when used for planning.
+
+\paragraph{Interaction models.}
+Some systems do not store the relevant mapping fully in advance. They reconstruct it through real or imagined engagement: probing, sampling, rolling out, comparing, and correcting. The action-relevant information is never fully internalized; it is recovered on demand from the environment or an approximate world model. This includes online trial-and-error, receding-horizon replanning, and procedures that use the current world as part of the computation. The formal distinguishing criterion is that no fixed function $h$ or $g$ is stored between decisions; the consequence structure is computed anew, conditionally on the current state, at each decision point. This differs from a consequence model in that the computation is not amortized: it cannot be separated from the act of querying the environment or the model.
+
+\paragraph{Representation learners.}
+A representation learner shapes $z=f(o)$ so that one of the above computations becomes possible. Forward prediction, inverse dynamics, contrastive learning, bisimulation losses, reconstruction, reward prediction, and auxiliary tasks all fall here when their role is to determine what distinctions the state should preserve.
+
+The categories are not mutually exclusive. A model-based agent may distil a planner into a policy. A policy may use a learned representation. A world model may be learned with inverse dynamics. A planner may repeatedly re-encode the current observation, making it partly interaction-based. The taxonomy concerns placement, not algorithm names.
+
+\section{Modern reinforcement learning through this lens}
+
+Reinforcement learning can be read as a family of ways to obtain action-sufficient structure.
+
+\paragraph{Model-free policy learning.}
+Model-free methods store action-relevant structure in the policy or value function. A policy $\pi_\theta(a\mid s)$ represents the mapping from state distinctions to action probabilities. A value function $V(s)$ or $Q(s,a)$ represents consequence information only after it has been compressed through expected return. This is efficient when the task is fixed, but less reusable when goals or dynamics change.
+
+\paragraph{Model-based reinforcement learning.}
+Model-based methods store consequence structure more explicitly, through a transition model
+\begin{equation}
+    \hat p(s'\mid s,a)
+\end{equation}
+or a latent predictor
+\begin{equation}
+    z' = g(z,a).
+\end{equation}
+The policy is then constructed by planning, search, dynamic programming, or policy improvement. The advantage is reuse: a consequence model can support multiple goals or costs. The disadvantage is that model errors compound under rollout.
+
+\paragraph{Latent world models.}
+Latent world models replace pixel-level prediction with prediction in learned representation space. This is sensible if the representation is action-sufficient. Pixel reconstruction may preserve irrelevant visual detail; a latent predictor can instead preserve the variables that determine action consequences. Dreamer-style models~\citep{Hafner-dream19,Hafner-dream20}, TD-MPC-style methods~\citep{Hansen-tdmpc22}, and JEPA-style world models~\citep{LeCun-path22} differ in objective and architecture, but all face the same question: what must the latent state retain so that action-conditioned prediction remains useful?
+
+\paragraph{Inverse dynamics.}
+Inverse dynamics is a direct pressure toward action-relevant representation. If the action can be recovered from two represented states, then the representation must preserve distinctions involved in action-induced change. This is why inverse dynamics has appeared in curiosity-driven exploration~\citep{Pathak-curiosity17}, representation learning, imitation, latent-action discovery, and sensorimotor world models.
+
+\paragraph{Reward-free representation learning.}
+Reward-free settings make the issue especially clear. Without a reward signal, the system cannot know which downstream outcome will later matter. It can still learn generally useful action-conditioned structure: what can change, how actions transform observations, and which variables are stable under intervention. Such representations are not universally sufficient, but they are often reusable because many later tasks depend on the same controllable geometry.
+
+\paragraph{Exploration and policy entropy.}
+Policy entropy can be useful during learning: it encourages exploration, improves optimization, and prevents premature collapse of behaviour. But in the regulatory theorem, residual $H(A\mid S)$ is not itself a virtue. If randomization among actions has no consequence for the regulated outcome, it is surplus complexity. Thus entropy in the policy and entropy in the outcome play different roles. Outcome entropy measures residual variability in what is regulated. Policy entropy may be a training device, robustness device, or expression of indifference among equivalent actions.
+
+\section{Failure modes}
+
+The action-sufficiency view also clarifies failure modes.
+
+\paragraph{Missing state.}
+If the representation omits a variable that changes action consequences, control fails. This may happen under partial observability, insufficient history, representation collapse, or poor coverage of the data distribution.
+
+\paragraph{Spurious state.}
+If the representation preserves variables correlated with action in the dataset but irrelevant under intervention, it may fail under distribution shift. Inverse dynamics is not immune to this; it can preserve confounded predictors of action.
+
+\paragraph{Aliased actions.}
+If distinct actions produce indistinguishable transitions, inverse dynamics cannot recover the original action. The best one can require is recovery of action equivalence classes: distinctions between actions that make a difference to observed consequence.
+
+\paragraph{Hidden dynamics.}
+A single frame may not identify velocity, force, contact mode, intention, or other temporally extended variables. Then a frame encoder is not action-sufficient. The representation must include history:
+\begin{equation}
+    z_t=f(o_{1:t})
+\end{equation}
+or at least a short window.
+
+\paragraph{Long-horizon compounding error.}
+A one-step consequence model may be accurate locally but unreliable under long rollout. Planning can then exploit model errors. This is a failure of approximation, not of the principle: the learned representation and dynamics are not sufficient over the horizon on which they are used.
+
+\section{Discussion}
+
+The central claim of this paper is intentionally modest. It is not that all perception is control, nor that all intelligence reduces to prediction, nor that all action selection is inference. It is that control requires a representation of action-relevant consequence. Everything else is architectural choice.
+
+This modesty is useful. It prevents entropy from being asked to explain value. It prevents world models from being mistaken for full reconstructions. It prevents sensorimotor accounts from being read as denying all internal structure. And it prevents model-free policies from being treated as model-free in any absolute sense: a policy still encodes a mapping from represented distinctions to actions.
+
+\paragraph{Relation to the internal model principle.}
+The cybernetic claim that a good regulator must be a model has a control-theoretic counterpart in the internal model principle of Francis and Wonham~\citep{Francis-internal76}: a regulator achieves zero steady-state error to a class of reference signals only if it contains an internal model of the signal generator. Both results say, in different mathematical settings, that successful regulation requires the controller to embody some representation of what it is controlling. The present paper's contribution is to identify, via the entropy criterion, how much of that representation is actually required: not a faithful copy, but a lossy, consequence-relevant one.
+
+\paragraph{Relation to active inference.}
+Active inference~\citep{Friston-free10} is a framework for perception and action grounded in the free-energy principle, which itself explicitly builds on the good regulator theorem and on the idea that biological agents embody generative models of the causes of their sensations. Active inference makes strong commitments that the present paper deliberately avoids: it posits that agents minimise variational free energy as a unified objective for both perception and action, that prior preferences over outcomes replace reward signals, and that inference and control are manifestations of the same variational process. The action-sufficiency framework makes none of these commitments. It asks only that the representation preserve the distinctions needed to predict action consequences for a regulated outcome; the objective (entropy minimisation, reward maximisation, free energy, or another) is not fixed, and the computational story (Bayesian inference, policy gradient, dynamic programming) is left open. The two frameworks are not in conflict---action sufficiency is, in a sense, a necessary condition that any sufficient account of regulation must satisfy---but this paper is deliberately thinner, seeking the minimal representational commitment rather than a unified theory of mind.
+
+\paragraph{Relation to bisimulation and state abstraction.}
+The consequence-equivalence relation of Definition~\ref{def:consequence-equivalence} and the quotient $\Scal/{\sim_Y}$ occupy conceptual ground also covered by two bodies of work that approached it from different directions. Bisimulation for MDPs identifies states whose action-conditioned reward and transition distributions are equal; Ferns, Panangaden, and Precup~\citep{Ferns-metrics04} extend this to a metric that quantifies how far apart states are under this criterion, and subsequent work has used bisimulation metrics as a representation-learning objective in deep RL~\citep{Zhang-learning21,Castro-mico21}. In the state abstraction literature, Li, Walsh, and Littman~\citep{Li-towards06} distinguish several levels of abstraction for MDPs, from model-irrelevance abstractions that preserve the full transition and reward structure down to coarser abstractions that preserve only the optimal value function or policy. The action-sufficiency condition is closest in spirit to their notion of $\pi^*$-irrelevance, which demands only that an optimal policy be recoverable from the abstract state, though it is stated here in terms of consequence distributions rather than value functions and does not presuppose a reward signal. What the present framing adds is not a finer notion of state equivalence, but a different entry point: the cybernetic and sensorimotor lineage makes explicit why action-conditioned consequence, rather than full model fidelity, is the right level of abstraction, and why this level dissolves an apparent conflict in the philosophy of perception that the bisimulation and abstraction literatures do not address.
+
+\paragraph{Relation to critiques of the good regulator theorem.}
+The GRT has attracted two related objections. The first is a \emph{near-tautology} charge: once ``model'' is defined as bare determinism ($H(A\mid S)=0$, Definition~\ref{def:model}), the claim that every good regulator must be a model reduces to the fact that a concave objective on a compact polytope of policies attains its minimum at a vertex---a generic mathematical property that does not require any internal representation worth the name~\citep{Nikolic-XXXX}. The second is a \emph{distribution-fragility} charge: the optimal $h$ is defined only on the support of $p(s)$ and optimised for that distribution; a shift in the disturbance regime can make $h$ suboptimal or undefined for new states, suggesting it fits a regime-specific lookup table rather than capturing the system's causal structure.
+
+We address the second critique more directly than the first. On fragility: Definitions~\ref{def:action-sufficiency} and~\ref{def:consequence-equivalence} are stated at the level of the consequence channel $p(y\mid s,a)$, without reference to $p(s)$. Action sufficiency and consequence equivalence are structural properties of the environment---they hold or fail based on the channel alone, invariant to which states happen to be visited. The coarsest action-sufficient representation---the quotient $\Scal/{\sim_Z}$ of the Corollary---is determined entirely by the channel, not by any operating distribution, and a regulator grounded in that partition is robust to distributional shift in a way the theorem's minimal $h$ is not. On tautology: we do not dissolve it. Definition~\ref{def:model} retains ``model'' in its weakest sense precisely to make transparent what the theorem does and does not claim; the ``Shared structure'' remark above already acknowledges that the conclusion is a generic extremal-point fact. What the surrounding framework adds---action sufficiency, the consequence-equivalence partition, the quotient construction---earns a stronger reading of ``model'' by working at the channel level, but the theorem itself does not.
+
+The good regulator principle tells us that successful regulation entails a state-to-response dependency. Sensorimotor theory tells us that this dependency need not be a stored internal replica; it can be grounded in active access to lawful action--sensation relations. Modern latent world models show how such dependencies can be learned: not by reconstructing everything, but by preserving the compact geometry of action-conditioned change.
+
+\section{Conclusion}
+
+An intelligent controller does not need to represent the world as it is. It needs to represent the world as it matters for action.
+
+The action-sufficient view says: preserve what changes the consequences of available actions for the variables that matter; discard the rest. A policy stores this structure as a response. A world model stores it as a consequence relation. An interaction model reconstructs it on demand. A representation learner shapes the state space so that one of these computations can succeed.
+
+This reconciles two views that can otherwise appear incompatible. The regulator can always be made into a model, in the precise weak sense the theorem establishes, but that model need not be a replica. Perception can be sensorimotor, but sensorimotor mastery still requires lawful structure. The common object is not a picture of the world, but a compressed, action-conditioned account of what can be done.
+
+\bibliographystyle{plainnat}
+\bibliography{action-sufficient}
+
+\end{document}
