@@ -1,0 +1,185 @@
+\documentclass[11pt]{article}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} % clear default header/footer
+\fancyhead[C]{Working Notes: Claims Not Verified}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,urlcolor=blue!55!black]{hyperref}
+\usepackage{natbib}
+\usepackage{dsfont}
+
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\newcommand{\Acal}{\mathcal A}
+\newcommand{\Ocal}{\mathcal O}
+\newcommand{\Scal}{\mathcal S}
+\newcommand{\Zcal}{\mathcal Z}
+\newcommand{\Ycal}{\mathcal Y}
+\newcommand{\Rcal}{\mathcal R}
+\newcommand{\Dcal}{\mathcal D}
+\newcommand{\E}{\mathbb E}
+\newcommand{\1}{\mathds{1}}
+\newcommand{\dd}{\mathrm d}
+\newcommand{\given}{\,\middle|\,}
+
+% This note: occupancy, pushforward, outcome marginal, entropy functional.
+\newcommand{\occ}{d^{\pi}}
+\newcommand{\push}{\Phi_{\#}}
+\newcommand{\pz}{p_{\pi}}
+\newcommand{\Hf}[1]{H\!\left[#1\right]}
+\newcommand{\todo}[1]{\textcolor{red!70!black}{[#1]}}
+
+\title{From Theory to Algorithm: $\min_\pi \Hf{p_\pi}$ over Trajectories\\
+\Large \textbf{Working Notes: Claims Not Verified}}
+\author{Joery A. de Vries}
+
+\begin{document}
+\maketitle
+
+\section{Setting}
+
+The companion draft on action-sufficient representation suggests a minimization of the entropy for a regulated outcome $Z$ for a \emph{single} decision: $p(s)$ is given, a policy $\pi(a\mid s)$ is chosen, and $\pz(z)=\sum_{s,a}p(s)\pi(a\mid s)p(z\mid s,a)$.
+To turn this into a functional reinforcement learning algorithm let's consider control over trajectories where the state distribution is induced marginally by the policy.
+
+Consider an MDP $(\Scal,\Acal,P,\rho_0,\gamma)$ with transition probabilities $P(s'\mid s,a)$, initial distribution $\rho_0(s)$, discount $\gamma\in[0,1)$, and a stationary policy $\pi(a\mid s)$.
+Everything below is written for finite $\Scal,\Acal,\Zcal$, but $P$, $\pi$, for continuous spaces the sums become integrals and distributions become densities with respect to a reference measure.
+The policy induces the discounted state--action occupancy
+\begin{equation}
+  \occ(s,a)=(1-\gamma)\sum_{t\ge0}\gamma^t\Pr_\pi(s_t=s,a_t=a),
+  \label{eq:occ}
+\end{equation}
+the discounted fraction of time spent in each state--action pair.
+It satisfies the linear flow constraint
+\begin{equation}
+  \sum_a \occ(s',a)=(1-\gamma)\rho_0(s')+\gamma\sum_{s,a}\occ(s,a)P(s'\mid s,a),
+  \label{eq:flow}
+\end{equation}
+and conversely every distribution satisfying~\eqref{eq:flow} is the occupancy of some stationary policy.
+The set $\Dcal$ of occupancies is therefore convex, and its extreme points (vertices of the policy polytope in finite spaces) are the occupancies of deterministic policies~\citep{Puterman-markov94}.
+Standard RL maximises the return $J(\pi)=\tfrac{1}{1-\gamma}\sum_{s,a}\occ(s,a)\,r(s,a)$, which is \emph{linear} in $\occ$.
+Policy search is thus a linear programme over $\Dcal$, in practice run as gradient ascent on say a parametric policy $\pi_\theta$ or through dynamic programming.
+
+Now, let every step emit an outcome $z\in\Zcal$ through the channel $K(z\mid s,a)$ of the companion drafts, with $K(z\mid s,a)=\1\{\psi(s,a)=z\}$ in the deterministic case.
+This can be seen as either an augmentation or a sub-component of a more general observation kernel.
+The point is to use this kernel for framing control as an inverse-problem with respect to $z\in\Zcal$.
+Consider the push-forward,
+\begin{equation}
+  \pz(z)=(\push\occ)(z)=\sum_{s,a}\occ(s,a)\,K(z\mid s,a),
+  \label{eq:push}
+\end{equation}
+so $\pz(z)$ is the long-run frequency of outcome $z$.
+When the channel is deterministic, $\push\occ=\psi_{\#}\occ$ is the ordinary pushforward of measures.
+Entropy is taken against a reference measure $\mu$ on $\Zcal$, $\Hf{p}=-\int p\log p\,\dd\mu$, which is Shannon entropy for counting $\mu$ and differential entropy for Lebesgue $\mu$.
+Conant and Ashby's criterion~\citep{Conant-good70} becomes
+\begin{equation}
+  \min_{\pi}\Hf{\pz}=\min_{\occ\in\Dcal}\Hf{\push\occ}.
+  \label{eq:obj}
+\end{equation}
+This minimises a concave functional over a convex set.
+Its minimum sits at an extreme point, so a deterministic stationary policy is optimal and the good-regulator conclusion $H(A\mid S)=0$ carries over unchanged.
+The objective is not linear in $\occ$, however, so it is not the return of any reward $r(s,a)$ and local optima are expected.
+Behaviourally, the policy should reach a set of states whose outcomes are indistinguishable and low-noise, and stay there.
+
+
+\paragraph{Occupancy Homeostasis.}
+Consider for a moment that the channel $K$ is the identity, i.e., $p_\pi \equiv d^\pi$.
+This amounts to a similar objective like SMiRL, which is a homeostasis objective over the state occupancy distribution.
+Such an optimization objective typically guarantees that the policy stays still and does nothing unless extraneous factors (environment, other agents, kernel noise, etc.) inject entropy into the agent.
+In practice, this can mean that staying still/ doing nothing can induce low-entropy, or even simply falling off a cliff and reaching the terminal state as fast as possible.
+
+
+\paragraph{Reward as a Channel.}
+Naturally we can also ask, can a general linear reward be expressed in terms of a channel to recover the LP formulation?
+The plain answer is no, since $\Hf{\push\occ}$ is never linear in $\occ$, but we can create a channel that induces high noise for low ``rewards'' and low noise for high ``rewards.''
+Take a reward $r(s,a)\in[0,1]$, a silence symbol $z_0$ and a noise alphabet $N$ of size $m$ disjoint from $z_0$.
+Let the channel emit silence with probability $r(s,a)$ and uniform noise otherwise,
+\begin{equation}
+  K(z\mid s,a)=r(s,a)\,\1\{z=z_0\}+\big(1-r(s,a)\big)\,\tfrac{1}{m}\1\{z\in N\}.
+  \label{eq:reward-channel}
+\end{equation}
+Write $R=\sum_{s,a}\occ(s,a)\,r(s,a)$ for the return.
+The outcome marginal depends on the occupancy only through $R$, because a mixture of a point mass and a uniform is determined by its weight.
+Its entropy is
+\begin{equation}
+  \Hf{\push\occ}=h_b(R)+(1-R)\log m,
+  \label{eq:reward-channel-entropy}
+\end{equation}
+with $h_b$ the binary entropy, which is strictly decreasing in $R$ whenever $R>1/(m+1)$.
+Hence for $m$ large enough the entropy minimiser and the return maximiser coincide exactly.
+In terms of the decomposition of stub~4, the noise term $(1-R)\log m$ is the linear part, a reward of $-(1-r(s,a))\log m$, and the residual $I(Z;S,A)=h_b(R)$ is the concave part, bounded by $\log 2$.
+Dividing by $\log m$ and letting $m\to\infty$ recovers the LP in the limit.
+The binary reward on two states is the special case $r\in\{0,1\}$, but nothing in the construction needs binary rewards.
+
+
+\section{Practical Algorithm}
+...
+
+first need to write H[p(z)] as an empirical quantity, ie the jenssen bound, H[E(p-hat(z))] >= E[H[p-hat(z)]] where E[p-hat(z)] = p(z). THis motivates learning an empirical occupancy with say a parametric mdoel p-hat. See smirl.
+
+My idea is to frame this in the FB representation, since it captures any successor measure for any reward, which actually allows us to adapt the policy on the fly. This is important since the homeostatis objective implies a non-stationary policy conditioned on the state measure.
+
+TBD exact implementation and how to relate this to desirable sets.
+
+
+\section{Stubs}
+
+Each item is a claim to prove or a construction to write out.
+
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+  \item \textbf{Gibbs form.}
+    $\Hf{\pz}=\min_q\E_{\occ}[-\sum_zK(z\mid s,a)\log q(z)]$, a cooperative min--min.
+    For fixed $q$ the inner problem is an MDP with reward $\sum_zK(z\mid s,a)\log q(z)$.
+    Contrast with the min--max of convex RL \todo{cite Hazan 19, Zahavy 21}.
+  \item \textbf{Stop-gradient.}
+    $\nabla_\theta \Hf{p_{\pi_\theta}}=-\nabla_\theta\E_{d^{\pi_\theta}}[\log p_{\bar\pi}(z)]$ with $\bar\pi$ frozen, since $\sum_z\nabla p(z)=0$.
+  \item \textbf{Geometry.}
+    Concave over $\Dcal$, so the optimum is a vertex (Prop.).
+    Local optima solve their own linearised MDP.
+    The global problem is plausibly NP-hard via the R\'enyi-2 surrogate.
+  \item \textbf{Decomposition.}
+    $H(Z)=\E_{\occ}\big[\Hf{K(\cdot\mid s,a)}\big]+I(Z;S,A)$, a linear noise-aversion reward plus an anti-empowerment term \citep{Klyubin-empowerment05}.
+  \item \textbf{Expressability.}
+    No reward of any memory depth has $\Hf{\pz}$ as return, because $\Hf{\cdot}$ is concave in the trajectory law.
+    The empirical $\E[\Hf{\hat p_T}]$, with $\hat p_T$ the episode histogram, \emph{is} affine.
+    It has the exact reward $r_t=g(n_{t+1})-g(n_t)$ with $g(n)=\Hf{n/T}$, solved by DP on $(s,n_t,t)$.
+  \item \textbf{Population vs.\ single trial.}
+    Jensen gives $\E[\Hf{\hat p_T}]\le \Hf{\pz}$, so minimising~\eqref{eq:obj} minimises an upper bound.
+    History-dependence matters only for the single-trial objective.
+  \item \textbf{Algorithms.}
+    (a) MM: fit $q_k\approx p_{\pi_k}$, then solve the MDP with reward $\log q_k$.
+    (b) Model-free: frozen histogram reward $\log\hat q(z_t)$ with an $\varepsilon$-floor \todo{cite SMiRL}.
+    (c) Successor features $\psi=K+\gamma P^\pi\psi$, with $\pz=(1-\gamma)\E_{\rho_0\pi}[\psi]$ and $Q=\psi^\top\log\hat p$.
+    (d) FB: $\pz=(1-\gamma)\bar F^\top B_Z\,\rho_Z$.
+    Native FB gives the ratio $\dd\pz/\dd\rho_Z$ only, so add a density model for $\rho_Z$.
+  \item \textbf{Relaxations.}
+    $H_\infty$ splits into one MDP per outcome $z$ with reward $K(z\mid\cdot)$ (finite $\Zcal$).
+    Binary $Z$ is two MDPs.
+    R\'enyi-2 is a quadratic in $\occ$.
+  \item \textbf{Open.}
+    Global complexity.
+    Continuous spaces: regularity for extreme points of $\Dcal$ and for the extreme-point minimum (compactness, semicontinuity of $\Hf{\cdot}$), and bounded channel densities so that $\inf\Hf{\push d}>-\infty$.
+    Discounted occupancy vs.\ the stationary distribution of $P^\pi$.
+    FB rank truncation is the one non-vanishing bias.
+\end{enumerate}
+
+\bibliographystyle{plainnat}
+\bibliography{action-sufficient}
+
+\end{document}
