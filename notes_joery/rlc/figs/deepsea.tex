@@ -1,0 +1,22 @@
+% DeepSea of depth L, schematic. Row t is time, the agent moves one row down per step, left or right.
+\begin{tikzpicture}[x=0.36cm, y=0.36cm]
+  \def\L{8}
+  \foreach \r in {0,...,7} {
+    \foreach \c in {0,...,7} {
+      \pgfmathparse{\c > \r ? 1 : 0}
+      \ifnum\pgfmathresult=1
+        \fill[gray!25] (\c,-\r) rectangle ++(1,-1);
+      \else
+        \fill[blue!\the\numexpr 8+8*\r\relax] (\c,-\r) rectangle ++(1,-1);
+      \fi
+    }
+  }
+  \draw[gray!60, very thin, xstep=0.36cm, ystep=0.36cm] (0,0) grid (8,-8);
+  \draw[thick] (0,0) rectangle (8,-8);
+  \fill[black] (0.5,-0.5) circle (0.25);
+  \node[star, star points=5, fill=yellow!90!black, inner sep=1.4pt] at (7.5,-7.5) {};
+  \draw[-{Stealth[length=1.5mm]}, thick, dashed, red!70!black] (0.5,-0.5) -- (7.3,-7.3);
+  \node[font=\scriptsize, anchor=west] at (8.2,-0.5) {start};
+  \node[font=\scriptsize, anchor=west] at (8.2,-7.5) {reward, channel $\kappa$};
+  \draw[<->] (-0.4,0) -- (-0.4,-8) node[midway, left, font=\scriptsize] {$L$};
+\end{tikzpicture}

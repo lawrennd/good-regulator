@@ -1,0 +1,57 @@
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section[Preliminaries]{Preliminaries}\label{sec:prelim}
+
+
+\paragraph{(Partially observable) Markov decision processes.}
+A Markov decision process (MDP) has finite sets $\Scal$ and $\Acal$, a kernel $P(s' \mid s,a)$, an initial law $s \sim \rho_0$, and a reward $r(s,a)$ \citep{Puterman-markov94}.
+A policy $\pi(a \mid s)$ must maximize the expected discounted return $\E_\pi\big[\sum_{t} \gamma^t r(S_t,A_t)\big]$ with discount $\gamma \in [0, 1)$, or the average reward $\lim_{T \to \infty} \frac1T \E_\pi\big[\sum_{t<T} r(S_t,A_t)\big]$ \citep{Mahadevan-average96}.
+A partially observable MDP (POMDP) adds a finite observation set $\Omega$ and a kernel $p(o \mid s)$, and the policy $\pi(a \mid x)$ reads the history $X_t = (O_0, A_0, O_1, A_1, \ldots, O_t)$ instead of $S_t$, since the optimal action depends on it.
+The belief $b_t(s) = \Pr(S_t = s \mid X_t)$ is a sufficient statistic of the history for the hidden state and is updated by the Bayes filter $b_{t+1}(s') \propto p(O_{t+1} \mid s') \sum_s P(s' \mid s, A_t)\, b_t(s)$.
+This reduces the POMDP to an MDP on the belief with reward $\sum_s b(s)\, r(s,a)$ \citep{Kaelbling-planning98}.
+
+
+\paragraph{Convex reinforcement learning.}
+A stationary policy $\pi$ with $S_0 \sim \rho_0$ and $A_t \sim \pi(\cdot \mid S_t)$ induces an occupancy, either long-run, $\occ(s,a) = \lim_{T\to\infty} \frac1T \sum_{t<T}\, \Pr_\pi(S_t = s, A_t = a)$, or discounted, $\occ_\gamma(s,a) = (1-\gamma) \sum_{t \ge 0}\, \gamma^t \Pr_\pi(S_t = s, A_t = a)$.
+In the long-run case we assume every $P^\pi(s' \mid s) = \sum_a \pi(a \mid s)\, P(s' \mid s,a)$ is unichain, so $\occ$ exists and is independent of $\rho_0$.
+Following \citet{Zahavy-reward21} the two cases differ only in the polytope of admissible occupancies, $\Occ$ or $\Occ_\gamma$.
+Both contain the distributions $d \ge 0$ with $\sum_{s,a} d(s,a) = 1$ that satisfy a flow constraint at every state $s'$, namely $\sum_a d(s',a) = \sum_{s,a} d(s,a)\, P(s' \mid s,a)$ for $\Occ$ and $\sum_a d(s',a) = (1-\gamma)\rho_0(s') + \gamma \sum_{s,a} d(s,a)\, P(s' \mid s,a)$ for $\Occ_\gamma$.
+Their vertices are the occupancies of deterministic stationary policies, and every $d$ is realised by $\pi(a \mid s) = d(s,a) / \sum_{a'} d(s,a')$ \citep{Puterman-markov94}.
+Reinforcement learning (RL) is then $\max_\pi \sum_{s,a} \occ(s,a)\, r(s,a)$, a linear program over $\Occ$ because $\pi \mapsto \occ$.
+Thus, the optimum sits at a vertex of $\Occ$ which gives a deterministic policy \citep{Puterman-markov94}.
+Convex RL, also called RL with general utilities, replaces the linear score by a convex function $f(d)$ to be minimised over the same polytope \citep{Zhang-variational20,Hazan-provably19,Zahavy-reward21,Mutti-convex23}.
+Its minimiser can lie inside $\Occ$ rather than at a vertex, so the optimal policy can be stochastic and no fixed reward $r$ on $(s,a)$ can express it.
+Convex RL therefore replaces $f$ by its tangent at the current occupancy $d_k$, $f(d_k) + \langle \nabla f(d_k), d - d_k \rangle$, which is linear in $d$ with reward $r_k = -\nabla f(d_k)$.
+The reward $r_k$ is updated in every round $k$, RL then finds a deterministic policy with occupancy $\hat d_k$, the running average $d_{k+1} = \tfrac{k}{k+1} d_k + \tfrac{1}{k+1} \hat d_k$ then converges to the minimiser of $f$ \citep{Hazan-provably19,Zahavy-reward21}.
+Maximum-entropy exploration, imitation, constrained and robust MDPs all sit inside this framework \citep{Hazan-provably19,Zahavy-reward21}.
+Extensions to POMDPs are studied in \citep{Zamboni-how24,Zamboni-limits24}.
+
+
+
+\paragraph{Primer on measure theory.}
+Measure theory generalises the notion of counting to volume over arbitrary mathematical spaces \citep{Billingsley-probability12}.
+A measure $m$ on a measurable space $\Zcal$ assigns a volume $m(B) \ge 0$ to each measurable set $B \subseteq \Zcal$, additively over disjoint sets.
+A probability measure is the special case of unit total volume, $m(\Zcal) = 1$.
+Two other common measures are the counting measure, which gives each point volume one on a countable $\Zcal$, and the Lebesgue measure, which extends length, area and volume to every measurable set in $\mathbb R^n$.
+We write $\lambda$ for the base measure on $\Zcal$.
+To compare two measures on the same space, $\nu$ is called absolutely continuous with respect to $\lambda$, written $\nu \ll \lambda$, if every set of $\lambda$-volume zero also has $\nu$-volume zero.
+The Radon--Nikodym theorem then gives a density $\dd\nu / \dd\lambda \ge 0$ with $\nu(B) = \int_B \tfrac{\dd\nu}{\dd\lambda} \, \dd\lambda$ for every measurable $B$.
+The density is a ratio of volumes that says how much $\nu$ stretches or shrinks the volume of $\lambda$ at $z$.
+A change of measure thus obeys $\int g \, \dd\nu = \int g \, \tfrac{\dd\nu}{\dd\lambda} \, \dd\lambda$ along with the chain rule $\dd p / \dd \nu = (\dd p / \dd \lambda)(\dd \lambda / \dd \nu)$ whenever all measures are mutually absolutely continuous.
+We can also combine two spaces with the product measure $m \otimes m'$ on $\mathcal X \times \Zcal$, which gives each rectangle the volume ${(m \otimes m')(C \times B) = m(C)\, m'(B)}$.
+To move between spaces, a measurable map $\psi\colon \mathcal X \to \Zcal$ pulls a set $B \subseteq \Zcal $ back to its pre-image $\psi^{-1}(B) \subseteq \mathcal X$ and a function $g$ on $\Zcal$ back to $x \mapsto (g \circ \psi)(x)$ on $\mathcal X$.
+The pushforward of a measure $m$ on $\mathcal X$ is the measure on $\Zcal$ that gives each set $B \subseteq \Zcal$ the $m$-volume of its pre-image, $\psi_\# m(B) = m(\psi^{-1}(B))$, so that $\int g \, \dd(\psi_\# m) = \int g \circ \psi \, \dd m$.
+
+
+\paragraph{Information theoretical quantities with measures.}
+Relevant to us is the measure theoretic definition of information theoretical objects for probability distributions.
+In this language, entropy must be defined against a base $m$, $H_m(p) = -\int \ln \tfrac{\dd p}{\dd m} \, \dd p$ for a probability measure $p \ll m$, taking $p$ as the base gives $H_p(p) = 0$.
+Through the change of measure, $H_m(p) = -\int \tfrac{\dd p}{\dd m} \ln \tfrac{\dd p}{\dd m} \, \dd m$, the entropy is an integral over the reference of the Radon--Nikodym derivative $\tfrac{\dd p}{\dd m}$ alone.
+For example, for counting $m$ this derivative is the probability $p(z) = \frac{\dd p(\{z\})}{\dd m(\{z\})}$ since $\dd m(\{z\}) = 1$, giving Shannon entropy $-\sum_z p(z) \ln p(z)$.
+Against a second measure $q$ with $p \ll q$, the chain rule $\tfrac{\dd p}{\dd q} = \tfrac{\dd p}{\dd m} / \tfrac{\dd q}{\dd m}$ gives the change of base $H_q(p) = H_m(p) + \E_p[\ln \tfrac{\dd q}{\dd m}]$, which for a probability measure $q$ yields $H_q(p) = -\int \ln \tfrac{\dd p}{\dd q} \, \dd p = -\KL(p \,\|\, q) \le 0$, which expresses the KL-divergence.
+Note that, normalisation of the reference shifts the entropy by a constant, since a finite $m = m(\Zcal)\, \bar m$ with $\bar m$ a probability measure gives $H_m(p) = \ln m(\Zcal) - \KL(p \,\|\, \bar m)$.
+We can similarly express the mutual information of a probability measure $p$ on a product space $\mathcal X \times \Zcal$, where $p$ has marginals $p_{\mathcal X}$\add{$(C) = p(C \times \Zcal)$} and $p_{\Zcal}$\add{$(B) = p(\mathcal X \times B)$} whose product measure $p_{\mathcal X} \otimes p_{\Zcal}$ \del{draws the two coordinates independently}\add{gives each rectangle the volume $p_{\mathcal X}(C)\, p_{\Zcal}(B)$ rather than $p(C \times B)$}.
+The mutual information is then the negative entropy of $p$ using the product measure as the base, $I(p) = \KL(p \,\|\, p_{\mathcal X} \otimes p_{\Zcal}) = -H_{p_{\mathcal X} \otimes p_{\Zcal}}(p) \ge 0$ for $p \ll p_{\mathcal X} \otimes p_{\Zcal}$.
+Moreover, against a product of bases $m \otimes m'$ the change of base splits it as $I(p) = H_m(p_{\mathcal X}) + H_{m'}(p_{\Zcal}) - H_{m \otimes m'}(p)$.
+

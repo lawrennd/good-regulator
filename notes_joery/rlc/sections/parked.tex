@@ -1,0 +1,681 @@
+% !TEX root = ../main.tex
+% Not inputted. Prose removed in the 2026-10-16 trim, kept here for reference.
+% ---- intro: Conant and Ashby enumerate, fixed-point stub, floors stub
+The paper makes two statements about a good regulator, a lemma and the theorem it proves.
+\begin{enumerate}
+    \item \emph{The outcome is fixed by the state.} In every optimal regulator, every action used at a state $s$ with $p(s) > 0$ gives the same outcome, so $H(Z \mid S = s) = 0$ \citep[Lemma, p.~96]{Conant-good70}.
+    This is a consequence of minimal $H(Z)$ under a deterministic $\psi$, not part of the criterion.
+    \item \emph{The simplest optimal regulator is a model.} By the lemma, at each state the regulator can keep any one of the actions it uses and drop the rest without changing $H(Z)$, which leaves a deterministic regulator, a mapping $h\colon S \to A$ \citep[Theorem and proof, pp.~95--96]{Conant-good70}.
+    Optimal regulators that are not mappings carry $H(A \mid S) > 0$, randomness that by the lemma never changes the outcome, and these are the ones Conant and Ashby call unnecessarily complex \citep[p.~96]{Conant-good70}.
+    Note that in the RL sense this is still model-free as $h$ posits a policy function $\pi$, and the wording of function versus model overlap.
+    Thus, this statement is a requirement that for a sufficient representation, states in MDPs, belief states in POMDPS, etc., the mapping from representations to actions $h: S \rightarrow A$ is deterministic and zero.
+    Even if, from the perspective of say the true state in POMDPs the mapping looks stochastic. 
+    This overlaps with a classical result that optimal policies in RL are deterministic.
+    Hence an optimum can always be found among the mappings $h\colon S \to A$ \citep[p.~96]{Conant-good70}.
+    This says where an optimum sits, a vertex of the set of regulators, not how to reach it: interior methods such as policy gradient remain valid routes and reach the vertex only in the limit.
+    Under error control being a model is automatic once $h$ is deterministic; under cause control the regulator reads $D$ and being a model of $S$ means its response factors through $S$, which Conant and Ashby call the stronger case and which holds for some optimal regulator, not every one.
+\end{enumerate}
+``Model'' here means only that the action is a function of the state, so a greedy Q-learning policy is a model in this sense, and nothing about the environment is predicted.
+Conant and Ashby do not ask for the coarsest $h$.
+Our reading adds it: a model is minimal if no coarser partition of $S$ admits an optimal regulator, it records what the optimal action depends on, and it need not be unique.
+They also distinguish how the regulator reaches the disturbance, Figure~\ref{fig:oneshot}.
+Under error control it sees only the state the disturbance has already moved, the chain $D \to S \to A$ gives $I(D;A) \le I(D;S)$, and it can know no more about the disturbance than the state shows.
+Under cause control it sees the disturbance itself.
+When the state is observed imperfectly, the minimal model becomes the posterior over the state \citep{Wentworth-fixing21}.
+
+\paragraph{The criterion as a fixed point.}
+\intent{Stub.
+Conant and Ashby define optimality as minimal $H(Z)$ ``with $p(S)$ fixed'' \citep[p.~95]{Conant-good70}; the theorem is a property of the optimum, like Bellman optimality, not a method for finding it.
+They allow $p(S)$ to drift slowly with a time-varying model \citep[p.~96]{Conant-good70}, but never through the regulator's own actions.
+Sequentially $p(S)$ is the state marginal of the occupancy, so it depends on $\pi$; at the optimum it is again fixed, because the optimal regulator reproduces its own occupancy.
+The fixed point: $q^\star = d^{\pi^\star} K$, and $\pi^\star$ is Bellman-optimal for the reward $\ln q^\star$.
+Must have a model: to find or keep this optimum the regulator must carry $q^\star$, the law of its own outcomes, the occupancy itself when $K$ is the identity; $\ln q^\star$ is the reward through which every action accounts for where it leads.
+To act at the optimum $h(s)$ suffices, as in Conant and Ashby; the model is what finding and holding it require.
+Two notions of simplest: Conant and Ashby's is the least randomness in the action, a deterministic $h$, defined once ``in an obvious sense'' \citep[p.~96]{Conant-good70}; ours is the smallest statistics the regulator must carry to produce that $h$ itself.
+Three levels.
+Initialised at the optimum, $h$ alone suffices.
+Finding $\min H(Z)$ with $P$ and $K$ known is planning and needs $q = d^\pi K$ for each candidate $\pi$, so the policy together with its own outcome law is the minimal model.
+Finding it from data is learning: $q$ is estimated from outcomes and the inner step is ordinary RL; successor features $\psi$ of the outcome are not required, but they make each policy-iteration step exact without fresh samples, a data-efficiency choice rather than part of the minimal model.}
+
+\paragraph{Floors, and continuous spaces.}
+\intent{Stub.
+$H(Z)$ is minimal, not zero; $H(Z \mid S = s) = 0$ is the lemma, within a state, and needs that everything reaching $Z$ besides the action is in what the regulator reads.
+Error control with deterministic $\psi$ keeps $H(Z \mid S) = 0$ but puts a floor on $H(Z)$, the variety $D$ passes through $S$ \citep[p.~92]{Conant-good70}; cause control lowers it.
+Noise in the outcome or a partially observed $S$ puts a floor on $H(Z \mid S)$ itself, $H(Z \mid S) \ge H(Z \mid S,A) > 0$; a belief lowers it only when the hidden part has memory.
+The lemma then reads: optimal regulators mix at each $s$ only actions with the same outcome law $K(\cdot \mid s,a)$.
+Continuous $S$: ``$p(s) > 0$'' becomes ``$p$-almost every $s$'', and the deterministic optimum needs a measurable selection.
+Continuous $Z$: a deterministic $\psi$ makes $Z \mid S = s$ a point mass with differential entropy $-\infty$, so zero is the discrete case only; entropies are taken against a reference $\mu$, each $K(\cdot \mid s,a)$ must have a density of finite entropy, and $H_\mu(Z \mid S,A)$ is then a finite floor.
+A deterministic outcome map is readmitted by coarse-graining $Z$ so that $\mu$ has atoms.}
+
+% ---- objective: channels figure, cause/error paragraphs, hidden generator, average vs discounted, special-case propositions, viability
+\begin{figure}[t]
+\centering
+\tikzset{
+  v/.style={inner sep=1pt, minimum size=5mm},
+  e/.style={-{Stealth[length=2mm]}},
+  occbox/.style={draw, dashed, rounded corners, inner sep=2pt, gray},
+}
+\begin{minipage}{0.48\textwidth}
+\centering
+\begin{tikzpicture}
+  \node[v] (D0) at (0,1.3) {$D_t$};
+  \node[v] (S0) at (0,0.3) {$S_t$};
+  \node[v] (A0) at (0,-0.8) {$A_t$};
+  \node[v] (Z0) at (1.2,-0.8) {$Z_t$};
+  \node[v] (D1) at (2.7,1.3) {$D_{t+1}$};
+  \node[v] (S1) at (2.7,0.3) {$S_{t+1}$};
+  \node[v] (A1) at (2.7,-0.8) {$A_{t+1}$};
+  \node[v] (Z1) at (3.9,-0.8) {$Z_{t+1}$};
+  \draw[e] (D0) -- (S1);
+  \draw[e] (S0) -- (S1);
+  \draw[e] (A0) -- (S1);
+  \draw[e] (S0) -- (A0);
+  \draw[e] (S0) -- (Z0);
+  \draw[e] (A0) -- (Z0);
+  \draw[e] (S1) -- (A1);
+  \draw[e] (S1) -- (Z1);
+  \draw[e] (A1) -- (Z1);
+  \node[occbox, fit=(S0)(A0)] (B0) {};
+  \node[gray, below=0mm of B0] {$\occ(s,a)$};
+\end{tikzpicture}\\[1mm]
+{\small (a) Error-controlled: $\pi(a \mid s)$.}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}
+\centering
+\begin{tikzpicture}
+  \node[v] (D0) at (0,1.3) {$D_t$};
+  \node[v] (S0) at (0,0.3) {$S_t$};
+  \node[v] (A0) at (0,-0.8) {$A_t$};
+  \node[v] (Z0) at (1.2,-0.8) {$Z_t$};
+  \node[v] (D1) at (2.7,1.3) {$D_{t+1}$};
+  \node[v] (S1) at (2.7,0.3) {$S_{t+1}$};
+  \node[v] (A1) at (2.7,-0.8) {$A_{t+1}$};
+  \node[v] (Z1) at (3.9,-0.8) {$Z_{t+1}$};
+  \draw[e] (D0) -- (S1);
+  \draw[e] (S0) -- (S1);
+  \draw[e] (A0) -- (S1);
+  \draw[e] (S0) -- (A0);
+  \draw[e] (D0) to[bend right=50] (A0);
+  \draw[e] (S0) -- (Z0);
+  \draw[e] (A0) -- (Z0);
+  \draw[e] (S1) -- (A1);
+  \draw[e] (D1) to[bend right=50] (A1);
+  \draw[e] (S1) -- (Z1);
+  \draw[e] (A1) -- (Z1);
+  \node[occbox, fit=(D0)(S0)(A0)] (B0) {};
+  \node[gray, below=0mm of B0] {$\occ(s,d,a)$};
+\end{tikzpicture}\\[1mm]
+{\small (b) Cause-controlled: $\pi(a \mid s,d)$.}
+\end{minipage}
+\caption{The channels of Figure~\ref{fig:oneshot} unrolled in time.
+The dashed box is what the occupancy counts; the outcome law is that box pushed through $K$.}
+\label{fig:channels}
+\end{figure}
+
+\paragraph{Error control is the MDP.} With $D_t \sim p(d)$ i.i.d.\ and $S_{t+1} \sim f(\cdot \mid S_t,A_t,D_t)$, a policy $\pi(a \mid s)$ sees the kernel $P(s' \mid s,a) = \sum_d p(d)\, f(s' \mid s,a,d)$, so $\occ(s,a)$ and $\Occ$ are those of error control.
+
+\paragraph{Cause control is the MDP on $(s,d)$.} $\pi(a \mid s,d)$ gives occupancies $d(s,d,a)$ in a polytope $\Occ^{+}$, whose flow constraint forces $\sum_a d(s,d,a) = d_S(s)\, p(d)$.
+An error-controlled policy embeds as $d(s,a)\, p(d)$, so
+\begin{equation}
+  \min_{d \in \Occ^{+}} \Hmu{dK} \ \le\ \min_{d \in \Occ} \Hmu{dK}.
+  \label{eq:cause-error}
+\end{equation}
+
+\paragraph{When the occupancy is not enough.} If $D$ has a hidden generator, $\pi(a \mid s)$ is a memoryless POMDP policy: no polytope, and the best one can be stochastic \citep{Singh-learning94}.
+A belief $b_t$ over the generator restores the MDP on $(s,b)$ and closes \eqref{eq:cause-error} as $b_t$ concentrates; that belief is the internal model \citep{Francis-internal76}, Section~\ref{sec:model}.
+The optimum is deterministic in $(s,b)$ but not a function of $s$ alone.
+I.i.d.\ noise, on the outcome as $\varepsilon$ or on the dynamics as $D$, is the degenerate case: $b$ is the prior at every step, the MDP on $s$ is exact, and the gap in \eqref{eq:cause-error} is irreducible under error control.
+\intent{The good regulator restated.
+Some optimal regulator has $H(A \mid S, B) = 0$ but in general not $H(A \mid S) = 0$: it is a model of its sufficient statistic, and the minimal one is the posterior \citep{Wentworth-fixing21}, the sequential analogue of Conant and Ashby's coarsest $h$.
+$H(Z \mid \cdot) = 0$ does not survive, since noise of any kind sets a floor, so the definition rests on optimality, $\min H(Z)$, not on zero entropy.
+Noise leaves these objects intact: memoryless noise averages into $K$ or $P$, and noise with memory joins the state that $b$ tracks.
+The belief space is continuous, so the vertex argument needs the countable-state occupancy result \citep{Altman-markov91}, not the finite polytope.}
+
+\subsection{Average-reward and discounted occupancies}
+\label{sec:avg}
+
+For a policy that reaches $s_G$ at time $\tau$ and holds there,
+\begin{equation}
+  \occ_\gamma = (1-\gamma^\tau)\, d_{\text{path}} + \gamma^\tau\, d_{\text{hold},\gamma},
+  \qquad
+  \occ = d_{\text{hold}},
+  \label{eq:split}
+\end{equation}
+and with $\lambda = \gamma^\tau$ the mixture bounds
+\begin{equation}
+  \Hmu{\occ_\gamma K} - \big[\lambda \Hmu{d_{\text{hold},\gamma} K} + (1-\lambda) \Hmu{d_{\text{path}} K}\big] \in [0, h_b(\lambda)].
+  \label{eq:split-bounds}
+\end{equation}
+The average case compares goals only once reached; discounting also charges the path, vanishing as $\gamma \to 1$.
+\intent{Unichain assumed; the inner critic of Appendix~\ref{sec:algorithm} differs only by the gain.}
+\begin{proposition}[{Reward as Quiet-Attractors}]
+    
+\end{proposition}
+\label{sec:quiet}
+
+\intent{$Z = S$: parks where walls absorb the push.
+$Z$ = region: holding $G$ scores $F(\rho_G)$; larger regions leak less but pay $\rho_G \ln \mu(G)$.
+Distance: by \eqref{eq:split}, only discounting charges travel.}
+\todo{Use a 3x3 large goal, not 2x2.}
+
+\begin{proposition}[Selection boundary]
+\label{prop:boundary}
+\todo{Average: large goal iff $F(\rho_L) < F(\rho_S)$.
+Discounted: bounds from \eqref{eq:split-bounds}.}
+\end{proposition}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\paragraph{Viability.}
+\intent{Short experiments, all in Appendix~\ref{app:experiments}, only to show the framework is viable and matches the robustness claims.
+DeepSea for exploration, a grid with large and small alphabets for robustness, cart-pole swing-up for continuous outcomes.
+The algorithm is in Appendix~\ref{sec:algorithm}.}
+
+
+% ---- experiments: subsections
+\subsection{Two-goal maze}
+\label{sec:exp-maze}
+\intent{10x10 maze, a 1x1 goal near the start and a 3x3 goal far away.
+Figure~\ref{fig:maze}: (a) the exact phase diagram over $(p,\gamma)$ from the tabular solve with Proposition~\ref{prop:boundary} overlaid; (b) where learned agents land; (c) the $Z=S$ condition, occupancy heat map showing the sheltered corner.}
+
+\begin{figure}[t]
+\centering
+\fbox{\rule[-.5cm]{0cm}{3cm}\rule[-.5cm]{0.9\textwidth}{0cm}}
+\caption{\todo{Maze: phase diagram, learned selections, $Z=S$ occupancy.}}
+\label{fig:maze}
+\end{figure}
+
+\subsection{Cart-pole swing-up under impulse disturbances}
+\label{sec:exp-cartpole}
+\intent{Upright is unstable, so quiet requires control; hanging is passively stable but, with an outcome that measures deviation from upright, loud.
+Show the regulator swings up and holds, and that its hold posture widens its margin as the kick rate grows.
+Continuous $Z$ with the Lebesgue reference, finite-entropy floor from the leak channel.}
+
+\subsection{Constrained permutation under random durations}
+\label{sec:exp-perm}
+\intent{Industrial case: jobs on machines with precedence or deadline constraints, random processing times.
+$Z$ is the completion-time profile or the constraint-violation pattern.
+Prediction: the regulator picks schedules with slack, the combinatorial analogue of the large goal.
+Baselines: expected-cost minimiser, a robust-optimisation schedule.}
+\todo{pick the concrete problem and its reference in the scheduling literature.}
+
+\subsection{Exploration and the SMiRL comparison}
+\label{sec:exp-other}
+\intent{DeepSea: with the channel unknown, the belief-MDP objective explores (Part 2b result), so entropy minimisation does not collapse to a dark room.
+SMiRL: reproduce one of its settings, then show a case where per-episode refitting and the pooled objective choose differently, predicted by $I(Z;\text{trial})$.}
+
+% ---- intro: one-shot figure (2026-10-16 second trim)
+\begin{figure}[t]
+\centering
+\tikzset{
+  v/.style={inner sep=1pt, minimum size=5mm},
+  e/.style={-{Stealth[length=2mm]}},
+}
+\begin{minipage}{0.45\textwidth}
+\centering
+\begin{tikzpicture}
+  \node[v] (D) at (0,0) {$D$};
+  \node[v] (S) at (1.8,0.7) {$S$};
+  \node[v] (A) at (1.8,-0.7) {$A$};
+  \node[v] (Z) at (3.4,0) {$Z$};
+  \draw[e] (D) -- (S);
+  \draw[e] (D) -- (A);
+  \draw[e] (S) -- (Z);
+  \draw[e] (A) -- (Z);
+\end{tikzpicture}\\[1mm]
+{\small (a) Cause-controlled.}
+\end{minipage}\hfill
+\begin{minipage}{0.45\textwidth}
+\centering
+\begin{tikzpicture}
+  \node[v] (D) at (0,0.7) {$D$};
+  \node[v] (S) at (1.8,0.7) {$S$};
+  \node[v] (A) at (1.8,-0.7) {$A$};
+  \node[v] (Z) at (3.4,0) {$Z$};
+  \draw[e] (D) -- (S);
+  \draw[e] (S) -- (A);
+  \draw[e] (S) -- (Z);
+  \draw[e] (A) -- (Z);
+\end{tikzpicture}\\[1mm]
+{\small (b) Error-controlled.}
+\end{minipage}
+\caption{Conant and Ashby's two channels from disturbance to regulator, for one decision.}
+\label{fig:oneshot}
+\end{figure}
+
+% ---- objective: occupancy figure (2026-10-16 second trim)
+\begin{figure}[t]
+\centering
+\tikzset{
+  v/.style={inner sep=1pt, minimum size=5mm},
+  e/.style={-{Stealth[length=2mm]}},
+  w/.style={gray, font=\scriptsize},
+}
+\begin{tikzpicture}
+  \node[v] (rho) at (-1.3,0.2) {$\rho_0$};
+  \foreach \t/\x in {0/0,1/2.8,2/5.6} {
+    \node[v] (D\t) at (\x,1.2) {$D_{\t}$};
+    \node[v] (S\t) at (\x,0.2) {$S_{\t}$};
+    \node[v] (A\t) at (\x,-0.9) {$A_{\t}$};
+    \node[v] (Z\t) at (\x+1.2,-0.9) {$Z_{\t}$};
+    \draw[e] (S\t) -- (A\t);
+    \draw[e] (S\t) -- (Z\t);
+    \draw[e] (A\t) -- (Z\t);
+  }
+  \node[v] (S3) at (8.4,0.2) {$\cdots$};
+  \draw[e] (rho) -- (S0);
+  \foreach \t/\u in {0/1,1/2,2/3} {
+    \draw[e] (S\t) -- (S\u);
+    \draw[e] (A\t) -- (S\u);
+    \draw[e] (D\t) -- (S\u);
+  }
+  \node[w] at (0.6,-1.5) {$(1-\gamma)$};
+  \node[w] at (3.4,-1.5) {$(1-\gamma)\gamma$};
+  \node[w] at (6.2,-1.5) {$(1-\gamma)\gamma^2$};
+  \node[w] at (8.4,-1.5) {$\cdots$};
+  \draw[decorate, decoration={brace, mirror, amplitude=5pt}, gray] (-0.4,-1.8) -- (8.8,-1.8);
+  \node (occ) at (4.2,-2.4) {$\occ_\gamma(s,a) = \Pr(S_T = s, A_T = a), \quad T \sim \mathrm{Geom}(1-\gamma)$};
+  \node (pz) at (4.2,-3.5) {$\pz = \occ_\gamma K$};
+  \draw[e] (occ) -- node[right, font=\scriptsize] {$K$} (pz);
+\end{tikzpicture}
+\caption{The occupancy is the law of the state--action pair at a random time, a mixture over all slices, and the objective acts on that mixture.
+The average case takes $T$ uniform on a long horizon.
+The state marginal $d_S$ depends on $\pi$ through the arrows into $S_{t+1}$, unlike Conant and Ashby's fixed $p(s)$.}
+\label{fig:occupancy}
+\end{figure}
+
+% ---- appendix: algorithm block (2026-10-16 second trim)
+By Gibbs, $\Hnu{p} = \min_q \E_p[-\ln (q/\nu)]$, and through the channel
+\begin{equation}
+  \min_\pi \Hnu{\occ K} = \min_\pi \min_q \Big(-\sum_{s,a} \occ(s,a)\, r_q(s,a)\Big),
+  \qquad
+  r_q(s,a) = \sum_z K(z \mid s,a) \ln \frac{q(z)}{\nu(z)}.
+  \label{eq:gibbs}
+\end{equation}
+Alternate $q_k = p_{\pi_k}$ and an improvement step under $r_{q_k}$; each step descends,
+\begin{equation}
+  \Hnu{p_{\pi_{k+1}}} \le \E_{p_{\pi_{k+1}}}[-\ln (q_k/\nu)] \le \E_{p_{\pi_k}}[-\ln (q_k/\nu)] = \Hnu{p_{\pi_k}}.
+  \label{eq:mm}
+\end{equation}
+Discounted: an MDP with reward $r_{q_k}$.
+Average: gain $g = \sum \occ\, r_{q_k}$ and $Q^\pi = r_{q_k} - g + P^\pi Q^\pi$ \citep[\S8.6]{Puterman-markov94}.
+\intent{Loop credited to convex RL \citep{Zahavy-reward21,Hazan-provably19}; learned variant fits $\hat q$ on pooled replay, descent up to $\KL(p_{\pi_k} \| \hat q_k)$.}
+
+% ---- related, discussion, appendix as they stood before the third trim (2026-10-16)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Related work}
+\label{sec:related}
+\budget{1 pp}
+
+\intent{Compressed from the survey (\texttt{notes\_joery/survey.tex}), seven clusters to one paragraph each at most, citing only the core: good regulator and cybernetics; homeostasis and surprise; free energy \citep{Friston-free12c}; concave occupancy objectives and their deterministic optima \citep{Derman-finite70ch7,Piunovskiy-controlled98,Xia-optimization16}; minimum-entropy control \citep{vanZutphen-predictable24,Adurthi-minimum14}; reward through channels and belief; representation \citep{Castro-equivalence09}.
+Name the closest neighbour honestly: \citet{MorenoBote-homeostasis26} for the point-target homeostat.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Discussion}
+\label{sec:discussion}
+\budget{0.75 pp}
+
+\intent{What the regulator must model: the maze result changes with $Z$, so which outcome to regulate is the abstraction question.
+This is the bridge to representation learning and to many regulators; state it as outlook, not as a claim.}
+\todo{Frame decision pending: whether representation learning and multi-agent results enter this paper or follow it.}
+
+\intent{Limits: tabular theory, the density model as the bottleneck for continuous $Z$, discount dependence of the selection.}
+
+\subsubsection*{Broader Impact Statement}
+\label{sec:broaderImpact}
+\todo{Optional.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proofs}
+\label{app:proofs}
+\todo{Deterministic optimum in two lines with credit; the identity channel as SMiRL, $H(d_S) = \E_E H(d_{S \mid E}) + I(S;E)$; the selection boundary.}
+
+\section{Environment details}
+\label{app:envs}
+\todo{Dynamics, disturbance models, $Z$, $\nu$, hyperparameters.}
+
+\section{Optimising the objective}
+\label{sec:algorithm}
+
+\intent{By Gibbs, $\Hnu{p} = \min_q \E_p[-\ln (q/\nu)]$, so $\min_\pi \Hnu{\occ K}$ is a min--min with inner reward $r_q(s,a) = \sum_z K(z \mid s,a) \ln (q(z)/\nu(z))$; alternating $q_k = p_{\pi_k}$ with an improvement step descends monotonically.
+Loop credited to convex RL \citep{Zahavy-reward21,Hazan-provably19}; learned variant fits $\hat q$ on pooled replay.}
+
+\section{Experiments}
+\label{app:experiments}
+\todo{DeepSea (exploration), grid with large and small alphabets (robustness), cart-pole swing-up (continuous).}
+
+
+% ---- discussion: optional broader impact block (2026-10-16)
+
+\subsubsection*{Broader Impact Statement}
+\label{sec:broaderImpact}
+\todo{Optional.}
+
+% ---- model.tex and related.tex as they stood when folded into Section 3.1 and the intro (2026-10-16)
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{What Model Must Every Good Regulator Have of Its Environment?}
+\label{sec:model}
+
+\todo{Stub.} Explain constraints on the model (eg minimal, not faithful). Relate to gooder-regulator, showing that under partial observability, the model implies a belief state. In the higher order setting, the belief state allows entropy to be zero for the policy, even if the resulting policy on the 'true' MDP (ie noise observed MDP) is stochastic.
+Relate to how this ties to representation learning and connections to the outcome.
+Value equivalence and action-sufficiency.
+Address information bottlenecks due to finite modelling capacity.
+...
+
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Related work]{Related work \budget{1 pp}}
+\label{sec:related}
+
+\intent{Seven clusters from the survey, one paragraph each at most: cybernetics; homeostasis and surprise; free energy \citep{Friston-free12c}; concave occupancy objectives; minimum-entropy control \citep{vanZutphen-predictable24,Adurthi-minimum14}; reward through channels and belief; representation \citep{Castro-equivalence09}; closest neighbour \citet{MorenoBote-homeostasis26}.}
+
+% ==== Sections as they stood before the one-line-per-paragraph trim (2026-10-16 evening)
+
+% ---- intro
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Introduction]{Introduction \budget{1.25 pp}}
+\label{sec:intro}
+
+\intent{Open with the maze picture: two goals, a small near one and a large far one, and a disturbance that pushes the agent around.
+A reward maximiser needs the designer to say which is better; a good regulator chooses by itself, and the choice is the one a robust controller would make.}
+
+\intent{The claim, in one sentence: minimising the entropy of the outcome law over the occupancy makes robustness to disturbance the objective itself, rather than a regularizer on a reward.}
+
+\paragraph{Conant and Ashby's setting.}
+Conant and Ashby take $Z$ to be ``the total set of events that may occur, the regulated and the unregulated'', with a good subset $G \subset Z$, a disturbance $D$, a state $S$ and an action $A$ fixing the event through a deterministic table $Z = \psi(S,A)$, and they score a regulator by $H(Z)$ with the state law fixed, setting $G$ aside as ``essentially independent'' \citep{Conant-good70}.
+We keep their five entities and change two readings, the good set becomes a measure on events so that goal and entropy are one criterion, and the state splits into a revealed and an unrevealed part so that noise and uncontrollable events are unrevealed state rather than a new ingredient.
+Their theorem places an optimum among the deterministic mappings $h\colon S \to A$ and says nothing about how to reach it, so a greedy Q-learning policy is a model in their sense and zero action entropy is not what makes a good regulator \citep[pp.~95--96]{Conant-good70}.
+Figure~\ref{fig:oneshot} shows the two channels they distinguish, error control where the regulator reads the state the disturbance has already moved and cause control where it reads the disturbance itself.
+
+\begin{figure}[h]
+\centering
+\tikzset{
+  v/.style={inner sep=1pt, minimum size=5mm},
+  e/.style={-{Stealth[length=2mm]}},
+}
+\begin{minipage}{0.45\textwidth}
+\centering
+\begin{tikzpicture}
+  \node[v] (D) at (0,0) {$D$};
+  \node[v] (S) at (1.8,0.7) {$S$};
+  \node[v] (A) at (1.8,-0.7) {$A$};
+  \node[v] (Z) at (3.4,0) {$Z$};
+  \draw[e] (D) -- (S);
+  \draw[e] (D) -- (A);
+  \draw[e] (S) -- (Z);
+  \draw[e] (A) -- (Z);
+\end{tikzpicture}\\[1mm]
+{\small (a) Cause-controlled.}
+\end{minipage}\hfill
+\begin{minipage}{0.45\textwidth}
+\centering
+\begin{tikzpicture}
+  \node[v] (D) at (0,0.7) {$D$};
+  \node[v] (S) at (1.8,0.7) {$S$};
+  \node[v] (A) at (1.8,-0.7) {$A$};
+  \node[v] (Z) at (3.4,0) {$Z$};
+  \draw[e] (D) -- (S);
+  \draw[e] (S) -- (A);
+  \draw[e] (S) -- (Z);
+  \draw[e] (A) -- (Z);
+\end{tikzpicture}\\[1mm]
+{\small (b) Error-controlled.}
+\end{minipage}
+\caption{Conant and Ashby's two channels from disturbance to regulator, for one decision.}
+\label{fig:oneshot}
+\end{figure}
+
+\paragraph{The criterion.}
+A regulator that persists acts on every step, so their frequencies become the occupancy of a policy and their criterion becomes
+\begin{equation}
+  \min_\pi\ H(Z), \qquad Z \sim \pz, \quad \pz(z) = \sum_{s,a} \occ(s,a)\, K(z \mid s,a),
+  \label{eq:criterion}
+\end{equation}
+the entropy of the event law that the policy induces through the kernel $K$ from state and action to events.
+Read on the state itself it is the surprise minimisation of SMiRL \citep{Berseth-smirl21}, read against a set point it is homeostatic RL \citep{Keramati-homeostatic14}, and read as a concave function of the occupancy it is convex RL with the sign reversed \citep{Zahavy-reward21,Hazan-provably19,Mutti-convex23}.
+Every statement in the paper is about \eqref{eq:criterion} and about what a regulator must carry to minimise it.
+
+\intent{Position in three moves, citing only the curated core: (i) Conant and Ashby state the criterion \citep{Conant-good70,Ashby-introduction56}; (ii) surprise minimisation and homeostasis learn special cases of it \citep{Berseth-smirl21,Keramati-homeostatic14}; (iii) convex RL gives the machinery \citep{Zahavy-reward21}.}
+
+\intent{Contributions list, matching the cover page word for word in scope.}
+
+% ---- objective
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[The Good Regulator Theorem states a Fixed Point Criterion]{The Good Regulator Theorem states a Fixed Point Criterion \budget{2 pp}}
+\label{sec:objective}
+
+Stub: start with motivating how entropy as an objective makes sense since plain RL with say Q-learning and a deterministic optimum also satisfies zero entropy.
+Tie this into the robustness criterion by the entropy objective -> quiet predictable states over just similar rewards (i.e., the objective itself is useful).
+How does this then translate the error/cause controlled regulators to an occupancy?
+Then derive the objective on the occupancy, the identity channel gives smirl (proof in the appendix; don't defer due to hedge).
+Show subsequently the reward as a quiet attractor.
+Short experiments with deepsea (exploration), grid with large-small alphabet sizes (robustness), cartpole swingup (continuous), setup and explanation of algorithm all deferred to appendix as this is only needed to show viability of the framework and alignment to the robustness claims, and is not a ``main'' result.
+
+\paragraph{Why the entropy of the outcome.}
+A reward maximiser already has $H(A \mid S) = 0$ at the vertex of the linear program, so what makes a good regulator is the first condition read on outcomes, among policies with similar return it prefers the one whose outcomes stay predictable under disturbance, and the entropy of the outcome law makes that preference the objective itself.
+
+\paragraph{One decision.}
+Keep Conant and Ashby's deterministic table on a state with an unrevealed part, $Z = \psi((S,\varepsilon),A)$ with $\varepsilon \sim P_\varepsilon$ independent of $(S,A)$, so the regulator faces the kernel $K(\cdot \mid s,a) = \psi((s,\cdot),a)_{\#} P_\varepsilon$ and we write $\kappa(s,a) := K(\cdot \mid s,a)$ for that law as a point of the simplex, the regulator's class of $(s,a)$.
+The outcome law $\pz = \sum_{s,a} p(s)\, \pi(a \mid s)\, K(\cdot \mid s,a)$ is linear in $\pi$, entropy is concave, so the minimum is at a deterministic $h$ for any kernel, while $H(Z \mid S,A) > 0$ is a floor rather than a defect.
+
+\paragraph{From one decision to a regulator's life.}
+A regulator that persists moves the state it will face next, and at a random time $T$, geometric or uniform over a long horizon, the slice $(S_T, A_T, Z_T)$ is again their single decision with $p(s)$ replaced by the state marginal of the occupancy.
+Error control is the MDP on $s$ with $D$ averaged into $P$, cause control is the MDP on $(s,d)$ and reaches a minimum at least as low, and a disturbance with memory makes $\pi(a \mid s)$ a memoryless POMDP policy \citep{Singh-learning94} until a belief restores the MDP.
+
+\paragraph{The objective on the occupancy.}
+With $Z \sim \pz$ as in \eqref{eq:criterion} and entropy taken relative to a goal measure $\nu$ on events, the objective is
+\begin{equation}
+  \min_{\pi}\ H_\nu(Z), \qquad Z \sim \pz = \sum_{s,a} \occ(s,a)\, K(\cdot \mid s,a).
+  \label{eq:objective}
+\end{equation}
+The map from occupancy to event law is linear, so the concavity bound holds with occupancies in place of policies and the minimum is at a vertex of $\Occ$, a deterministic stationary policy \citep{Derman-finite70ch7,Piunovskiy-controlled98}.
+Unlike the linear program it is not the return of any fixed reward, and local minima can sit at every vertex \citep{Pardalos-quadratic91}.
+
+\paragraph{The split and the change of measure.}
+Let $\tilde Z = \kappa(S,A)$ be the regulator's class, the law it assigns to the pair it is in, and $\rho$ a reference measure on classes, counting when they are finitely many.
+Write the goal measure against the resolution as $\nu(\dd z) = e^{-r(z)}\, \lambda(\dd z)$, so that $r = -\ln(\dd\nu/\dd\lambda)$ is a log volume, bad events are the ones $\nu$ inflates, and $\ln \mu(q) := H_\lambda(q) - \E_q[r]$ is the free energy of a law $q$ under $\nu$.
+\begin{proposition}[Split of the criterion, fully observed, $\kappa$ and $P$ known]
+\label{prop:split}
+\begin{equation}
+  H_\nu(Z)
+  = \underbrace{I(S;\tilde Z)}_{\text{regulation}} + \underbrace{I(A;\tilde Z \mid S)}_{\text{empowerment}} + \underbrace{\E[\ln \mu(\tilde Z)]}_{\text{change of measure}} - H_\rho(\tilde Z \mid Z).
+  \label{eq:split}
+\end{equation}
+\end{proposition}
+\intent{Proof: $H_\nu(Z) = H_\lambda(Z) - \E[r(Z)]$ by the chain rule for densities, the chain rule on $(\tilde Z, Z)$ in both orders, $Z \sim \tilde Z$ given $\tilde Z$ collapses $H_\lambda(Z \mid \tilde Z) - \E[r]$ to $\E[\ln \mu(\tilde Z)]$, and $H_\rho(\tilde Z) = I(S;\tilde Z) + I(A;\tilde Z \mid S)$ because $\tilde z = \kappa(s,a)$ is a function of its conditions.
+The last term is the slack of the regulator's side over the events, zero for deterministic feedback.
+For finite $\nu$ the left side is $\ln \nu(\Zcal) - \KL(p_\pi \| \nu / \nu(\Zcal))$, which is how it is estimated from data, and the measure form is kept for infinite $\nu$ and for comparing representations where $\sum_{\tilde z} \mu(\tilde z)$ depends on $\kappa$.}
+\intent{Reading: the first two terms are the information the regulator's classes carry about where it is and what it does, the third grounds good against bad through $\nu$ alone, so reward shaping is a choice of volume and not of a scalar, a hard goal set $G$ is $\nu = \lambda$ on $G$ and $e^{\Delta r}\lambda$ off $G$ with $\Delta r \to \infty$.
+Special cases: identity channel is SMiRL over the occupancy \citep{Berseth-smirl21}, per-episode refitting drops $I(S;E)$ \citep{Mutti-importance22}; a reward channel uniform on $G$ w.p.\ $r(s,a)$ gives $F(R) = h_b(R) + R \ln \nu(G) + (1-R) \ln \nu(G^c)$ and the return maximiser iff $h_b(R^\ast) < R^\ast \ln(\nu(G^c)/\nu(G))$; variance MDPs \citep{Filar-variance89,Sobel-meanvariance94}; homeostatic RL via $\nu = e^{-c}\lambda$ \citep{Keramati-homeostatic14}.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Partial observation, and learning as a second regulator}
+\label{sec:pomdp}
+
+\intent{Partial observation: $S$ is replaced by the history $X$ and the belief, the class becomes $\tilde Z = \kappa(S,A)$ with $S$ inferred, and the regulation term splits as $I(X;\tilde Z) + I(S;\tilde Z \mid X,A)$, the second being perception, zero when the state is observed.
+Learning: $\kappa$ and $P$ unknown with a posterior, static under the prior, adds $I(\theta;\tilde Z \mid X,A,S)$ with $\theta = (P,\kappa)$, the law-learning term, and $P$ enters only through the belief and the occupancy.
+Interpretation as a second regulator: its events are the realised surprises $-\ln p_b(z \mid x,a)$, its classes are hypotheses, and in the well-specified case it merges into the belief MDP, so there is one regulator with a hyperstate rather than two.}
+\intent{What model must every good regulator have.
+Explain constraints on the model (eg minimal, not faithful). Relate to gooder-regulator, showing that under partial observability, the model implies a belief state. In the higher order setting, the belief state allows entropy to be zero for the policy, even if the resulting policy on the 'true' MDP (ie noise observed MDP) is stochastic.
+Relate to how this ties to representation learning and connections to the outcome.
+Value equivalence and action-sufficiency.
+Address information bottlenecks due to finite modelling capacity.
+...}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Generalization of control as inference}
+\label{sec:cai}
+
+\intent{$\nu = e^{-r}\lambda$ is the optimality likelihood of control as inference \citep{Levine-reinforcement18,Rawlik-stochastic12}, $\ln \mu$ is a free energy, and the entropy of the event law is the evidence of the policy under that likelihood; our objective keeps the information terms that the inference reading absorbs into a KL to a prior policy.}
+\todo{Placement unsure, may move to the discussion.}
+
+% ---- algorithm
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[A simple algorithm]{A simple algorithm \budget{1 pp}}
+\label{sec:algorithm}
+
+\intent{By Gibbs, $H_\nu(Z) = \min_q \E_{\pz}[-\ln (\dd q/\dd \nu)]$, so the objective is a min--min, alternate $q_k = p_{\pi_k}$ with a policy improvement step under the reward $r_{q_k}(s,a) = \E_{K(\cdot \mid s,a)}[\ln (\dd q_k/\dd\nu)]$, each step descends \citep{Zahavy-reward21,Hazan-provably19}.
+Tabular: exact $q_k$ from the occupancy, inner step policy iteration, discounted or average with the gain.
+Learned: $\hat q$ fitted on pooled replay, descent up to $\KL(p_{\pi_k} \| \hat q_k)$.
+Belief version for DeepSea: exact Bayesian search over the posterior on $\kappa$, Thompson sampling as the baseline.}
+
+% ---- experiments
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[When are Good Regulators Useful?]{When are Good Regulators Useful? \budget{3 pp}}
+\label{sec:experiments}
+
+\intent{Each environment carries one claim; generality comes from the claims differing, not from the count.}
+
+\intent{Colour grid with per-cell noise, a near and a far goal: regulation, free bits go to exploration and not to noise.
+Cart-pole band under impulse kicks: continuous $Z$ with the Lebesgue reference, the quiet state needs active control.
+DeepSea \citep{Osband-behaviour20} with the kernel unknown: no dark room, the belief over $\kappa$ explores.}
+
+% ---- related
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Related work]{Related work \budget{0.75 pp}}
+\label{sec:related}
+
+\intent{One short paragraph per cluster, each stating its relation to \eqref{eq:split}, placed here because every comparison needs the split on the page first.
+Cybernetics: Conant and Ashby state the criterion and the theorem \citep{Conant-good70,Ashby-introduction56}, the fixed point and the measure are ours.
+Expected free energy \citep{Friston-free12c}: the same chain rule on the same law, the information terms enter with the opposite sign and the ambiguity term with the same, so the two objectives differ exactly in whether information about the world is sought or avoided.
+Surprise minimisation: SMiRL is the identity channel over the occupancy with the across-episode term $I(S;E)$ dropped by per-episode refitting \citep{Berseth-smirl21,Mutti-importance22}, homeostatic RL is a set point carried as $\nu = e^{-c}\lambda$ \citep{Keramati-homeostatic14}, the point-target homeostat of \citet{MorenoBote-homeostasis26} is the closest neighbour.
+Concave occupancy objectives and minimum-entropy control: the deterministic optimum is theirs \citep{Derman-finite70ch7,Piunovskiy-controlled98,Xia-optimization16}, the entropy of the outcome law appears open loop in \citet{Adurthi-minimum14} and as predictability in \citet{vanZutphen-predictable24}, convex RL supplies the polytope and the min--min \citep{Zahavy-reward21,Hazan-provably19,Mutti-convex23}.
+Empowerment \citep{Klyubin-all05}: the middle term of the split, maximised there, minimised here, and no paper found by the survey minimises it.
+Representation: value equivalence and bisimulation \citep{Castro-equivalence09} ask what a model must keep for the return, the split asks what it must keep for the event law.}
+
+% ---- discussion
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Discussion]{Discussion \budget{0.75 pp}}
+\label{sec:discussion}
+
+\intent{Which outcome to regulate is the abstraction question, the bridge to representation learning and many regulators, stated as outlook; limits are tabular theory, the density model for continuous $Z$ and discount dependence of the selection; frame decision pending on whether representation learning and multi-agent results enter this paper or follow it.}
+
+% ---- appendix
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proofs and environments}
+\label{app:proofs}
+\label{app:envs}
+\label{app:experiments}
+\intent{Proof of Proposition~\ref{prop:split}; deterministic optimum with credit; identity channel as SMiRL via $H(d_S) = \E_E H(d_{S \mid E}) + I(S;E)$; selection boundary; environment details.}
+
+% ---- supplementary
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Additional environments and ablations}
+\todo{Anything not central: extra seeds, sensitivity to the density model, the remaining environments if they do not fit.}
+
+%% Occupancy-necessity paragraph, pre-compaction version with tracked edits (2026-10-16)
+In fact it is impossible to express the criterion in terms of minimal entropy without the use of an occupancy.
+At least, not in a way that makes sense.
+Take for instance an MDP with an entropy objective at \add{each pair, the reward $-H(Z \mid s,a)$, whose return under the occupancy is $-H(Z \mid S,A)$.}
+\add{With $Z = \psi(s,a)$ this reward is zero for every policy, and with noise it charges only the noise of each pair, while $H(Z) = H(Z \mid S,A) + I(S,A;Z)$ also charges how much the outcome law varies across the pairs the policy visits.}
+\add{Per-time entropies fail on cycles, a deterministic policy that alternates between two outcomes from a fixed start has $H(Z_t) = 0$ at every $t$, so both $\sum_t \gamma^t H(Z_t)$ and the final $H(Z_T)$ score it as perfect while it visits two outcomes.}
+\add{In general concavity gives $\sum_t (1-\gamma)\gamma^t H(Z_t) \le H(\psi_\# \occ_\gamma)$, so per-time entropies underestimate the criterion by exactly the information that time carries about the outcome.}
+\add{For an aperiodic unichain $P^\pi$ the law of $Z_T$ converges to $\pz$, so $H(Z_T)$ recovers the criterion only in the limit, and the time average that always converges is the occupancy itself.}
+\add{Conversely, the value of the indicator reward $\mathbf 1\{\psi(s,a) \in B\}$ from a start state is, up to the factor $1-\gamma$, the occupancy from that state pushed through $\psi$, the successor representation \citep{Dayan-improving93}, and with features in place of indicators the successor features \citep{Barreto-successor17}.}
+\add{So even the value-function route computes an occupancy, and ultimately that is what the criterion needs.}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% ---- OLD, Section 3: lines superseded by the 2026-10-26 restructure (definition and theorem up front), moved here from sections/objective.tex
+% OLD: Conversely the value of the indicator reward $\mathbf 1\{\psi(s,a) \in B\}$ is, up to $1-\gamma$, the occupancy from the start pushed through $\psi$, the successor representation \citep{Dayan-improving93}, and with features in place of indicators the successor features \citep{Barreto-successor17}.
+% OLD: So even the value-function route computes an occupancy, which is what the criterion needs.
+% OLD: \add{The gap $H(D \mid S) > 0$ is the part of the disturbance irrecoverable from $S$ alone, irreducible partial observability, or noise when it is drawn afresh at every step.}
+% OLD: \add{For a deterministic policy this uncontrollable part stays in the classes, the states whose outcome laws no choice of action can merge, while the noise stays within them.}
+% OLD: The criterion of \eqref{eq:objective} asks for minimal entropy induced by the regulator.
+% OLD: Moreover, the notion of modelling through the morphism argument that gives the good regulator its idiom is built on \add{a deterministic $\psi$ on a perfect information state the regulator reads in full \citep[p.~95]{Conant-good70}}.
+% OLD: Although C\&A admit that under error control there is always a residual entropy\citep[p.~92]{Conant-good70}, we would like to formalize this explicitly within their frame.
+% OLD: In C\&A the disturbance $D$ causes the events in $S$ \citep[p.~91]{Conant-good70}.
+% OLD: In the case of stochastic dynamics $D$ enters through $P$ into the state law and to the  and through the part that reaches $Z$ within the step before any read, which we read as noise.
+% OLD: The regulator acts on samples from that \del{law state}\add{state law} so that $Z = \psi(S,A)$ is a deterministic map of state and action.
+% OLD: The reinforcement learning problem aligns most with the error-control framing of the good regulator framework, \del{and through}\add{where by} the data processing inequality $I(A;D) \le I(S;D)$\add{ the action knows no more of the disturbance than the state carries}.
+% OLD: This gap\add{, $H(D \mid S) > 0$,} is especially relevant when part of the disturbance is irrecoverable from $S$ alone, this becomes irreducible partial observability, or \del{simply stochasticity}\add{noise when it is drawn afresh at every step}.
+% OLD: Suppose the agent were to model this unseen noise variable induce\add{d}\del{s} by $D$, let's call it $\varepsilon \sim P_\varepsilon^D$.
+% OLD: The extended perfect information regulator would \del{model}\add{face} $Z = \psi((s, \varepsilon),a)$.
+% OLD: In reality we can however only model a marginal \del{realization}\add{law over $\varepsilon$}, which gives the kernel $K(\cdot \mid s,a) = \psi((s,\cdot),a)_\# P^D_\varepsilon$.
+% OLD: \del{The regulator thus faces the kernel $K(\cdot \mid s,a) = \psi((s,\cdot),a)_\# P_\varepsilon$, so}\add{Then} \add{$\pz = \E_{(s,a) \sim \occ}[K(\cdot \mid s,a)]$ stays linear in the occupancy and deterministic policies stay optimal \citep{Derman-finite70ch7}.}
+% OLD: \add{Its noise $H_\lambda(Z \mid S,A) > 0$ is a floor the regulator can lower by steering to narrow kernels but not remove, so the criterion asks for minimal rather than zero entropy.}
+% OLD: \add{This is Conant and Ashby's error-controlled regulator, for which ``there must be some residual variation'', while a cause-controlled one reads $D$ and with it $\varepsilon$ \citep[p.~92]{Conant-good70}.}
+% OLD: \add{Two pairs with the same kernel are then the same to the regulator, and which laws it can tell apart decides what is reduced to noise, the subject of the next paragraph.}
+% Extend inline the argument from psi to K due to irreducible noise, creating minimal H(Z). This aligns with C&A. Now put formally.
+% \intent{Conant and Ashby's table acts on the full state, so we split it as $(s,\varepsilon)$ with $\varepsilon \sim P_\varepsilon$ the part the regulator does not read, independent of $(s,a)$, and $Z = \psi((s,\varepsilon),a)$.
+% The law the regulator faces at $(s,a)$ is then the kernel $K(\cdot \mid s,a) = \psi((s,\cdot),a)_\# P_\varepsilon$, the pushforward of the unrevealed state, and \eqref{eq:objective} becomes $\pz = \E_{(s,a) \sim \occ}[K(\cdot \mid s,a)]$.
+% This law is linear in the occupancy and entropy is concave, so the minimum still sits at a deterministic stationary policy \citep{Derman-finite70ch7}, while $H(Z \mid S,A) > 0$ becomes a \add{policy-dependent} floor, their ``residual variation'' \citep[p.~92]{Conant-good70}, and the criterion is minimal rather than zero entropy.}
+% OLD: \paragraph{4) Information flow as a recipe for models.}
+% OLD: Since the case by C\& was made from the error control example, where if the regulator does not have a model, a homomorphism from the disturbance to teh state for a deterministic policy, that that would leave residual entropy.
+% OLD: \add{Given its class the event has exactly that law, so the chain rule on $(\hat Z, Z)$ in both orders gives, with $\rho$ the counting measure on the finitely many classes,} [display moved to Theorem~\ref{thm:criterion}]
+% OLD: \add{Our regulator reads the state but not $\varepsilon$, so it can tell two pairs apart only by the law they face, and what its model must resolve is the class $\tilde Z = \kappa(S,A)$, with $\kappa(s,a) := K(\cdot \mid s,a)$ the pushforward of $\varepsilon$ at the pair as a point of the simplex over $\Zcal$.}
+% OLD: \add{Identifying the class from the history when the state is hidden or the law unknown is the learning problem of Section~\ref{sec:pomdp}.}
+
+% ---- OLD, Section 4: lines superseded by the 2026-10-26 rewrite of sections/split.tex (identifiability through empowerment)
+% OLD: \subsection{Partial observability induces learning as a second regulator}
+% OLD: \subsection{Partial observability, empowerment and exploration}
+% OLD: \add{Let $(X,A,S,\theta,Z)$ have the discounted law under a prior on $\theta = (P,\kappa)$, since a long-run occupancy over histories does not exist.}
+% OLD: Let $\tilde Z = \kappa(S,A)$ be the regulator's class, \add{where $\kappa(s,a) := K(\cdot \mid s,a)$ is the law the pair faces as a point of the simplex over $\Zcal$,} taking finitely many values, and let $\rho$ be counting measure on classes.
+
+% ---- OLD, Sections 5 and 6: stubs of sections/algorithm.tex and sections/experiments.tex, merged into sections/validation.tex on 2026-10-26
+\section[A simple algorithm]{A simple algorithm \budget{1 pp}}
+\label{sec:algorithm}
+
+\intent{Gibbs min--min: alternate $q_k = p_{\pi_k}$ with RL on the reward $\E_K[\ln(\dd q_k/\dd\nu)]$; tabular, learned and belief variants.}
+\section[When are Good Regulators Useful?]{When are Good Regulators Useful? \budget{3 pp}}
+\label{sec:experiments}
+
+\intent{Colour grid with noise, cart-pole band, DeepSea \citep{Osband-behaviour20}; one claim each.}
+
+% ---- preliminaries: Conant and Ashby paragraph and Figure fig:oneshot, moved to a tcolorbox in objective.tex on 2026-10-29
+% \begin{figure}[h]
+% \centering
+% \tikzset{
+%   v/.style={inner sep=1pt, minimum size=5mm},
+%   e/.style={-{Stealth[length=2mm]}},
+% }
+% \begin{minipage}{0.45\textwidth}
+% \centering
+% \begin{tikzpicture}
+%   \node[v] (D) at (0,0) {$D$};
+%   \node[v] (S) at (1.8,0.7) {$S$};
+%   \node[v] (A) at (1.8,-0.7) {$A$};
+%   \node[v] (Z) at (3.4,0) {$Z$};
+%   \draw[e] (D) -- (S);
+%   \draw[e] (D) -- (A);
+%   \draw[e] (S) -- (Z);
+%   \draw[e] (A) -- (Z);
+% \end{tikzpicture}\\[1mm]
+% {\small (a) Cause-controlled.}
+% \end{minipage}\hfill
+% \begin{minipage}{0.45\textwidth}
+% \centering
+% \begin{tikzpicture}
+%   \node[v] (D) at (0,0.7) {$D$};
+%   \node[v] (S) at (1.8,0.7) {$S$};
+%   \node[v] (A) at (1.8,-0.7) {$A$};
+%   \node[v] (Z) at (3.4,0) {$Z$};
+%   \draw[e] (D) -- (S);
+%   \draw[e] (S) -- (A);
+%   \draw[e] (S) -- (Z);
+%   \draw[e] (A) -- (Z);
+% \end{tikzpicture}\\[1mm]
+% {\small (b) Error-controlled.}
+% \end{minipage}
+% \caption{Conant and Ashby's two channels from disturbance to regulator, for one decision.}
+% \label{fig:oneshot}
+% \end{figure}
+%
+% \paragraph{\add{Conant and Ashby's good regulator.}}
+% \add{In the good regulator of \citet{Conant-good70}, a disturbance $D$ causes events in a system $S$, a regulator answers with an action $A$, and the two determine an outcome $Z = \psi(S,A)$ in a set $\Zcal$ that contains a set $G$ of good outcomes.}
+% \add{Figure~\ref{fig:oneshot} shows two ways the regulator can reach the disturbance, a cause-controlled regulator reads $D$ itself, while an error-controlled one reads only the state $S$ that $D$ has already moved \citep[p.~92]{Conant-good70}.}
+% \add{For one decision with the state law $p(s)$ fixed, their criterion asks for the regulator that leaves the least entropy in the outcome \citep[p.~95]{Conant-good70},}
+% \begin{equation}
+%   \min_{\pi(a \mid s)}\ H(Z), \qquad Z = \psi(S,A), \quad S \sim p(s), \quad A \sim \pi(\cdot \mid S).
+%   \label{eq:criterion}
+% \end{equation}
+% \add{The law of $Z$ is linear in the policy and entropy is concave, so a deterministic policy attains the minimum, and they show that the simplest optimal regulator is a mapping $h$ from $S$ to $A$, which they call a model of the system \citep[pp.~95--96]{Conant-good70}.}
+% \add{The state law never moves in this setting, since a single decision never acts on its own future.}

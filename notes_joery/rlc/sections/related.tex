@@ -1,0 +1,43 @@
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Discussion and related work]{Discussion and related work \budget{1.5 pp}}
+\label{sec:related}
+\label{sec:discussion}
+
+\add{Supplementary~\ref{sup:related} extends each paragraph.}
+
+\paragraph{\add{Predictability objectives.}}
+\add{Predictability has been an objective as the entropy rate of the state process \citep{JarneOrnia-predictable25,vanZutphen-predictable24}, as the entropy of the output in minimum-entropy control \citep{Wang-minimum02}, as the surprise of the agent's own states under a density refit within the episode \citep{Berseth-smirl21}, and as motion that matches what a human observer expects \citep{Dragan-legibility13}.}
+\add{These score predictability step by step, within one trajectory, or in the eyes of an observer.}
+\add{The pooled outcome entropy itself is stated as an ergodic sensory entropy by \citet{Friston-free12c} and minimised open loop by \citet{Adurthi-minimum14}, while \citet{Wang-minimum02} minimises the entropy of the output one step ahead.}
+
+\paragraph{\add{Free energy principle and active inference.}}
+\add{The free energy principle states our aim for the sensory states, a system that minimises the long-run entropy of its sensations through a deterministic internal map \citep{Friston-free12c}, and its descent step freezes the sensory density at the model, which is the inner step of \eqref{eq:game} without the refit \citep{Friston-free12b}.}
+\add{Determinism is assumed there, while Theorem~\ref{thm:criterion} derives it from the concavity of the criterion.}
+\add{Active inference plans with the expected free energy instead, which penalises the ambiguity of outcomes given hidden states but rewards the information outcomes carry about those states, the opposite sign to our criterion on both the outcome entropy and the information terms \citep{Friston-active15}.}
+\add{Our floors take the place of that reward, they buy the information that identifiability needs and go slack after it, where the expected free energy keeps seeking it.}
+
+\paragraph{\add{Cybernetics and control.}}
+\add{Ashby framed regulation as keeping the essential variables within limits \citep{Ashby-design60} and quantified it in the law of requisite variety, whose Shannon form $H(E) \ge H(D) + H_D(R) - H(R)$ bounds how far the regulator's own variety can lower that of the outcome and is tightest when the regulator's move is a function of the disturbance \citep[ch.~11]{Ashby-introduction56}.}
+\add{Conant and Ashby replace the limits by the entropy of the outcome and show that its simplest minimiser is a model of the system \citep{Conant-good70}, and our floors are in the spirit of the requisite variety bound.}
+\add{\citet{Wentworth-fixing21} shows that the model claim is lost once the regulator sees only a noisy view of the system, recovers it for expected utility as a deterministic function of the posterior, and with his gooder regulator, which must serve tasks revealed later at minimal memory, forces a model isomorphic to that posterior.}
+\add{He leaves open whether this carries over to the entropy criterion, where Theorem~\ref{thm:criterion} gives a deterministic regulator on the belief and the floors supply the pressure to identify that his task uncertainty supplies.}
+\add{\citet{Richens-general25} reach a model through competence instead, since an agent that achieves enough multi-step goals has a transition model that can be read off its policy, while myopic agents need none.}
+\add{In control theory the internal model principle makes the model necessary, since a structurally stable controller that rejects a persistent exogenous signal must contain a copy of the system that generates it \citep{Francis-internal76}, and the model it forces is one of the disturbance rather than of the plant.}
+\add{Internal model control and model predictive control place a model inside the controller by design \citep{Garcia-internal82,Mayne-constrained00}.}
+
+\paragraph{Control as inference.}
+\label{sec:cai}
+\add{Control as inference writes optimality as a likelihood $e^{r}$ on trajectories and recovers RL as inference under it \citep{Levine-reinforcement18}.}
+\add{Here the likelihood is the inverse volume ratio $\dd\lambda / \dd\nu = e^{r}$, so with $q = q_k$ the cost in \eqref{eq:game} is $-\ln \tilde q_k$ up to a constant, with $\tilde q_k \propto q_k\, e^{r}$ the outcome law conditioned on optimality, and the game is inference on outcomes, where $\nu$ may have infinite volume and a hard goal set makes optimality the event $Z \in G$.}
+\add{Its bonus on the policy entropy comes from the action floor, clearest for $Z = (S,A)$ with counting $\lambda$, where noise and ambiguity vanish, the regulation term is $H(S)$ and the empowerment term is $H(A \mid S)$ under $\occ$, the normalised discounted sum of per-step policy entropies.}
+\add{With $\ln \tfrac{\dd\nu}{\dd\lambda} = -\beta r$, $\lambda_A = 1 + \alpha\beta$ and $c_A \ge \ln|\Acal|$, so that the hinge in \eqref{eq:lagrangian} never goes slack, $\Lcal(\pi) = H(S) - \beta\big(\E_{\occ}[r] + \alpha H(A \mid S)\big)$ is the maximum entropy objective at temperature $\alpha$, scaled by $\beta$, plus the state entropy, and a non-uniform action prior folds into $r$ \citep[Sec.~2.3]{Levine-reinforcement18}.}
+\add{Control as inference is thus the Lagrangian minus the regulation term rather than a special case, and no $\nu$ or floor absorbs the residual, since $\nu$ is linear in $\occ$ and the regulation term has no multiplier.}
+\add{The floor sets the regime, as for $\lambda_A \le 1$ this $\Lcal$ is concave and Theorem~\ref{thm:criterion} keeps a deterministic minimiser, while for $\lambda_A > 1$ the action term is convex and the minimiser can be interior.}
+\add{The loop of \eqref{eq:game} is the concave-convex procedure \citep{Yuille-concave03}, since by $H(p) + \KL(p \,\|\, q) = \E_p[-\ln q]$ each round minimises $\Lcal(\pi) + \KL(p_\pi \,\|\, q_k)$, which linearises the concave entropy at $q_k$ and keeps the convex floors exact, a proximal step with prior $q_k$ whose unit weight alone makes the round linear in the outcome law, so no step size is tuned.}
+\add{For $Z = (S,A)$ this KL is on the joint occupancy as in relative entropy policy search \citep{Peters-relative10}, a mirror descent step on the linear reward with learning rate $\beta$ \citep[Sec.~5.1.1]{Neu-unified17}, and the chain rule splits it into a state cost $-\ln d_k(s)$ and the exact trust region $\E_{\occ}\KL(\pi \,\|\, \pi_k)$ under the new occupancy \citep[Sec.~5.1.2]{Neu-unified17}, which the expectation step of \citet{Abdolmaleki-maximum18} evaluates on replay states.}
+\add{Each round is thus the soft MDP with reward $\beta r + \ln d_k(s,a)$ at temperature $\lambda_A$ and descends $\Lcal$, and as the KL has zero value and gradient at a fixed point, that point is a stationary point of the nonconvex $\Lcal$ and no more, at $\lambda_A = 1 + \alpha\beta$ the soft optimal policy at temperature $\alpha$ for $r + \beta^{-1} \ln d(s)$ under its own occupancy, so the state entropy shifts the soft optimum of control as inference.}
+\add{At $\lambda_A = 0$ the reward $\ln d_k$ is $-\infty$ off the support of $d_k$, so every deterministic policy is a fixed point of an exact refit, which the mixing of Proposition~\ref{prop:plugin} removes.}
+\add{For $Z = (S,A,S')$ the identity gains the transition noise $\E_{\occ}[H(P(\cdot \mid S,A))]$ with a positive sign, so the criterion charges for noise, whereas exact inference backs up $\log \E[e^{V}]$ and is optimistic about it \citep[Sec.~2.3]{Levine-reinforcement18}, and the variational form with fixed dynamics restores the expected backup and is neutral \citep[Sec.~3.1]{Levine-reinforcement18}.}
+
+\intent{Discussion: which outcome to regulate as the abstraction question; limits; outlook.}

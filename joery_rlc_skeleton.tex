@@ -1,0 +1,633 @@
+\documentclass[10pt]{article}
+\usepackage[hmargin=1.3cm,top=1.2cm,bottom=1.3cm]{geometry}
+\usepackage{titlesec}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
+\setlist{itemsep=0.5pt,topsep=1pt,leftmargin=*}
+\pagestyle{empty}
+
+\newcommand{\Hmu}[1]{H_{\mu}[#1]}
+\usepackage{xcolor}
+\usepackage[normalem]{ulem}
+\newcommand{\add}[1]{\textcolor{red}{#1}}
+\newcommand{\del}[1]{\textcolor{red}{\sout{#1}}}
+
+\begin{document}
+\begin{center}
+{\large\bfseries When are Reinforcement Learners Good Regulators? Skeleton}\\[1mm]
+{\small Joery de Vries, \today. Two pages; detail in \texttt{notes\_joery/rlc/} and \texttt{notes\_joery/learner\_as\_regulator.tex}.}
+\end{center}
+
+\noindent This doc aims to structure the main message and top-down logical chain on a good-regulator paper.
+This stub already assumes a RL target audience, so it's not directly aimed at Trent or our use-cases, but at an RLC audience.
+
+\section{Why look at the good regulator.}
+
+\paragraph{Agent Criteria.}
+\begin{itemize}
+    \item Agents increasingly act in the real world, e.g., as robots and LLM assistants. How they behave matters to society.
+    \item Aligning that behaviour is usually framed as optimising a criterion: a reward, a cost, a preference, a risk, etc.
+    \item A criterion says what a good solution must satisfy.
+    \item An algorithm is justified if it satisfies the criterion is and does so efficiently.
+\end{itemize}
+
+% \begin{center}\small
+%     \begin{tabular}{@{}lll@{}}
+%     \toprule
+%     Criterion & Algorithm & What the designer specifies \\
+%     \midrule
+%     Bellman optimality & DP, Q-learning & reward \\
+%     Gradient of the return & policy gradient & reward \\
+%     HJB, Riccati & LQR & cost \\
+%     Pontryagin & shooting, DDP, iLQR & cost \\
+%     Lyapunov stability & CLF, SOS programs & set point \\
+%     $H_\infty$ & robust synthesis & worst-case disturbance gain \\
+%     Internal model principle & structure of the controller & disturbance generator \\
+%     Fitness, ESS & selection & viability \\
+%     Conant and Ashby & ? & outcome variable $Z$, not its value \\
+%     \bottomrule
+%     \end{tabular}
+% \end{center}
+
+\paragraph{Common themes.}
+\begin{itemize}
+  \item A good criterion can be stated without an algorithm but typically motivates algorithms.
+  \item Reward maximisation or cost minimization is the dominant criterion. 
+  \item RL and control specify a reward or cost, which ranks outcomes from better to worse.
+  \item Rewards are difficult to specify and reward hacking or gaming is a persistent failure point.
+\end{itemize}
+
+\paragraph{Good regulator.}
+\begin{itemize}
+  \item We should revisit what criteria we use for motivating new algorithms. 
+  \item One such criteria is an older but relevant idea from cybernetics, the good regulator theorem.
+  \item Good regulator sets criteria in terms of outcomes that are kept stable under disturbance.
+  \item Our reading: this is similar to a robust RL criterion $\rightarrow$ High predictability. As predictable systems are easier to supervise.
+  \item In practice RL patches this: Safe RL adds constraints, robust RL a worst case, reward-free RL drops the reward. The good regulator touches all three with a single criterion.
+  \item Question: what would an RL algorithm look like in the good regulator sense, what does it need, how does this fit?
+\end{itemize}
+
+\section{What Conant and Ashby say.}
+\paragraph{The good regulator}
+\begin{itemize}
+  \item Setting: a disturbance $D$ moves the system $S$, the regulator, equivalently a policy, picks $a \sim \pi(a \mid s)$, which fixes an outcome $Z = \psi(S,A)$.
+  \item They consider two criteria: (i) for every $D$ the outcome lands in a good set $G \subset Z$; (ii) $H(Z)$ is sufficiently small, which is zero exactly when $Z$ is constant. The good regulator requires $H(Z)$ to be minimal.
+  \item Lemma: in an optimal regulator, all actions it uses in a state $s$ lead to the same outcome, $H(Z \mid S{=}s) = 0$.
+  \item Theorem: so the simplest optimal regulator picks one action per state, a function $h\colon S \to A$ with $H(A \mid S) = 0$.
+  \item The theorem locates an optimum. It does not say how to reach it.
+  \item The term ``model'' means a homomorphism. With $\phi\colon D \to S$ the system's response and $\rho\colon D \to A$ the regulator's, the regulator models $S$ if $\rho = h \circ \phi$ for some  $h\colon S \to A$. It acts on $D$ only through $S$, and any deterministic $h$ qualifies.
+  \item Hence the title. 
+    The lemma gives one outcome per state, $H(Z \mid S) = 0$, the theorem one action per state, $H(A \mid S) = 0$, so $\rho = h \circ \phi$ and the simplest good regulator is a model of $S$.
+    Neither says $H(Z) = 0$, only that it is minimal.
+\end{itemize}
+
+\begin{center}\vspace{-2mm}
+\tikzset{v/.style={inner sep=1pt, minimum size=5mm}, e/.style={-{Stealth[length=2mm]}}}
+\begin{tabular}{@{}p{0.42\textwidth}p{0.56\textwidth}@{}}
+\centering
+\begin{tikzpicture}
+  \node[v] (D) at (0,0) {$D$};
+  \node[v] (S) at (1.8,0.7) {$S$};
+  \node[v] (A) at (1.8,-0.7) {$A$};
+  \node[v] (Z) at (3.4,0) {$Z$};
+  \draw[e] (D) -- (S); \draw[e] (D) -- (A);
+  \draw[e] (S) -- (Z); \draw[e] (A) -- (Z);
+\end{tikzpicture}
+&
+\centering
+\begin{tikzpicture}
+  \node[v] (D) at (0,0.7) {$D$};
+  \node[v] (S) at (1.8,0.7) {$S$};
+  \node[v] (A) at (1.8,-0.7) {$A$};
+  \node[v] (Z) at (3.4,0) {$Z$};
+  \draw[e] (D) -- (S); \draw[e] (S) -- (A);
+  \draw[e] (S) -- (Z); \draw[e] (A) -- (Z);
+\end{tikzpicture}
+\tabularnewline
+\centering\footnotesize (a) Cause control: the regulator sees the disturbance $D$.
+&
+\centering\footnotesize (b) Error control: the regulator sees only its effect on $S$, so $I(D;A) \le I(D;S)$.
+\end{tabular}
+\end{center}
+
+\paragraph{Limitations of their setting.}
+\begin{itemize}
+  \item $\psi$ is deterministic and $S$ fully seen. Extension to noise sets a minimal floor so $H(Z \mid S,A) > 0$.
+\item No time: only one decision with $p(S)$ is given and actions do not change which states occur.
+  \item No learning: the theorem describes the optimum, a fixed point, not how to reach it.
+\end{itemize}
+\paragraph{Example extensions.}
+\begin{itemize}
+  \item With hidden variables, Wentworth's gooder regulator must carry their posterior to meet the criterion
+  \item With time, Francis and Wonham's internal model principle says that a stateful disturbance process needs a regulator whose own memory captures the process's dynamics.
+  \item These extension sketch what it would mean for porting the ideas from the good regulator to reinforcement learning.
+\end{itemize}
+
+\section{Read the good-regulator as a fixed point criterion to motivate solutions.}
+
+\boxed{\textbf{Main Idiom: Good regulation requires modelling only the predictable causes of the outcome.}}
+
+\paragraph{Main principle and questions.}
+\begin{itemize}
+  \item {The good-regulator theorem states criteria at the optimum similar to how the Bellman optimality equation does.}
+  \item {$Q$-learning is the Bellman optimality analog of the respective fixed-point criteria. What is the analog for good-regulator?}
+  \item What do the criteria imply and require of an algorithm?
+\end{itemize}
+
+\paragraph{{Fixed-point reading.}}
+\begin{itemize}
+  \item The $p(S)$ from C\&A is timeless and worded as the relative frequencies of the events in $S$.
+  \item The entropy $H(Z)$ is computed from $p(z) = \sum_{s,a} p(s,a)\, \mathbf 1\{z = \psi(s,a)\}$.
+  \begin{itemize}
+    \item RL has a similar object, the occupancy of a policy $d^\pi(s,a)$ says how often $(s,a)$ occurs in a lifelong sequence of events.
+    \item So $p(z)$ becomes $p_\pi(z) = \sum_{s,a} d^\pi(s,a)\, \mathbf 1\{z = \psi(s,a)\} = \sum_{s,a}d^\pi(s)\pi(a|s) \mathbf 1\{z = \psi(s,a)\}$, how often $\pi$ produces $z$.
+  \end{itemize}
+  \item Thus, good regulator directly implies the objective $\min_\pi H[p_\pi(z)]$ for RL.
+\end{itemize}
+
+\paragraph{Objective Properties}
+\begin{itemize}
+  \item $H(Z)$ cannot be written without an occupancy.
+    Suppose $H(Z)$ is a reward, with $p(z)$ an average of $\mathbf 1\{z = \psi(s,a)\}$.
+  \begin{itemize}
+    \item Over one step $H(Z \mid s,a) = 0$ for deterministic $\psi$, so every action is optimal.
+    \item Per time step, $\sum_t H(Z_t)$ or $H(Z_T)$ miss the spread over time.
+      E.g., a cycle $z_1 z_2 z_1 z_2 \dots$ can obtain zero entropy.
+    \item $H(Z_{t:T}) = \sum_k H(Z_k \mid Z_{<k})$ gives trajectory predictability, which would still be $0$ for the above cycle.
+    \item Using a value function through e.g., $(1-\gamma)\mathbb E\big[\sum_k \gamma^k \mathbf 1\{Z_{t+k} = z\} \mid s\big]$, would simply express the occupancy again.
+    \item Typical RL is linear in the occupancy, $\langle d^\pi, r \rangle$, and $H(Z)$ is concave in it, so no fixed reward can support it.
+  \end{itemize}
+  \item Bellman and the good regulator coincide at the optimum for the optimal occupancy reward $r(s,a) = \ln p_{\pi^\star}(\psi(s,a))$.
+  \begin{itemize}
+    \item Gibbs' inequality gives, for any distribution $q$ over $\mathcal Z$, the bound $\langle d^\pi, \ln q \circ \psi \rangle \le -H(p_\pi)$, with equality at $q = p_\pi$, so $-H(p_\pi) = \max_q \langle d^\pi, \ln q \circ \psi \rangle$.
+      The objective $\min_\pi H(p_\pi)$ thus becomes $\min_{\pi,q} -\langle d^\pi, \ln q \circ \psi \rangle$.
+    \item For fixed $q$ the bound is linear in $d^\pi$, namely the return for the fixed reward $\ln q(\psi(s,a))$.
+      This return is the linearization of $-H$ at $q$, which is tight at $p_\pi = q$.
+      Thus $\pi$ has return $\le -H(p_\pi) \le -H(p_{\pi^\star})$.
+    \item At $\pi^\star$ the bound is tight and $p(S) = d^{\pi^\star}(S)$ is fixed, thus pinning the reward at $r(s,a) = \ln p_{\pi^\star}(\psi(s,a))$.
+      Thus, the good regulator coincides with Bellman at this exact fixed point.
+  \end{itemize}
+\end{itemize}
+
+
+\paragraph{Framework interpretation.}
+\begin{itemize}
+  \item Disturbances enter through the dynamics, $P(s' \mid s,a) = \sum_d p(d)\, \mathbf 1\{s' = f(s,a,d)\}$.
+  \begin{itemize}
+    \item Error control is reactive to state disturbance $D$, this gives $H(Z) > 0$ even when $H(Z \mid s,a) = 0$ $\forall s,a$.
+    \item Seeing $D$ before acting puts it in the state, so cause control is never worse, $\min_{\mathrm{cause}} \le \min_{\mathrm{error}}$.
+  \end{itemize}
+  \item C\&A's model homomorphism argument sets our expectation for what must be modelled: what must be part of the state for the regulator to be a mapping $h$? For example:
+  \begin{itemize}
+    \item A stateful disturbance, $d_{t+1} \sim P(\cdot \mid d_t)$, needs a model of its generator, the internal model principle.
+    \item A multi-agent disturbance needs a model of the opponent's policy and memory.
+    \item Partial observability needs a belief state $b$, and the optimum is deterministic in $b$, the gooder regulator.
+    \item The occupancy objective $H(Z)$ requires a model of the outcome law $p_\pi$ as it is needed in the reward.
+  \end{itemize}
+\end{itemize}
+
+
+
+\subsection{Main Components for a General Formulation}
+
+\paragraph{Occupancy objects.}
+\begin{itemize}
+  \item Discounted, $d^\pi_\gamma(s,a) = (1-\gamma)\sum_t \gamma^t P^\pi(s_t = s, a_t = a)$, from a start law, weights early steps.
+  \item Average, $d^\pi(s,a) = \lim_{T \to \infty} \frac1T \sum_{t<T} P^\pi(s_t = s, a_t = a)$, the stationary law under $\pi$, forgets the start.
+  \item Both are probability measures on $\mathcal S \times \mathcal A$ with a linear flow constraint.
+  \item Discounting is the average case of the chain that resets to the start law with probability $1-\gamma$ each step.
+\end{itemize}
+
+\paragraph{Channel noise sharpens C\&A's homomorphism argument}
+\begin{itemize}
+  \item Split $D = (d,\varepsilon)$ with $\varepsilon$ unobserved, so $K(z \mid s,a) = \sum_\varepsilon p(\varepsilon \mid s,a)\,\mathbf 1\{z = \psi((s,\varepsilon),a)\}$.
+  \item C\&A's lemma requires $H(Z \mid S) = 0$, which with $\varepsilon$ present needs $\varepsilon$ in the state (cause control over $\varepsilon$).
+  \begin{enumerate}
+    \item If $\varepsilon$ is left unmodelled, it leaves an entropy floor $H(Z \mid S,A) = I(Z;\varepsilon \mid S,A)$ by the chain rule.
+    \item Wentworth's gooder regulator inserts a posterior $b$ over $\varepsilon$, which lowers the floor by $I(Z;b \mid S,A) \le I(Z;\varepsilon \mid S,A)$.
+  \item We conclude that C\&A's argument is incomplete whenever this floor is positive.
+  \end{enumerate}
+  \item We extend the homomorphism argument in terms of minimal entropy. A modelling process is not needed if:
+  \begin{itemize}
+    \item $\varepsilon$ is unpredictable, the posterior $b$ equals the prior.
+    \item $\varepsilon$ is uncounterable, no action affects its consequence for $Z$.
+  \end{itemize}
+  \item This is not an extension of the theorem, but a claim on modelling: a model is only required if it lowers the minimal $H(Z)$.
+\end{itemize}
+
+
+
+\paragraph{Outcome Space}
+
+\begin{itemize}
+  \item Formulate the outcome $Z \in \mathcal Z$ with a base measure $\mu$ on $\mathcal Z$. The kernel $K(z \mid s,a)$ is then a density w.r.t.\ $\mu$, $p_\pi = d^\pi K$, and $H_\mu[p] = -\int p \ln p \, d\mu$.
+  \item Entropy $H(Z)$ is invariant to labels, there is no good or bad $z$, only the shared symbol partition $\{\psi^{-1}(z)\}$ of $\mathcal S \times \mathcal A$.
+  \item Conventional RL with a bounded reward is a subclass of the minimal entropy criterion.
+  \begin{itemize}
+    \item {Rescale $r \in [0,1]$ and, with $\mathcal G \subset \mathcal Z$ the good set, take $K(z \mid s,a) = r(s,a)\,\frac{\mathbf 1\{z \in \mathcal G\}}{\mu(\mathcal G)} + (1-r(s,a))\,\frac{\mathbf 1\{z \in \mathcal G^c\}}{\mu(\mathcal G^c)}$.}
+    \item {$K$ is affine in $r$, so $p_\pi = K_{R}$ with $R = \langle d^\pi, r \rangle$ the return, and $H(p_\pi) = F(R) = h_b(R) + R \ln \mu(\mathcal G) + (1-R) \ln \mu(\mathcal G^c)$.}
+    \item {$F$ decreases in $R$ for $R > \mu(\mathcal G)/\mu(\mathcal Z)$, so the minimal entropy criterion is equivalent to maximal return for small $\mathcal G$.}
+  \end{itemize}
+  \item Examples. The criterion needs a setting where one outcome can be held and the rest fluctuate.
+  \begin{itemize}
+    \item Cart-pole, $z = (\theta,\dot\theta)$. Held upright, $z$ stays at one point. Falling and resetting makes $z$ fluctuate over the reset law.
+    \item Thermostat with a comfort band represented by one symbol of $\psi$. Regulated by climate-control, room temperature $z$ sits stable in the band. When turned off, $z$ follows irregular values from the weather.
+  \end{itemize}
+\end{itemize}
+
+\paragraph{Extension to partial observability and history occupancy (gooder-regulator).}
+\begin{itemize}
+  \item When the state is partially observed, the regulator sees $o_t \sim O(\cdot \mid s_t)$ and must remember $x_t = (o_{1:t}, a_{<t}) \in \mathcal X$.
+  \item The framework does not change over the perfect information $S$. However, the minimal entropy criterion forces the regulator to model the belief state $b(s \mid x_t)$ through the history (memory). This is Wentworth's gooder regulator insight.
+  \item From the regulator's perspective, the decision variable is now the history occupancy $d^\pi(x,a)$. The state occupancy follows from the belief $d^\pi(s,a) = \sum_{x \in \mathcal X} d^\pi(x,a)\, b(s \mid x)$. By linearity of expectation $p_\pi(z) = \mathbb{E}_{(x,a) \sim d^\pi}\mathbb{E}_{s \sim b}K(z \mid s, a)$.
+  \item The optimum is deterministic in $b$ and not $s$. C\&A's simplest regulator becomes $h: B \to A$, and the model is $b$ itself since the homomorphism is $h \circ b$. The \textbf{minimal belief} resolves state uncertainty only where it lowers $H[p_\pi(Z)]$.
+  \item The difference between cause and error control is now timing, under cause control $D$ enters $o_t$ before acting, under error control only later $o$ through $s$. Information about $D$ that the history never recovers is $\varepsilon$.
+\end{itemize}
+
+
+\paragraph{What does the regulator lower?}
+\begin{itemize}
+  \item Under $(S,A,Z) \sim d^\pi(s,a)\,K(z \mid s,a)$ the chain rule gives, $\displaystyle H[p_\pi(Z)] = \underbrace{I(S;Z)}_{\text{regulation}} + \underbrace{I(A;Z \mid S)}_{\text{empowerment}} + \underbrace{H(Z \mid S,A)}_{\text{channel noise}}$.
+  \begin{enumerate}
+    \item \textbf{Regulation}, $I(S;Z) = \mathbb E_{s \sim d^\pi}\,\mathrm{KL}\big(p(z \mid s)\,\|\,p_\pi(z)\big)$, zero iff wherever the disturbance pushes the agent it preserves the outcome law, $p(z \mid s) = p_\pi(z)$. Achieved by choosing at each state the action that reproduces that law, or trivially by concentrating $d^\pi$ on a quiet attractor (e.g., dying and staying dead if $z$ freezes there).
+    \item \textbf{(Anti-)Empowerment}, $I(A;Z \mid S) = \mathbb E_{(s,a) \sim d^\pi}\,\mathrm{KL}\big(K(\cdot \mid s,a)\,\|\,p_\pi(\cdot \mid s)\big)$, how much the outcome at a state depends on the action. It is forced to zero as, $I(A;Z \mid S) \le H(A \mid S) = 0$.
+    We call it (anti-)empowerment because empowerment RL maximises this information to keep many outcomes reachable by future actions. 
+    \item \textbf{Channel noise}, the entropy floor. Per row $H(Z \mid s,a) = I(Z;D \mid s,a) + H(Z \mid s,a,D) = I(Z;D \mid s,a)$, as the second vanishes since $\psi$ is deterministic. For stochastic channels this preserves the $\varepsilon$ part $I(Z;\varepsilon \mid S,A)$ from before.
+  \end{enumerate}
+  \item With $(X,S,A,Z) \sim d^\pi(x,a)\,b(s \mid x)\,K(z \mid s,a)$ and $Z \perp X \mid (S,A)$,
+    \begin{align*}
+      H[p_\pi(Z)] = \underbrace{I(X;Z)}_{\text{regulation}} + \underbrace{I(A;Z \mid X)}_{\text{empowerment}} + \underbrace{I(S;Z \mid X,A)}_{\text{active perception}} + \underbrace{H(Z \mid S,A)}_{\text{channel noise}}.
+    \end{align*}
+  \begin{itemize}
+    \item \textbf{Active perception}, $I(S;Z \mid X,A) = \mathbb E_{(x,a) \sim d^\pi}\,\mathbb E_{s \sim b(\cdot \mid x)}\,\mathrm{KL}\big(K(\cdot \mid s,a)\,\|\,K(\cdot \mid x,a)\big)$, the part of the belief's uncertainty that is relevant to the regulated outcome. Reducing it is active perception only insofar as it sharpens the outcome law, for $X=S$ it is zero (similar to bisimulation).
+  \end{itemize}
+\end{itemize}
+
+
+\subsection{The Outcome Channel}
+
+
+\paragraph{What even is the channel or the outcome?}
+\begin{itemize}
+  \item The outcome $z \in \mathcal Z$ and the map $\psi$ are exogenous and good regulation is $\min_\pi H(Z)$ which is agnostic to their values.
+  \item The general channel is $K(z \mid s,a) = \sum_\varepsilon p(\varepsilon \mid s,a)\,\mathbf 1\{z = \psi((s,\varepsilon),a)\}$, with C\&A's map $\psi$ and the noise $\varepsilon$.
+  \item The seeming arbitrariness of the framework lives in the pair $(\psi, \mu)$. Entropy is label-blind, so $\psi$ matters only as a partition of $(s,a,\varepsilon)$ into preimages $\psi^{-1}(z)$ and $\mu$ as their volumes. The regulator then keeps the occupancy inside one large preimage.
+  \begin{itemize}
+    \item Manual preimage specification. These are our examples of the thermostat band and the CartPole upright region. The designer specifies the desired preimage manually, and a different band or finer resolution would give a different regulator.
+    \item Reward-to-noise preimage specification. The designer's reward fixes the partition into a binary class of quiet good and noisy bad. Here the volume $\mu(\mathcal G)$ specifies the grading, and varying $\mu$ reorders the same rewards.
+  \end{itemize}
+  \item The general reading of both examples is a desired behaviour defined on a grounding space $\mathcal Y$. The alphabet $\mathcal Z$ and the map $\psi$ are the designer's decision variables, chosen such that regulation of $z$ serves $\mathcal Y$.
+  \begin{itemize}
+    \item This implies that $\mathcal Y$ is exogenous while $\mathcal Z$ and $\psi$ are internal. Feedback from $\mathcal Y$ to $\mathcal Z$ entails a (lossy) change of measure, $\nu$ on $\mathcal Y$ and $\mu$ on $\mathcal Z$ for grounding or alignment by mapping good $y$ to large preimages with small volume $\mu$.
+  \end{itemize}
+\end{itemize}
+
+
+\paragraph{Outcome grounding}
+
+\begin{center}\vspace{-1mm}
+\tikzset{v/.style={inner sep=1pt, minimum size=5mm}, e/.style={-{Stealth[length=2mm]}}}
+\begin{tikzpicture}
+  \node[v] (D) at (0,0.75) {$D$};
+  \node[v] (S) at (1.6,0.75) {$S$};
+  \node[v] (A) at (1.6,-0.6) {$A$};
+  \node[v] (Z) at (3.4,0.1) {$Z$};
+  \node[v] (Y) at (7.4,0.1) {$Y$};
+  \draw[e] (D) -- (S); \draw[e] (S) -- (A);
+  \draw[e] (S) -- node[above right, font=\scriptsize, inner sep=1pt] {$\psi$} (Z); \draw[e] (A) -- (Z);
+  \draw[e] (Z) -- node[above, font=\scriptsize] {$g(y \mid z)$} (Y);
+  \node[font=\scriptsize, anchor=west] at ([xshift=2pt]Y.east) {$\nu = e^{-r_{\mathcal Y}}\lambda$};
+  \draw[e, dotted, thick] (Y.south) to[out=-100, in=-30] node[pos=0.5, below, font=\scriptsize] {pullback $\mu$} (Z.south east);
+  \foreach \i in {0,1,2,3} \fill[gray!50] (2.0+\i*0.22,-1.95) rectangle ++(0.15,0.5);
+  \draw[e] (2.95,-1.7) -- (3.65,-1.7);
+  \fill[red!60] (3.85,-1.95) rectangle ++(0.15,0.1);
+  \foreach \i/\h in {1/0.5,2/0.32,3/0.5} \fill[gray!50] (3.85+\i*0.22,-1.95) rectangle ++(0.15,\h);
+  \node[font=\scriptsize] at (2.4,-2.15) {counting, $H(Z)$};
+  \node[font=\scriptsize] at (4.25,-2.15) {$\mu$, $H_\mu(Z)$};
+  \draw[gray, densely dotted] (Z.south) -- (3.4,-1.3);
+\end{tikzpicture}\\[2mm]
+\parbox{\linewidth}{\footnotesize (c) Outcome grounding under error control. The regulated outcome $Z = \psi(S,A)$ is mapped to feedback $Y$ by $g$, and $\nu$ grades this feedback. Pulling $\nu$ back along $g$ gives each symbol a weight $\mu(z)$, which changes the uniform reference of $H(Z)$ such that good feedback is collected into a minimal good alphabet with low volume $\mu$, e.g., as shown by the short red bar which would be cheap to hold under the entropy criterion. Without the reweighting by $\mu$, the grading implied by $\nu$ would need $\mu(z)$ copies of each symbol, which would grow the alphabet with every grade.}
+\end{center}
+
+\begin{itemize}
+  \item The grounding through the $\mathcal Y$ and $\nu$ change of measure is necessary for aligning the entropy criterion to useful behaviour.
+  \item \textbf{$y$-sufficiency of $z$.}
+  Write the map from the regulated outcome to feedback as $g(y \mid z)$.
+  The best $\psi$ minimises $H(Z)$ subject to $I(Z;Y) = I(S,A;Y)$, so it keeps all the information $(s,a)$ carries about $y$ with the smallest alphabet.
+  \begin{itemize}
+    \item The feedback entropy $H(Y) = I(S,A;Y) + H(Y \mid S,A)$ is undesirable as $H(Y \mid S,A)$ is irreducible exogenous noise.
+    \item The first term is useful, $I(S,A;Y) = I(Z,S,A;Y) = I(Z;Y) + I(S,A;Y \mid Z)$ since $Z$ is a function of $(S,A)$. 
+    \item $I(Z;Y)$ is what the symbol alone predicts about the feedback.
+    \item \textbf{The gap} $I(S,A;Y \mid Z)$ is what $(s,a)$ predicts about $y$ within one preimage, zero iff $Y \perp (S,A) \mid Z$.
+  \end{itemize}
+  \item Thus, pushing the gap to zero creates the constraint $I(Z;Y) = I(S,A;Y)$ so that $z$ turns into a sufficient statistic for $y$ to the extent that $(s,a)$ have leverage, $\min H(Z)$ then preserves the feedback law with minimal symbols.
+  \item \textbf{Weigh good and bad.} The $y$-sufficiency of $z$ through $g$ preserves information on $y$ but does not say which $y$ is good. The weighting on $\mathcal Z$ based on $y$ can be done through the pullback $\mu(z) = \nu(\{y : g(y \mid z) > 0\})$ since good and bad feedback lives in the grounding channel. Holding $z$ then costs $\ln \mu(z)$, so small $\mu$ is good and large $\mu$ is bad as set by $\nu$.
+  \begin{itemize}
+    \item Recall that every entropy is measured against a reference measure, ours is uniform, $H[p_\pi(Z)] = \ln |\mathcal Z| - \mathrm{KL}(p_\pi \,\|\, \mathrm{Unif}(\mathcal Z))$.
+    \item Aligning feedback to the regulation replaces the reference by $\mu$, $H_\mu[p_\pi(Z)] = -\mathrm{KL}(p_\pi \,\|\, \mu) = H[p_\pi(Z)] + \mathbb{E}_{p_\pi(z)} [\ln \mu(z)]$.
+  \end{itemize}
+  \item Therefore the change of measure to $\mu$ gives the same entropy criterion minus an expected reward $r = -\ln \mu(z)$.
+  \item Without weights $\mu$, a reward must be expressed by copying every $z$ into $\mu(z) = e^{-r(z)}$ symbols, giving huge alphabets.
+  \item The reward $r(z) = -\ln \mu(z)$ can also be expressed in terms of the feedback, writing $\nu(dy) = e^{-r_{\mathcal Y}(y)}\,\lambda(dy)$ against a base measure $\lambda$ on $\mathcal Y$ gives $r(z) = -\ln \int_{g(y \mid z) > 0} \nu(dy)$. Below are two examples on how this would work in practice,
+  \begin{itemize}
+    \item DeepSea. Suppose a chain MDP of length $L$ where only one action sequence gives $y = 1$ and everything else $y = 0$. With $r_{\mathcal Y}(y) = y$, $\nu(1) = e^{-1} < \nu(0) = 1$, so the rewarded symbol has the smaller weight and is cheaper to hold.
+    \item CartPole. $y$ is the pole angle on $[-\pi,\pi]$ with Lebesgue $\lambda$ and $r_{\mathcal Y}(y) = 1$ inside the upright band $|y| < \theta_0$. The upright symbol $z_{\text{up}}$ gets $\mu = 2\theta_0 e^{-1}$, so its reward $1 - \ln 2\theta_0$ is the feedback reward plus a bonus for the narrowness of the band.
+    Outside the $\theta_0$ band the symbol $z_{\text{out}}$ gets $\mu = 2\pi - 2\theta_0$ and reward $-\ln(2\pi - 2\theta_0)$.
+  \end{itemize}
+  \item Two earlier examples bin $\mathcal Y$ ad-hoc with a quantiser $e: \mathcal Y \to \mathcal Z$ such that a $z$-weight is the $\nu$-size of its bin, $\mu(z) = \nu(e^{-1}(z))$.
+  \begin{itemize}
+    \item Thermostat. $y$ is the room temperature with $\nu(dy) = dy$, so the feedback reward is zero everywhere and a bin's reward is $-\ln$ of its width, therefore holding a narrow comfort band is cheap in terms of entropy (high reward).
+    \item Reward-to-noise. $y \in \{\text{good}, \text{bad}\}$ with $\nu(\text{good}) = 1$ and $\nu(\text{bad}) = N$, represented without weights by $N + 1$ symbols, one for good and $N$ noise copies for bad.
+  \end{itemize}
+\end{itemize}
+
+\paragraph{Entropy vs. Reward tradeoff in terms of Alphabets and Volumes}
+\begin{itemize}
+  \item As shown in our reward-to-noise example: Aligning $\psi$ and $\mathcal Z$ with reward seeking (conventional RL) rests on a trade-off between quiet and noise, i.e.\ when the noise is large enough to steer the agent into rewarding states.
+  \item On DeepSea of length $L$ with $N$ noise symbols, always-left has $H(Z) = \ln N$ and the rewarded policy $H_2(\tfrac1L) + \tfrac{L-1}{L}\ln N$, so the reward-seeking policy wins only if $\ln N > L\,H_2(\tfrac1L)$, i.e.\ $N > eL$, an alphabet size that grows with the horizon.
+  \item Under $\mu$, with criterion $H[p_\pi(Z)] - \mathbb E_{p_\pi}[r(Z)]$, the reward-seeking policy is preferred iff the reward it gains exceeds the entropy it spends. On DeepSea the reward-seeking policy is rewarded on one step of each length-$L$ episode, $p_\pi(z{=}1) = \tfrac1L$, so the reward gap must satisfy $r(1) - r(0) > L\,H_2(\tfrac1L)$, which holds whenever $r(1) - r(0) \ge \ln L + 1$.
+  \item \add{On realised feedback the volume criterion is $\min H_\nu(Y) = H_\lambda(Y) - \mathbb E[r_{\mathcal Y}]$, equivalently $\max \mathrm{KL}\big(p_\pi(y)\,\|\,e^{-r_{\mathcal Y}}/Z\big)$, so the optimum is a point mass on the best reachable $y$ and a scale $\beta$ on $r_{\mathcal Y}$ is the inverse temperature.}
+  \item \add{Risk is the entropy of the feedback and not the spread of its reward, a coin flip between rewards 10 and 10.1 costs $\ln 2$ exactly as one between 0 and 10, so the resolution of $\mathcal Y$ decides what counts as a different outcome.}
+  \item \add{For binary feedback the trade is $h_b(R) - R\,\Delta r$ with its hump at $R = 1/(1+e^{\Delta r})$, below which more expected reward is net negative, which is the discovery threshold read as risk aversion.}
+  \item \add{For continuous feedback under Lebesgue the penalty is differential entropy, $\tfrac12 \ln(2\pi e\,\sigma^2)$ for a Gaussian, so risk aversion is logarithmic in the spread and the band width is its worst case.}
+\end{itemize}
+
+\paragraph{Learning a channel without collapse --- Requisite Variety}
+\begin{itemize}
+  \item Suppose we learn $\psi_\theta: \mathcal S \times \mathcal A \rightarrow \mathcal Z$ without grounding, the criterion would map everything to one symbol s.t. $H(Z) = 0$.
+  \begin{itemize}
+    \item Good regulation needs requisite variety, we want the smallest $\psi$ whose variety lets actions counter disturbances.
+    \item Grounding tells us which distinctions this minimal $\psi$ must keep through $y$-sufficiency.
+    \item Grounding only works on the policy occupancy's support, exploration must observe the informative $y$ before regulation.
+  \end{itemize}
+  \item \textbf{Conclusion}: during learning $\psi$ must preserve controllable entropy until grounding dictates the requisite variety.
+  \begin{itemize}
+    \item Empowerment achieves this by keeping controllable information alive.
+    \item Bayesian exploration supplies the data that completes $y$-sufficiency.
+    \item For a $y$-sufficient $\psi$ grounding holds the requisite variety and empowerment can fade. 
+  \end{itemize}
+\end{itemize}
+
+\paragraph{Anti-collapse in the transient through empowerment}
+\begin{itemize}
+  \item For a non $y$-sufficient $\psi_\theta$, the end-to-end objective $\min H(Z)$ requires the constraint $I(A;Z|S) \ge C$, where $C$ are free bits.
+  \item Empowerment splits as $I(A;Z \mid S) = H(A \mid S) - H(A \mid S,Z)$ where $H(A \mid S, Z) \le \mathbb E_{s,a,z}[-\ln q(a \mid s,z)]$.
+  \begin{itemize}
+    \item The first term is the policy entropy, $H(A \mid S) = \mathbb E_{s}[H(\pi(\cdot \mid s))]$.
+    \item The second, $H(A \mid S,Z) = \mathbb E_{s,a,z}[-\ln q(a \mid s,z)] - \mathbb E_{s,z}\,\mathrm{KL}\big(p(\cdot \mid s,z) \,\|\, q(\cdot \mid s,z)\big)$, with $q$ a variational action posterior.
+  \end{itemize}
+  \item Under a deterministic $\pi$, $H(A \mid S) = 0$ and thus $I(A;Z|S) = 0$ making the constraint infeasible for $\theta$.
+  \item Thus, the constraint is joint over $(\pi,\theta, q)$ with the program, $\min_{\pi,\theta, q} \max_{\lambda \ge 0} H(Z) - \lambda H(A \mid S) - \lambda\,\mathbb E_{s,a,z}[\ln q(a \mid s,z)] + \lambda C$
+  \begin{itemize}
+    \item Written out fully, we can see that $\theta$ enters only through $K_\theta(z \mid s,a) = \mathbb E_\varepsilon\,\mathbf 1\{z = \psi_\theta((s,\varepsilon),a)\}$,
+    \[
+      \min_{\pi,\theta,q} \max_{\lambda \ge 0}\; H[p_\pi(z)] - \lambda\,\mathbb E_{s \sim d^\pi}\big[H(\pi(\cdot \mid s))\big] - \lambda\,\mathbb E_{s \sim d^\pi,\, a \sim \pi(\cdot \mid s)}\,\mathbb E_{z \sim K_\theta(\cdot \mid s,a)}\big[\ln q(a \mid s,z)\big] + \lambda C,
+    \]
+    with $\varepsilon$ the irreducible noise, so the inner expectation is $\mathbb E_\varepsilon[\ln q(a \mid s,\psi_\theta((s,\varepsilon),a))]$.
+    \item Note that the constraint holds over $d^\pi$ on average but not necessarily locally, e.g., $\pi$ can be deterministic at some states.
+  \end{itemize}
+  \item As the support of $y$ gets observed and represented by $\theta$, $y$-sufficiency allows $C \to 0$ and $\pi$ may become fully deterministic.
+\end{itemize}
+
+\paragraph{Anti-collapse through exploration and the channel posterior}
+\begin{itemize}
+
+  \item \add{The posterior is over the feedback law $p(y \mid s,a)$ of unvisited rows, and $\psi$ and $g$ follow from it as the quotient by feedback law and the law on each class.}
+  \item \add{A row's cost $H(p(\cdot \mid s,a)) - \bar r(s,a)$ is a smooth functional of its law, so a Beta or Dirichlet posterior gives it a posterior, which the support pullback does not have.}
+  \item \add{Under the predictive law all unvisited rows share the prior, so $y$-sufficiency merges them into one unexplored symbol, worth an occupancy share $w$ iff $h_b(w\bar\rho) < w\bar\rho\,\Delta r$ for prior hit rate $\bar\rho$, for small $w$ iff $\Delta r > 1 + \ln(1/(w\bar\rho))$, the DeepSea condition with $w = 1/L$ plus $\ln(1/\bar\rho)$ for the prior.}
+  \item \add{The predictive channel pays the mixture entropy $I(\theta;Y)$ and explores only through prior optimism, a sampled channel does not, which is the predictive versus Thompson choice of the learner note.}
+  \item \add{DeepSea at $L = 20$ fails on the hidden action map and not on the feedback law, so it tests a posterior over $P$ and not this one.}
+  \item \add{When $y$ is delayed or latent the posterior is over the feedback behind $z$ and enters through the pullback, the case the grounding architectures cover.}
+\end{itemize}
+
+
+
+
+
+
+
+\section{\add{REVISION TO Y}}
+
+\paragraph{\add{Premise.}}
+\begin{itemize}
+  \item \add{The control objective is $\min H_\nu(Y) = H_\lambda(Y) - \mathbb E[r_{\mathcal Y}]$ on observed feedback, so the volume criterion is entropy-regularised reward on the feedback.}
+  \item \add{$\psi$ is the model and not the objective's variable, the minimal $y$-sufficient statistic of $(s,a)$, which recovers C\&A's deterministic map.}
+  \item \add{All randomness sits in $g(y \mid z)$, which is exogenous, so the stochastic channel $K$ to $z$ is only needed as the belief-marginalised channel under partial observation.}
+  \item \add{The pullback $\mu$ is the deterministic-feedback special case and the device for latent, internal or delayed feedback, where $Z$ carries the criterion.}
+  \item \add{Caveat, this is a strict subcase that assumes a stationary feedback law and a well observed state, under partial observation a residual belief entropy about $z$ remains as a permanent floor.}
+\end{itemize}
+
+\paragraph{\add{Derivation.}}
+\add{Start from the grounded objective on $Z$, $H_\mu(Z) = H(Z) + \mathbb E[\ln \mu(Z)]$ with the pullback $\mu(z) = \nu(B_z)$, and use Gibbs' identity $\ln \mu(z) = \max_{g} \big[H_\lambda(g) - \mathbb E_g[r_{\mathcal Y}]\big]$ over laws on $B_z$, attained at the Boltzmann law $\nu_z \propto \nu$ on $B_z$, evaluated at the actual feedback law $g(\cdot \mid z)$,
+\begin{align*}
+  H_\mu(Z) &= H(Z) + \mathbb E_z\big[H_\lambda(g(\cdot \mid z)) - \mathbb E_{g}[r_{\mathcal Y}]\big] + \mathbb E_z\,\mathrm{KL}\big(g(\cdot \mid z)\,\|\,\nu_z\big) \\
+           &= H(Z) + H(Y \mid Z) - \mathbb E[r_{\mathcal Y}] + \mathbb E_z\,\mathrm{KL}
+            = H_\nu(Y) + H(Z \mid Y) + \mathbb E_z\,\mathrm{KL}\big(g(\cdot \mid z)\,\|\,\nu_z\big),
+            \quad H_\nu(Y) = H_\lambda(Y) - \mathbb E[r_{\mathcal Y}].
+\end{align*}
+The pullback charges each symbol as if its feedback were Boltzmann on its support, the KL term is that worst-case gap, zero for deterministic feedback and for a band with constant reward, and it mis-grades stochastic rows.
+Dropping it gives the objective $J = H_\nu(Y) + H(Z \mid Y) = H(Z,Y) - \mathbb E[r_{\mathcal Y}]$, the pullback of the pair $(Z,Y)$ with $\mu(z,y) = e^{-r_{\mathcal Y}(y)}$, and the rest follows,
+\begin{align*}
+  \min_{\pi,\theta} J &\;\;\text{s.t.}\;\; I(S,A;Y \mid Z) = 0,\;\; I(A;Z \mid S) \ge C, \\
+  H_\nu(Y) &= \mathbb E_{d^\pi} H\big(p(\cdot \mid s,a)\big) + I(S,A;Y) - \mathbb E_{d^\pi}[\bar r(s,a)]
+     \quad\text{depends on } \pi \text{ only}, \\
+  I(S,A;Y \mid Z) &= H(Y \mid Z) - H(Y \mid S,A) \le \mathbb E[-\ln g_\phi(y \mid z)] - H(Y \mid S,A)
+     \quad\text{for any decoder, equality at the true law}, \\
+  I(A;Z \mid S) &= H(A \mid S) - H(A \mid S,Z) \ge H(A \mid S) + \mathbb E[\ln q(a \mid s,z)]
+     \quad\text{for any inverse model}, \\
+  \min_{\pi,\theta,\phi,q}\max_{\lambda,\lambda' \ge 0}\;
+    & H_\nu(Y) + H(Z \mid Y)
+      + \lambda\big(\mathbb E[-\ln g_\phi(y \mid z)] - H(Y \mid S,A)\big)
+      - \lambda'\big(H(A \mid S) + \mathbb E[\ln q(a \mid s,z)] - C\big), \\
+  H(Z \mid Y) &= H(Z) - I(S,A;Y) \;\text{ at sufficiency, so } \;
+    \min_\theta H(Z) + \lambda\,\mathbb E[-\ln g_\phi(y \mid z)] \;\text{ is the } \theta \text{ part}, \\
+  I(A;Z \mid S) &\ge I(A;Y \mid S) \;\text{ at sufficiency, so } C \to 0.
+\end{align*}
+All expectations are under $d^\pi(s)\,\pi(a \mid s)\,p(y \mid s,a)$ with $z = \psi_\theta(s,a)$.}
+
+\paragraph{\add{What survives.}}
+\begin{itemize}
+  \item \add{$y$-sufficiency becomes the primary loss and a program, $\min_\theta H(Z) + \lambda\,\mathbb E[-\ln g_\phi(y \mid z)]$, the decoder bounding the gap, symmetric to the empowerment program and of information-bottleneck form.}
+  \item \add{Empowerment survives as the floor under approximate sufficiency, as the only anchor in the latent and internal cases, and on $Y$ as the term $I(A;Y \mid S)$ the policy pays down.}
+  \item \add{Where feedback is observed and a posterior is present, sufficiency to the predictive law never collapses $\psi$, so the $C$ bits may be redundant there, a derivation still to test on known dynamics.}
+  \item \add{Requisite variety stays the conclusion, grounding holds the variety where $y$ is observed and empowerment where it is not.}
+  \item \add{Exploration is the posterior over $p(y \mid s,a)$, entering as predictive mean, as a Thompson draw, or through the belief occupancy, which is the POMDP occupancy with $\theta$ as a hidden state that does not move.}
+  \item \add{Risk is the entropy of the feedback and not the spread of its reward, with the hump of $h_b(R) - R\,\Delta r$ as the discovery threshold.}
+\end{itemize}
+
+\paragraph{\add{Roles of $Z$ and $Y$.}}
+\begin{itemize}
+  \item \add{$Y$ is what is regulated, the only observable the environment gives, so the control objective lives on $Y$ and can be stated there alone, $H_\nu(Y) = \big[I(Y;S,A) - \mathbb E[r_{\mathcal Y}]\big] + H(Y \mid S,A)$, risk-neutral control plus the spread charge, both set by $\pi$ through the rows it visits.}
+  \item \add{$Z$ is what regulates, a deterministic function of $(s,a)$ that indexes the law $p(y \mid s,a)$ where a sample $y$ cannot, noise is why $Z$ and $Y$ are different objects and with deterministic feedback $z$ may be $y$ itself.}
+  \item \add{The objective never asks for $Z$, under sufficiency $I(Y;S,A) = I(Y;Z)$ and $H(Y \mid S,A) = H(Y \mid Z)$, so $Z$ is the statistic the $Y$ objective silently assumes, the thing that must be learned to evaluate it.}
+  \item \add{$Z$ earns its place in the transient, it holds the model a regulator must contain, hosts the variety floor the agent can impose on its own channel but not on $y$, and carries the prediction when feedback is delayed or sparse.}
+  \item \add{Neither can be dropped and neither is preferred, $H_\mu(Z)$ and $H_\nu(Y)$ are one number once $Z$ is sufficient, write it on $Y$ when the claim is about control and on $Z$ when the claim is about what a regulator must model.}
+\end{itemize}
+
+\paragraph{\add{Corrected weight.}}
+\add{The support pullback $\mu(z) = \nu(B_z)$ grades a symbol by the feedback it can reach, the corrected weight grades it by the feedback it produces,
+\begin{align*}
+  \ln \mu(z) = H_\lambda\big(g(\cdot \mid z)\big) - \mathbb E_{g(\cdot \mid z)}[r_{\mathcal Y}], \qquad
+  \ln \nu(B_z) = \ln \mu(z) + \mathrm{KL}\big(g(\cdot \mid z)\,\|\,\nu_z\big).
+\end{align*}
+Under it the KL term of the bridge is identically zero and $H_\mu(Z) = H_\nu(Y) + H(Z \mid Y)$ exactly, deterministic feedback gives back $e^{-r}$, and a row that is good with probability $p$ costs $h_b(p) - p\,\Delta r$ instead of the sure-bad weight.
+The weight needs the law $g(\cdot \mid z)$ and not only its support, so it is policy independent exactly when the law is constant on each symbol, which is $y$-sufficiency, and in learning it is read off the posterior over the law.}
+
+\paragraph{\add{Two halves and the hyperstate.}}
+\add{Write the objective as the pair and split each half on its own coordinate, with the hyperstate $\tilde S = (S, \theta, \phi, W)$, history $X$ including past feedback, $z = \psi_\theta(s,a)$ and $y \sim g_\phi(\cdot \mid z)$,
+\begin{align*}
+  J &= H(Z) + H(Y \mid Z) - \mathbb E[r_{\mathcal Y}], \\
+  H(Z) &= \underbrace{I(X;Z)}_{\text{regulation}} + \underbrace{I(A;Z \mid X)}_{\text{empowerment}} + \underbrace{I(W;Z \mid X,A)}_{\text{dynamics learning}} + \underbrace{I(S;Z \mid X,A,W)}_{\text{state perception}} + \underbrace{I(\theta;Z \mid X,A,S,W)}_{\text{partition learning}}, \\
+  H(Y \mid Z) - \mathbb E[r_{\mathcal Y}] &= \underbrace{I(\phi;Y \mid Z)}_{\text{law learning}} + \underbrace{H(Y \mid Z,\phi)}_{\text{noise}} - \mathbb E[r_{\mathcal Y}], \qquad \text{all cross terms zero under sufficiency.}
+\end{align*}
+Both halves were checked numerically on random joints with this structure.}
+\begin{itemize}
+  \item \add{The $Z$ half has no noise term because $\psi$ is deterministic, the $Y$ half carries the noise and the reward once, and with $\phi$ known the $Y$ half is $\mathbb E[-\ln \mu(Z)]$ under the corrected weight.}
+  \item \add{Dynamics learning has no one-step signature in $H(Y)$, it enters only through the next state and the occupancy, which is why DeepSea at $L = 20$ is invisible to any entropy of feedback.}
+  \item \add{The predictive mean charges $I(\phi;Y \mid Z)$ at the same rate as the noise, a belief planner separates them and prices law learning as an investment.}
+  \item \add{$\theta$ ignores the noise, $\phi$ models it, $\pi$ pays it, the floor $C$ sits with $\theta$.}
+  \item \add{$\psi$ stays deterministic, the only stochasticity in learning is the posterior over $\theta$, and a stochastic $\psi$ is useful uncertainty when its spread shrinks per row with the data at that row and tempering when it decays on a schedule.}
+  \item \add{The noise splits by what it still depends on, state but not action stays in regulation and is steered by occupancy, predictable from history is epistemic and removed by the belief, independent of everything is the floor $H(Y \mid Z,\phi)$ paid by $\pi$.}
+\end{itemize}
+
+\paragraph{\add{Learning inside the objective.}}
+\begin{itemize}
+  \item \add{Past feedback enters the history, so $Y$ feeds back to the regulator only through $X$ and the belief is the missing arrow of the diagram.}
+  \item \add{With the drift kernel in the hyperstate the outer regulator is the belief MDP itself, the posterior is a tool and not a regulated variable, and what stays outside is misspecification only, the calibration gap $\mathbb E\,\mathrm{KL}(q \,\|\, p_b)$ which no evaluation under the model's own predictive can see, the freedom to depart from Bayes' rule, and dynamics learning valued directly rather than through the occupancy.}
+  \item \add{Realised surprise $-\ln p_b(y \mid x,a)$ has expectation $H(Y \mid X,A)$ under the model, the last five terms of the split, and exceeds it by the calibration gap under the true law, so it is the diagnostic that grounds the belief and not a second objective.}
+  \item \add{Under a correct prior a Bayes-optimal regulator can stop searching with positive probability and stay wrong forever, Rothschild 1974, and that is correct under the grounded objective, below $\Delta r_{\mathrm{disc}}$ never visiting the treasure is not regret.}
+  \item \add{Posterior sampling keeps the same belief and changes the decision rule to a draw, it buys a per-instance regret guarantee by giving up prior optimality and is a downward step from belief planning, not a baseline.}
+  \item \add{Conjecture, above the threshold with known $P$ the problem is a finite-arm search with a bounded objective and the Bayesian regret argument transfers with the spread charge making the agent conservative but not inconsistent.}
+  \item \add{Under stationarity the posterior holds the variety itself and $C \to 0$, under drift the stationary value of $C$ is the entropy rate of the drift, requisite variety stated for the hypothesis space, and a deterministic regulator with $C = 0$ cannot register that its circumstances changed.}
+  \item \add{The stationarity caveat is a tower, each level buys stationarity one level up, the regress stops where the regulator stops modelling and the unmodelled variety is paid as a floor.}
+\end{itemize}
+
+\paragraph{\add{Against expected free energy.}}
+\add{With a preference $\tilde p \propto e^{r}$ in place of $\nu$ and one step,
+\begin{align*}
+  H_\nu(Y) = H(Y) - \mathbb E[r] = I(S;Y) + H(Y \mid S) - \mathbb E[r], \qquad
+  G = \mathrm{KL}\big(q(y)\,\|\,\tilde p\big) + \mathbb E_s H(Y \mid s) = -I(S;Y) - \mathbb E[r].
+\end{align*}
+Same measure, same sign on the noise, opposite sign on the marginal and so on every information term, they seek information and we spend it, which is why incomplete learning is a feature here and a bug there.
+The identity is a chain rule and not a contribution, the arrangement is, all information terms as positive summands of the grounded feedback entropy on the occupancy with the two halves separated by sufficiency, and the honest grade is new as a combination with Friston 2015, Hafner 2020 and the information bottleneck as named neighbours.}
+
+\paragraph{\add{Experiments, one environment per term.}}
+\begin{itemize}
+  \item \add{Colour grid with per-cell noise, the agent settles in the cell whose colour is most concentrated under $\nu$, a stable dull colour beating a bright flickering one, coarse-to-fine partitioning shows $Z$ and sufficiency, a mostly-one-colour cell shows the corrected weight against the support pullback, regulation and the $Y$ half.}
+  \item \add{CartPole with the band, continuous $\lambda$, volume as band width and the logarithmic risk, the measure.}
+  \item \add{DeepSea in three stages with known $P$ and $\psi$ the identity, first the one-treasure search solved exactly over the $2^L$ reachable beliefs with the search order, the threshold and incomplete learning against Thompson, second a Beta per column for the spread charge, third a moving treasure with an HMM filter where assumed hazard zero collapses and the best assumed hazard tracks the true one, active perception and learning.}
+  \item \add{Dark room as the colour grid with drift, the stable colour moves, without $C$ the agent sits in a cell that is no longer stable and cannot tell, with $C$ it notices, and realised surprise against predictive entropy shows the gap, empowerment and the outer level.}
+  \item \add{Noisy TV is a cell with maximal colour entropy and is charged rather than rewarded by construction, one sentence and no experiment.}
+\end{itemize}
+
+\paragraph{\add{Derivation in the $\kappa$ frame.}}
+\add{Their table is $\psi((s,\varepsilon),a)$ on the full state, the regulator sees $s$ and the marginal over $\varepsilon$ is the kernel $K(z \mid s,a) = \mathbb E_\varepsilon \mathbf 1\{\psi((s,\varepsilon),a) = z\}$.
+Let $\kappa(s,a) := K(\cdot \mid s,a)$ be that law read as a point of the simplex, so $K(z \mid s,a) = \kappa(s,a)(z)$, and let $\tilde Z = \kappa(S,A)$ be the regulator's class, with $\rho$ a reference measure on classes, counting when they are discrete, so that every entropy below carries its measure as a subscript and the mutual informations carry none.
+The unknowns are the functionals $\kappa$ and $P$, static under the prior, the history $X$ holds past observations, actions and feedback, and all expectations are under the Bayesian joint $p(\kappa,P)\,d^\pi(x,a)\,b(s \mid x,P)\,\kappa(s,a)(z)$.
+The goal set enters as a measure on events.
+Their $G$ under a resolution $\lambda$, the base measure that says which events count as the same, is the measure that keeps $\lambda$ on $G$ and inflates it off $G$, $\nu = \lambda$ on $G$ and $\nu = e^{\Delta r}\lambda$ on $G^c$ with $\Delta r \to \infty$ for a hard goal, so that bad events carry the large volume, and in general $\nu$ is any measure on $\mathcal Z$ absolutely continuous with respect to $\lambda$.
+Its density against the resolution defines $r := -\ln(d\nu/d\lambda)$, so $\nu(dz) = e^{-r(z)}\lambda(dz)$ is not a Boltzmann assumption but the way any measure is written against a resolution, $r$ is a log volume, $\Delta r = \ln N$ is a ratio of volumes, and reward is only the name a control reader gives it.
+For a law $p$ on $\mathcal Z$ write $H_\lambda(Z) := -\int p \ln \tfrac{dp}{d\lambda}$ for its entropy relative to the resolution and $H_\nu(Z) := -\int p \ln \tfrac{dp}{d\nu}$ for its entropy relative to the goal measure, the same functional with $\lambda$ replaced by $\nu$, Jaynes' invariant form, and since $\tfrac{dp}{d\nu} = \tfrac{dp}{d\lambda}\tfrac{d\lambda}{d\nu} = \tfrac{dp}{d\lambda} e^{r}$ the two differ by $\mathbb E_p[r]$.
+The criterion is $\min_\pi H_\nu(Z)$ for $Z \sim p_\pi(z) = \sum_{s,a} d^\pi(s,a)\,\kappa(s,a)(z)$, the events under the occupancy, and the derivation is
+\begin{align*}
+  H_\nu(Z) &= H_\lambda(Z) - \mathbb E[r(Z)] && \tfrac{dp}{d\nu} = \tfrac{dp}{d\lambda} e^{r} \\
+           &= H_\rho(\tilde Z) + H_\lambda(Z \mid \tilde Z) - H_\rho(\tilde Z \mid Z) - \mathbb E[r(Z)] && \text{chain rule on } (\tilde Z, Z), \text{ both orders} \\
+           &= H_\rho(\tilde Z) + \mathbb E\big[H_\lambda(\tilde Z) - \mathbb E_{\tilde Z}[r]\big] - H_\rho(\tilde Z \mid Z) && Z \sim \tilde Z \text{ given } \tilde Z \\
+           &= H_\rho(\tilde Z) + \mathbb E[\ln \mu(\tilde Z)] - H_\rho(\tilde Z \mid Z) =: H_{\mu\rho}(\tilde Z) - H_\rho(\tilde Z \mid Z) && \ln \mu(q) := H_\lambda(q) - \mathbb E_q[r] \\
+           &= \scalebox{0.92}{$\displaystyle \underbrace{I(X;\tilde Z)}_{\text{regulation}} + \underbrace{I(A;\tilde Z \mid X)}_{\text{empowerment}} + \underbrace{I(S;\tilde Z \mid X,A)}_{\text{perception}} + \underbrace{I(\theta;\tilde Z \mid X,A,S)}_{\text{law learning}} + \mathbb E[\ln \mu(\tilde Z)] - H_\rho(\tilde Z \mid Z)$} && \theta = (P,\kappa).
+\end{align*}
+The last line is the chain rule on $H_\rho(\tilde Z)$ with residual $H_\rho(\tilde Z \mid X,A,S,\theta) = 0$ because $\tilde z = \kappa(s,a)$ is a function of its conditions.
+The measure $\rho$ appears in $H_\rho(\tilde Z)$ and $H_\rho(\tilde Z \mid Z)$ alike and cancels in the criterion, so $\lambda$ enters only inside $\mu$, where $\ln \mu(q) = H_\lambda(q) - \mathbb E_q[r]$ is the free energy of a law under $\nu$.
+So the regulator minimises $H_{\mu\rho}(\tilde Z) = H_\rho(\tilde Z) + \mathbb E[\ln \mu(\tilde Z)]$, the entropy of its classes relative to $\mu\rho$, every term of which it computes from $\kappa$, and this is an upper bound on the criterion with slack $H_\rho(\tilde Z \mid Z)$, the classes the realised event does not identify, zero for deterministic feedback and otherwise left open.
+If $H_\rho(\tilde Z) = 0$ every term on the right is zero and the criterion is $\ln \mu(\tilde z^\star)$ of the one class visited.
+The four terms live on the regulator's side in $\tilde Z$, their twins in $Z$ are smaller by data processing since $Z$ is drawn from $\tilde Z$, and the noise sits in those gaps and in $\mu$, never as a summand.
+$P$ contributes nothing to the last term given $S$ since $Z \perp P \mid (S,A,\kappa)$, it enters through the belief $b(s \mid x,P)$ in the perception term and through the occupancy, and when the state is observed the perception term is zero.
+The pullback is the single function $\mu$ on the simplex, the free energy of a law under $\nu$, and $\kappa$ carries it to rows.}
+
+\paragraph{\add{Attention points per paragraph.}}
+\begin{itemize}
+  \item \add{Fixed-point reading, Objective properties. Unchanged with $Z$ read as $Y$, the fixed-point reward becomes $\mathbb E_{p(y \mid s,a)}[\ln p_{\pi^\star}(y) + r_{\mathcal Y}(y)]$.}
+  \item \add{Framework interpretation, Channel noise. Unchanged, $\varepsilon$ is now the feedback noise in $g$ and the floor is $H(Y \mid S,A)$, paid by $\pi$.}
+  \item \add{Outcome space. State that the reward-to-noise construction is the realised-feedback channel, with $F(R) = h_b(R) - R\,\Delta r$ under volumes.}
+  \item \add{POMDP extension. Add that $\psi$ stays on $(s,a)$ while the channel to $z$ marginalises the belief, that delayed feedback is a hidden state, and that the residual belief entropy is a permanent floor.}
+  \item \add{What does the regulator lower. The decomposition applies to $Y$, with $I(A;Y \mid S)$ the empowerment the policy pays down.}
+  \item \add{What even is the channel. The decision variables are $\psi$ as model and the resolution of $\mathcal Y$, which sets what counts as a different outcome.}
+  \item \add{Outcome grounding. The main rewrite, the pullback demoted to the deterministic-feedback and latent cases, the mixed-row failure of support grading noted, bands as the worst case of $H_\lambda(g)$.}
+  \item \add{Alphabets and volumes. Already $H_\nu(Y)$, say so, the DeepSea thresholds are unchanged.}
+  \item \add{Learning a channel without collapse, Anti-collapse. Re-anchor the conclusion and the opening bullet to the latent case and the approximate-sufficiency floor, the program is unchanged.}
+  \item \add{Instantiation. Grounding architectures become the scope statement, the pullback-assumption bullet is rewritten to the Gibbs reading.}
+  \item \add{Experiments. The volume rerun is the $Y$ objective, $L = 20$ is a dynamics test, a known-dynamics task for the feedback posterior is missing.}
+\end{itemize}
+
+\section{Instantiation}
+
+% MDP framing
+% POMPDP framing
+% Learning the channel/ empowerment or action-sufficiency to prevent learning collapse of the channel
+
+
+\paragraph{\add{Grounding architectures.}}
+\begin{itemize}
+  \item \add{Grounding replaces the anchor whenever $z$ is observed.}
+  \begin{itemize}
+    \item \add{$z$ observed, $\psi$ exogenous. $\theta$ fits $K_\theta$ by forward MLE, $\min_\theta \mathbb E_{(s,a,z) \sim d^\pi K}[-\ln K_\theta(z \mid s,a)]$, collapse is impossible. The inverse model is Bayes, $p(a \mid s,z) \propto \pi(a \mid s)\,K_\theta(z \mid s,a)$, not a separate loss.}
+    \item \add{$z$ latent, proxies $y \sim g(\cdot \mid z)$ with $g$ fixed. The loss for $\psi$ is $I(Z;Y)$ alone, a decoder $q(y \mid z)$ fit by cross-entropy, while the inner objective stays $\min_\pi H(Z)$. $\theta$ is identified up to the partition $g$ resolves, which by label invariance costs nothing.}
+    \item \add{$z$ internal, the true outcome $y$ never seen. The agent regulates $z$ and fits $K$, proxies enter through $s$. $y$ grounds $\psi$ only in the outer loop, viability selects $\psi$ once per lifetime. Open.}
+  \end{itemize}
+  \item \add{Outer-loop structure. Encoder as posterior over $z$, decoder as grounding $g(y \mid z)$, transition $K_\theta$. Regulation trains $\pi$ only, stop-gradient into the encoder, else the reconstruction weight is $c$ under another name. Reconstruction keeps variance no action moves, so selecting a regulable $z$ needs the controllable and disturbed prior.}
+\end{itemize}
+
+\paragraph{\add{What model it needs.}}
+\begin{itemize}
+  \item \add{Successor features of the outcome avoid relearning when $q$ changes, and $P$ is never needed.}
+  \item \add{The pullback $\mu(z)$ assumes $r_{\mathcal Y}$ is known on the whole set of $y$ behind $z$, which holds for a designed band but not for an agent that sees only visited $y$.
+    The Gibbs bound $-\ln \mu(z) \le \mathbb E_{g(\cdot \mid z)}[r_{\mathcal Y}] - H_\lambda(g(\cdot \mid z))$ needs reward only at visited $y$, and the posterior supplies it for unvisited $z$.}
+\end{itemize}
+
+
+
+\section{Experiment Setup}
+
+\paragraph{7. Evidence.} Illustrations only: maze with a small and a large goal, DeepSea, cart-pole swing-up.
+
+\section{Extensions}
+
+Predictability of agents. i.e., trajectory level entropy. Learner itself as a regulator (meta-level). 
+
+\add{Which $\psi$ is a posterior under a viability channel $v$, graded, not survival alone, else everything visited looks safe.} 
+
+
+\add{Cost through the reference measure. Reweighting $d\mu' = e^{c}\,d\mu$ gives $H_{\mu'} = H_\mu + \mathbb E_{p_\pi}[c]$, a cost $c(z)$ without touching $\psi$, the objective stays concave, homeostatic RL becomes an instance.}
+
+% \paragraph{\add{Beyond the occupancy.}}
+% \begin{itemize}
+%   \item \add{Over histories, $\min_\pi H(Z_{1:T})$ is Bellman on $(s, \text{summary of } z_{<t})$ with reward $\ln q(z_t \mid z_{<t})$.}
+%     \add{\textbf{[check convexity]}}
+%   \item \add{This is predictability from the past, and the model becomes $q(z_t \mid z_{<t})$, a predictor of its own outcomes.}
+% \end{itemize}
+
+% \paragraph{5. The learner is itself a regulator.}
+% \begin{itemize}
+%   \item Apply the same picture one level up: the system is the unknown environment $S = \theta = (P,K)$, the action is a whole policy $A = \pi$, the outcome is $Z \sim p_\pi$, with time inside the channel. The optimal learner acts on its belief, the gooder regulator.
+%   \item Fitting $q$ to pooled data (empirical Bayes, MM) misses the term $I(Z;k)$. Open: is Thompson sampling's randomness Conant and Ashby's ``unnecessary complexity''? Testable on DeepSea.
+% \end{itemize}
+
+
+\paragraph{Connections}
+\add{Model-free is the least an agent must learn to reach the optimum, so a greedy Q-function is a model for Conant and Ashby and model-free for RL.} \add{Conversely, in the good-regulator framework: Counting $q$ from observed outcomes is model-free because it is minimal to suffice the criterion; computing it by planning with $\hat P$ would then be model-based.}
+
+Control as inference, zoomed out.
+\begin{itemize}
+  \item Let the optimality variable $O$ take values in the outcome alphabet $\mathcal Z$ with law $K$, not just $\{0,1\}$. Control as inference is then one inference step, at a frozen $q$, inside our loop.
+  \item CaI conditions on a fixed event; we count outcomes, per step or as the sequence $Z_{1:T}$, which also makes the path predictable.
+  \item empowerment also recovers a cai posterior term $q(a|s,z)$.
+\end{itemize}
+\add{Klyubin's empowerment is the held capacity $C(s) = \max_p I_p(A;Z \mid S{=}s)$, the most $Z$ could depend on $A$ at $s$, untouched by the objective, while $I(A;Z \mid S)$ at $\pi$ is the spend.}
+
+
+\end{document}
+
+

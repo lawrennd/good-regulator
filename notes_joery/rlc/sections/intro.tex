@@ -1,0 +1,46 @@
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[Introduction]{Introduction}\label{sec:intro}
+
+Autonomous agents are increasingly deployed in the world, from software agents acting in cyberspace \citep{Jimenez-swebench24,Yang-sweagent24,Zhang-cybench25} to robots and self-driving cars \citep{Kober-reinforcement13,Kiran-deep22}.
+Reinforcement learning (RL) is a key ingredient for such agents, yet efficient and reliable algorithms remain an open problem.
+Every algorithm abstracts the world through assumptions, such as a Markov state, a given reward or a stationary environment, yet real systems tend to break several of these assumptions simultaneously \citep{Dulac-Arnold-challenges21}.
+So far, most of RL builds on the dynamic programming foundation of \citet{Bellman-dynamic57} or on policy gradients \citep{Williams-simple92,Sutton-policy00}, and each broken assumption has met extensions that increase algorithm complexity to counter that of the world.
+As RL scales up to the real world, this complexity compounds and it becomes increasingly important to revisit ideas and ask which recipes give effective but also more manageable solutions for when assumptions break.
+
+
+The good regulator of \citet{Conant-good70} is an alternative recipe from cybernetics that frames control as both an objective and a modelling problem.
+A regulator acts on a system so as to leave minimal entropy in an outcome law, and the simplest regulator that achieves this must be a model of that system.
+The criterion thus asks for the coarsest map $\pi$ from states to actions that minimises this entropy.
+An overly abstract model merges states the outcome depends on and leaves residual entropy, while one that is too granular doesn't lower entropy but at worst spreads the outcome law.
+
+
+Convex RL \citep{Zahavy-reward21,Mutti-convex23} provides a unifying language to formulate such criteria as losses on the occupancy $\occ \in \Delta(\Scal \times \Acal)$, which is the long-run distribution over states $s \in \mathcal S$ and actions $a \in \mathcal A$ as an agent's policy $\pi: \mathcal S \rightarrow \mathcal A$ is deployed in a Markov decision process (MDP).
+We propose that the good regulator fits in this frame as the concave program:
+\begin{equation*}
+  \underbrace{\min_{\pi}\ \langle \occ, -r \rangle}_{\text{conventional RL}}
+  \qquad\qquad
+  \underbrace{\min_{\pi}\ F(\occ)}_{\text{convex RL}}
+  \qquad\qquad
+  \underbrace{\min_{\pi}\ H_\nu(\psi_\# \occ)}_{\text{good regulator}}
+\end{equation*}
+where $r \in \mathbb R^{\Scal \times \Acal}$ is a reward, $F$ is convex, and $H_\nu$ is the entropy of the outcome law $\psi_\# \occ$ under a measure $\nu$.
+We thus frame the good regulator as an instance of $F$ under a pushforward $\psi_\#$ of the occupancy $\occ$ to a deterministic outcome law $p_\pi(Z) = \psi_\# d^\pi$.
+The resulting optimization rewards the agent by its own outcome law to hold it stably, as this minimizes the surprise in observed $Z$.
+
+
+Solutions to our recipe must be both sufficient and minimal, and hence predictable.
+This implies a form of robustness that makes autonomous agents easier to audit and manage.
+The main obstacle is that minimising entropy alone leads to the dark room problem, a trivial but perfectly predictable outcome law that achieves nothing \citep{Friston-dark12, Berseth-smirl21}.
+This obstacle exists on two levels, the outcome level (e.g., what reward is observed) and the learning level (e.g., what hypothesis on the reward is assumed).
+We resolve the outcome level through a change of measure from $\lambda$ to a goal measure $\nu$ under which to evaluate the entropy, which prevents the dark room by tying predictability to good outcomes.
+The learning level is mitigated through an information floor on combined mutual information terms of the agent's model to the imposed outcome law.
+These mutual information terms reveal a decomposition of the entropy into well-known empowerment \citep{Klyubin-all05, Ivashkov-smwm26} and active learning and perception \citep{MacKay-informationbased92, Bajcsy-active88} terms, for which we derive a necessary condition to ensure identifiability for a sufficient model.
+
+
+Our paper is organized as follows.
+Following preliminaries in \S\ref{sec:prelim}, \S\ref{sec:objective} states the good regulator as an RL criterion on the occupancy and splits it into control, noise, goal and ambiguity terms, which impose the conditions for a sufficient model.
+In \S\ref{sec:pomdp}, we show that the entropy decomposes into well-known mutual information terms, which must preserve a floor to ensure identifiability of the good-regulator criterion.
+We thus cast this as a constrained program and derive a necessary budget on the free information constraint to ensure the model is grounded.
+In \S\ref{sec:experiments}, we insert the resulting Lagrangian into the convex RL objective to obtain an algorithm, and test it on environments with reward-free learning, continuous control, or deep exploration.
+Finally, \S\ref{sec:related} relates our work to expected free energy~\citep{Friston-active15} and control-as-inference~\citep{Levine-reinforcement18}, and scopes out future work.

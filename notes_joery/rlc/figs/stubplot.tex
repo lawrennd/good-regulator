@@ -1,0 +1,9 @@
+% Empty axes for a result panel not yet produced. Usage: \stubplot{x label}{y label}
+\newcommand{\stubplot}[2]{%
+  \begin{tikzpicture}
+    \draw[->] (0,0) -- (4.6,0) node[below left, font=\scriptsize] {#1};
+    \draw[->] (0,0) -- (0,2.8) node[above right, font=\scriptsize] {#2};
+    \draw[dashed, gray] (0.15,0.15) rectangle (4.4,2.55);
+    \node[gray, font=\scriptsize\itshape] at (2.3,1.35) {placeholder};
+  \end{tikzpicture}%
+}

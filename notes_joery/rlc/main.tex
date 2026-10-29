@@ -1,0 +1,131 @@
+% RLJ main.tex Version 2026.1, stubbed for the good-regulator RLC 2027 submission.
+% Page limit: 8--12 pages of main text. Appendices BEFORE the references count toward it;
+% material after \beginSupplementaryMaterials does not, and must hold nothing central.
+
+\documentclass[10pt]{article}
+
+% \usepackage{rlj}           % submission (anonymous)
+%\usepackage[accepted]{rlj} % camera-ready
+\usepackage[preprint]{rlj} % de-anonymised preprint
+
+\usepackage{amssymb}
+\usepackage{mathtools}
+\usepackage{mathrsfs}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage[space]{grffile}
+\usepackage{url}
+\usepackage{amsthm}
+\usepackage{booktabs}
+\usepackage{tikz}
+\usetikzlibrary{positioning,fit,arrows.meta,decorations.pathreplacing,calc,shapes.geometric}
+\input{figs/stubplot} % figure stubs, remove before submission
+
+\graphicspath{{figs/}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Notation, following notes_joery/theory_to_algorithm_joery_v2.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\Scal}{\mathcal S}
+\newcommand{\Acal}{\mathcal A}
+\newcommand{\Zcal}{\mathcal Z}
+\providecommand{\Lcal}{\mathcal L}
+\newcommand{\Dcal}{\mathcal D}
+\newcommand{\E}{\mathbb E}
+\newcommand{\occ}{d^{\pi}}
+\newcommand{\Occ}{\mathscr D}   % occupancy polytope; \Dcal is the disturbance alphabet
+\newcommand{\pz}{p_{\pi}}
+\newcommand{\Hnu}[1]{H_{\nu}\!\left[#1\right]}
+\newcommand{\KL}{\mathrm{KL}}
+\newcommand{\dd}{\mathrm d}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+
+% Tracked edits. \add = red insertion, \del = red strikethrough. Remove before submission.
+\usepackage[normalem]{ulem}
+\newcommand{\add}[1]{\textcolor{red}{#1}}
+\newcommand{\del}[1]{\textcolor{red}{\sout{#1}}}
+
+% Planning macros. Remove before submission: grep for \todo and \intent.
+\newcommand{\todo}[1]{\textcolor{red!70!black}{[TODO: #1]}}
+\newcommand{\intent}[1]{\par\noindent\textcolor{blue!60!black}{\small\textit{Intent: #1}}\par}
+\newcommand{\budget}[1]{\textcolor{gray}{\small[budget: #1]}}
+
+
+
+% Working title; the overall frame is not decided yet. write down more ideas
+\title{Good Regulators make Predictable Policies}
+
+\setrunningtitle{Good Regulators make Predictable Policies}
+
+\author{Joery A. de Vries\textsuperscript{1}, Neil D. Lawrence\textsuperscript{1,2}}
+
+\emails{\{joery,neil\}@trent.ai, ndl21@cam.ac.uk}
+
+\affiliations{
+$^{1}$\textbf{Trent AI Limited, London, United Kingdom}\\
+$^{2}$\textbf{Computer Laboratory, University of Cambridge, Cambridge, United Kingdom}
+}
+
+\contribution{
+    We state Conant and Ashby's good regulator as a reinforcement-learning objective, the entropy $\min_\pi H_\nu(Z)$ of the event law over the occupancy, and show that variance MDPs, homeostatic RL and surprise minimisation are special cases or relaxations of it.
+    }
+    {
+    The criterion is stated as ergodic sensory entropy by \citet{Friston-free12c} and minimised open loop by \citet{Adurthi-minimum14}.
+    The deterministic optimum follows from the concave-occupancy results of \citet{Derman-finite70ch7} and \citet{Piunovskiy-controlled98}, and the variance line has it already \citep{Filar-variance89,Sobel-meanvariance94}.
+    }
+
+\keywords{good regulator, homeostasis, convex reinforcement learning}
+
+\summary{
+We develop a reinforcement learning (RL) recipe framed around the good regulator from cybernetics.
+It reuses the machinery from convex RL to minimize the entropy of an outcome law represented by the pushforward of an agent's state-action occupancy measure.
+Our recipe seeks policies that are predictable, averse to uncontrollable effects and noise, and provides a necessary modelling condition of the environment to reduce said entropy.
+At face value, our formulation suffers from the dark room problem, where the agent seeks a trivial but stable solution.
+We therefore derive a goal-seeking condition and enable identifiability through a necessary floor on the mutual information of our agent's model to the outcome law.
+On simple reward-free, deep-exploration, and continuous control tasks we confirm the efficacy and generality of our framework.
+}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+
+\makeCover
+\maketitle
+
+% One paragraph of 4-6 sentences, written last.
+\begin{abstract}
+We develop a reinforcement learning (RL) recipe framed around the good regulator from cybernetics.
+It reuses the machinery from convex RL to minimize the entropy of an outcome law represented by the pushforward of an agent's state-action occupancy measure.
+Our recipe seeks policies that are predictable, averse to uncontrollable effects and noise, and provides a necessary modelling condition of the environment to reduce said entropy.
+At face value, our formulation suffers from the dark room problem, where the agent seeks a trivial but stable solution.
+We therefore derive a goal-seeking condition and enable identifiability through a necessary floor on the mutual information of our agent's model to the outcome law.
+On simple reward-free, deep-exploration, and continuous control tasks we confirm the efficacy and generality of our framework.
+\end{abstract}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{sections/intro}
+\input{sections/preliminaries}
+\input{sections/objective}
+\input{sections/split}
+\input{sections/validation}
+\input{sections/related}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Appendices count toward the 8--12 page limit.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\appendix
+\input{sections/appendix}
+
+\bibliography{main}
+\bibliographystyle{rlj}
+
+\beginSupplementaryMaterials
+\input{sections/supplementary}
+
+\end{document}

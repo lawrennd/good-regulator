@@ -1,0 +1,131 @@
+\documentclass[10pt]{article}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{Working Note: Frame Not Decided}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\usepackage[margin=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,urlcolor=blue!55!black]{hyperref}
+\usepackage[round]{natbib}
+
+\setlist{nosep,leftmargin=1.3em}
+\setlength{\bibsep}{1pt}
+\renewcommand{\bibfont}{\footnotesize}
+
+\newcommand{\Hmu}{H_\mu}
+\newcommand{\dpi}{d^\pi}
+\newcommand{\E}{\mathbb E}
+\newcommand{\Zcal}{\mathcal Z}
+\newcommand{\open}[1]{\textcolor{red!70!black}{[Open: #1]}}
+
+\title{A Frame for the Paper: What a Good Regulator Must Model}
+\author{Working note, 29 September 2026}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\noindent
+This note records a candidate frame for the RLC 2027 paper, whose stub lives in its own Overleaf project. Nothing here is decided. It sits beside \texttt{plan.md}, which it does not change: Part~2 is the base theory, and Parts~3 and~4, on representations and on many regulators, are needed for a full submission. Quiet-state selection under disturbance is a small section, since it is close to known results.
+
+\section{The question}
+
+Conant and Ashby's theorem says a good regulator must be a model of the system it regulates. The frame asks which model, and answers: it depends on the regulated outcome $Z$. The objective is
+\begin{equation}
+  \min_\pi \Hmu[\dpi K], \qquad \Hmu[p] = -\int p \ln \frac{dp}{d\mu}\, d\mu ,
+  \label{eq:obj}
+\end{equation}
+so only what moves the law of $Z$ matters. An exogenous variable $X$ falls into one of three classes.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}lcXX@{}}
+\toprule
+Exogenous $X$ & Moves $Z$? & A good regulator & Current methods \\
+\midrule
+Distractor & no & drops $X$ & Exogenous-BMDP and inverse-dynamics methods drop it \citep{Efroni-provable22,Islam-agentcontroller22,Dietterich-discovering18}. Correct. \\
+Predictable disturbance & yes & keeps a model of the generator of $X$, by the internal model principle \citep{Francis-internal76,Sontag-adaptation03} & Inverse dynamics drops it too, since $X$ does not predict the action. Wrong for regulation. \\
+Another regulator & yes & models it as a disturbance whose generator is a policy & Part~4 \\
+\bottomrule
+\end{tabularx}
+\caption{The three classes of exogenous variable, relative to $Z$.}
+\label{tab:classes}
+\end{table}
+
+\noindent
+The survey marks the second row as narrowed but open. Learning methods in output regulation either measure the disturbance or are given the minimal polynomial of its generator; none learns the generator from the regulated error alone. The testable claim is that action-predictive representations discard what a good regulator needs, and that a forward loss taken relative to $Z$ keeps it.
+
+\open{Is this the spine, or do action confounders carry more weight? A confounder is a hidden cause of both the action and the outcome. It biases an inverse model towards the confounder rather than the effect of the action \citep{Nikulin-latent25,Lee-latent26}. It becomes central mainly with offline data, or with agents that react to a shared signal. Current default: a named failure mode of the inverse loss, not the spine.}
+
+\section{How the parts map onto it}
+
+\begin{itemize}
+\item \emph{Part 2, base theory.} The objective, the deterministic optimum, reward recovery through the channel, the threshold, and the belief MDP for an unknown channel.
+\item \emph{Quiet states, a short section.} With $Z$ the region label, the regulator holds the region the disturbance is least able to leave, against a volume cost $\rho \ln \mu(G)$ and, under discounting, the cost of getting there. With $Z = S$ it seeks cells where walls absorb the push. The contrast shows that $Z$ decides the behaviour, which is the hook for Part~3.
+\item \emph{Part 3, representations.} What the latent must keep, by Table~\ref{tab:classes}: drop distractors, keep predictable disturbances. Forward and inverse losses as in the action-sufficient draft; collapse is the question below.
+\item \emph{Part 4, many regulators.} Each agent is the others' structured disturbance, so modelling other agents is the internal model principle again. The population view is concave-utility RL as a mean-field game \citep{Geist-concave22}.
+\end{itemize}
+
+\section{Three dark rooms}
+
+The dark-room objection to surprise minimisation says the agent should find a dark, silent room and stay \citep{Friston-free12,Sun-dark20}. For \eqref{eq:obj} it takes three forms, with different answers.
+\begin{enumerate}
+\item \emph{A reachable dark room exists.} Then sitting in it is optimal and correct: Conant and Ashby call that a perfect regulator. Their setting always contains a disturbance, and without one the problem is trivial. Quiet-state selection is the choice of the best dark room available under disturbance.
+\item \emph{The agent never explores, because exploring raises entropy.} This is the real risk. On the belief MDP of Part~2b the darkness of a room is itself uncertain, so exploring pays.
+\item \emph{The agent games $Z$}, by closing its eyes or by collapsing a learned latent to a point. This is the dark room in latent space and is the collapse question of Part~3. The inverse-dynamics loss keeps the room lit.
+\end{enumerate}
+One paragraph early in the paper should separate these three, so a reviewer cannot raise them as one objection.
+
+\section{How far an inference reading goes}
+
+\paragraph{The identity.} For any probability law $q$ on $\Zcal$, Gibbs' inequality gives $-\E_p \ln \frac{dq}{d\mu} \ge -\E_p \ln \frac{dp}{d\mu}$, with equality at $q=p$. Hence
+\begin{equation}
+  \min_\pi \Hmu[\dpi K] \;=\; \min_{\pi,\, q}\; \E_{z \sim \dpi K}\!\left[-\ln \frac{dq}{d\mu}(z)\right].
+  \label{eq:joint}
+\end{equation}
+The regulator maximises the expected log-likelihood of its outcomes under its own model $q$, and it chooses the data. The majorisation--minimisation loop is coordinate descent on \eqref{eq:joint}. The $q$-step is maximum-likelihood density estimation on the agent's own outcomes. The $\pi$-step is an MDP with reward $r(s,a) = \sum_z K(z\mid s,a) \ln \frac{dq}{d\mu}(z)$.
+
+\paragraph{Where it fits.}
+\begin{itemize}
+\item \emph{Each $\pi$-step is control as inference.} Take the optimality likelihood $p(O=1\mid z) \propto q(z)$, so that $r = \ln q$ up to a constant. With a policy-entropy term this is the inner problem of \citet{Levine-reinforcement18}, \citet{Toussaint-probabilistic06} and \citet{Rawlik-stochastic12}. The difference is that their target is fixed, while ours is refit to the agent's own outcome law.
+\item \emph{Reward recovery.} The reward channel emits a good outcome with probability $r(s,a)$ and uniform noise over $N$ outcomes otherwise. This is the optimality variable of control as inference, with a noise alphabet. Control as inference always conditions on $O=1$, while \eqref{eq:obj} may concentrate on either side. The threshold $h_b(R^*) < R^* \ln N$ is exactly when the two agree.
+\item \emph{Unknown channel.} Part~2b is Bayesian throughout: the belief MDP and the predictive channel $\bar K$.
+\item \emph{Modelling the disturbance.} For a scalar linear-Gaussian outcome, $H[Z] = \tfrac12 \ln(2\pi e\, \sigma_Z^2)$, so \eqref{eq:obj} is stationary-variance minimisation. By the separation principle its solution contains a Kalman filter on the disturbance state. The internal model principle becomes filtering. \open{vector $Z$: entropy is $\ln\det$, not a trace, so the separation argument needs checking.}
+\item \emph{Representations.} With a deterministic encoder $Z=\phi(X)$, $H[Z] = I(X;Z)$. Minimising it while keeping what predicts the consequences of actions is an information bottleneck, with the consequences as the relevance variable \citep{Tishby-information99}; the variational form is \citet{Alemi-deep17}. This is a reading, not yet a result.
+\end{itemize}
+
+\paragraph{Fixed target or fitted target.} No fixed target makes \eqref{eq:obj} a control-as-inference problem. For a fixed $C$ and temperature $\alpha \ge 0$, the soft objective $\E_{p_\pi}[-\ln C] - \alpha H[p_\pi]$ is convex in the occupancy, while \eqref{eq:obj} is concave. With the target fitted, it is one: at a fixed point of the loop, $q^\star = p_{\pi^\star}$ and $\pi^\star$ solves the control-as-inference problem with likelihood $q^\star$. The optimum is a control-as-inference solution for a target the agent must find itself. \eqref{eq:joint} is variational EM over the policy and the optimality likelihood. It is also self-evidencing in the language of the free-energy principle, which states the criterion \citep{Friston-free12c}. The dark room of Section~3 is this estimator's degenerate solution: a single data point has maximal likelihood.
+
+\paragraph{The sign flip against active inference.} Take preferences $C$ and the reference $\mu = \lambda / C$, with $\lambda$ the counting measure. Then $\Hmu[p] = H[p] - \E_p \ln C$. The expected free energy, with risk $\mathrm{KL}(p\,\|\,C)$ and ambiguity $\E_s H[Z \mid S=s]$, and ours are
+\begin{align}
+  G_{\mathrm{AIF}} &= -\E_p \ln C - H[Z] + H[Z \mid S] \;=\; -\E_p \ln C - I(S;Z), \\
+  \Hmu[p] &= -\E_p \ln C + H[Z] \;=\; -\E_p \ln C + I(S;Z) + H[Z \mid S].
+\end{align}
+The extrinsic term is shared. In $G_{\mathrm{AIF}}$ the ambiguity cancels the noise part of $-H[Z]$, leaving only the information term, rewarded. In $\Hmu$ the information term is penalised and the channel noise is charged too, so $\Hmu[p] - G_{\mathrm{AIF}} = 2\, I(S;Z) + H[Z \mid S]$. The flip is on the information term: active inference rewards outcomes that reveal the state, and the regulator penalises them. Blocking the flow of variety from the disturbance to the outcome is Ashby's account of regulation, so the flipped epistemic term is the good regulator. On the occupancy, active inference is the convex mirror \citep{Milosevic-active26}, and the survey found the concave sign open. With the curiosity term flipped, exploration has to come from elsewhere: in Part~2b it comes from the predictive channel on the belief MDP, not from a bonus.
+
+\paragraph{Verdict.} Everything can be read as inference: the $q$-step, each $\pi$-step, the belief over the channel, the filter on the disturbance and the encoder. The objective needs one extra step, a target fitted by maximum likelihood rather than given. An inference-led frame is therefore viable, and the sign flip is its point: active inference with the epistemic term reversed, posed on the occupancy, is the good regulator. The survey's caution stands in a changed form: the paper has to show what the flip buys, not just that it is possible.
+
+\open{Lead with inference, active inference with the epistemic sign reversed, or with regulation and inference for the model side?}
+
+\noindent
+A related construction, the entropy of the outcome law as the tilt $p(O=1\mid\pi)=e^{-\beta\Hmu[\dpi K]}$ with a posterior over occupancies, is parked as a possible workshop paper in \texttt{cai\_occupancy.tex}.
+
+\bibliographystyle{plainnat}
+\IfFileExists{notes_joery/joery_survey.bib}
+  {\newcommand{\surveybib}{notes_joery/joery_survey}}
+  {\newcommand{\surveybib}{joery_survey}}
+\bibliography{\surveybib}
+
+\end{document}

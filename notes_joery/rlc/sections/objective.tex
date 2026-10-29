@@ -1,0 +1,166 @@
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section[The Good Regulator Framework for Reinforcement Learning]{The Good Regulator Framework for Reinforcement Learning}
+\label{sec:objective}
+
+\begin{figure}[t]
+\refstepcounter{figure}\label{fig:oneshot}
+\begin{tcolorbox}[colback=gray!4, colframe=gray!60, boxrule=0.5pt, arc=2pt, left=4pt, right=4pt, top=3pt, bottom=3pt, title={Figure~\thefigure: The good regulator from \citet{Conant-good70} in a nutshell.}, fonttitle=\small\bfseries, coltitle=black, colbacktitle=gray!15]
+\tikzset{
+  v/.style={inner sep=1pt, minimum size=5mm},
+  e/.style={-{Stealth[length=2mm]}},
+}
+\begin{minipage}[c]{0.3\linewidth}
+\centering
+\begin{tikzpicture}[scale=0.75]
+  \node[v] (D) at (0,0) {$D$};
+  \node[v] (S) at (1.8,0.7) {$S$};
+  \node[v] (A) at (1.8,-0.7) {$A$};
+  \node[v] (Z) at (3.4,0) {$Z$};
+  \draw[e] (D) -- (S);
+  \draw[e] (D) -- (A);
+  \draw[e] (S) -- (Z);
+  \draw[e] (A) -- (Z);
+\end{tikzpicture}\\
+{\small (a) Cause-controlled.}\\[8mm]
+\begin{tikzpicture}[scale=0.75]
+  \node[v] (D) at (0,0.7) {$D$};
+  \node[v] (S) at (1.8,0.7) {$S$};
+  \node[v] (A) at (1.8,-0.7) {$A$};
+  \node[v] (Z) at (3.4,0) {$Z$};
+  \draw[e] (D) -- (S);
+  \draw[e] (S) -- (A);
+  \draw[e] (S) -- (Z);
+  \draw[e] (A) -- (Z);
+\end{tikzpicture}\\
+{\small (b) Error-controlled.}
+\end{minipage}\hfill
+\begin{minipage}[c]{0.67\linewidth}
+\small
+A disturbance $D$ causes events in a system $S$ which a regulator counteracts with an action $A$.
+The pair generates an outcome $Z = \psi(S,A)$ in some set $\Zcal$ with a desirable set $G \subset \Zcal$.
+A cause-controlled regulator acts on $D$, while an error-controlled regulator acts on the state $S$ caused by $D$, so that by the data processing inequality $I(A;D) \le I(S;D)$.
+For a fixed state distribution $p(s)$, the good regulator should keep $Z \in G$, and the criterion asks for minimal entropy in the outcome law,
+\[
+  \min_{\pi(a \mid s)}\ H(Z), \qquad Z = \psi(S,A), \quad S \sim p(s), \quad A \sim \pi(\cdot \mid S).
+\]
+Since the law of $Z$ is linear in the policy and entropy is concave, an optimal policy is deterministic.
+The idiom ``\textbf{every good regulator of a system must be a model of that system}'' then refers to the argument that in the cause-controlled setting the simplest optimal regulator is a deterministic map $\pi\colon S \to A$, so observing $D$ requires the regulator to model the relation $\phi\colon D \to S$, such that $\pi' = \pi \circ \phi$ must model $\phi$.
+\end{minipage}
+\end{tcolorbox}
+\end{figure}
+
+The good regulator of \citet{Conant-good70} is written in the cybernetic language of its time.
+Time, noise and the split into good and bad events are not absent from it, but they are only partly worked out.
+Linking its idioms to modern reinforcement learning takes some abstraction, in three places.
+First, the objective itself, the criterion of minimal entropy.
+Second, alignment to the good set $G$, which they set aside as an essentially independent criterion \citep[p.~91]{Conant-good70}.
+Third, what the regulator reads.
+Their regulator reads the state in full, while ours reads a history, which leaves a hidden state, an unknown law and noise open.
+With this comes the question of what it means to model, which the error-controlled regulator of Figure~\ref{fig:oneshot} reduces to a mapping from $S$ to $A$ \citep[p.~96]{Conant-good70}.
+We first state the criterion and its anatomy and then go through each term, with the Markov decision process as the case where the latest observation reveals the state, while Section~\ref{sec:pomdp} dives into identifiability and minimality.
+
+\begin{definition}[Regulation problem]
+\label{def:regulation}
+A regulator is a policy $\pi(a \mid x)$ on the history $X$ of Section~\ref{sec:prelim}, with hidden state $S$, law $\theta = (P,\kappa)$ and belief $b$ over both, and the fully observed case is $O_t = S_t$ with $\theta$ known.
+The environment answers each pair with an outcome $Z \in \Zcal$ drawn from the kernel $\kappa(s,a) := K(\cdot \mid s,a)$, a point of the simplex over $\Zcal$, so that under the occupancy $\occ$ the outcome has the marginal law $\pz = \E_{(s,a) \sim \occ}[K(\cdot \mid s,a)]$.
+The space $\Zcal$ carries a base measure $\lambda$, counting or Lebesgue, and the designer's goal is a second measure $\nu$ on $\Zcal$ with $\dd\nu / \dd\lambda > 0$.
+The observable class of a pair is the law the regulator can predict for it, $\hat Z = \hat\kappa(X,A)$ with $\hat\kappa(x,a) := p(Z \mid x,a) = \E[\kappa(S,a) \mid X = x]$, taking finitely many values with $\rho$ the counting measure on them.
+The good regulator criterion is
+\begin{equation}
+  \min_{\pi}\ H_\nu(Z), \quad Z \sim \pz = \psi_\# \occ, \quad \text{such that} \quad \pz(G) = \E_{(s,a) \sim \occ}\big[\mathbf 1\{\psi(s,a) \in G\}\big]
+  \label{eq:objective}
+\end{equation}
+where the channel $\psi$ is read as the kernel $K$ once noise is made explicit.
+\end{definition}
+
+\begin{theorem}[Good regulator criterion, sequential form]
+\label{thm:criterion}
+For every regulator of Definition~\ref{def:regulation},
+\begin{equation}
+  H_\nu(Z) = \underbrace{H_\rho(\hat Z)}_{\text{control}} + \underbrace{H_\lambda(Z \mid \hat Z)}_{\text{noise}} + \underbrace{\E\big[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)\big]}_{\text{goal}} - \underbrace{H_\rho(\hat Z \mid Z)}_{\text{ambiguity}},
+  \label{eq:classes}
+\end{equation}
+and the right-hand side depends only on the law of $\hat Z$.
+A regulator that reads the history only through the belief attains the infimum of \eqref{eq:objective}, and when the belief takes finitely many values a deterministic one does.
+\end{theorem}
+\begin{proof}
+  Proof in Supplementary~\ref{sup:proof-criterion}.
+\end{proof}
+
+\begin{proposition}[Change of measure as alignment]\label{prop:alignment}
+  Let $\nu$ and $\lambda$ be such that $\dd\nu / \dd\lambda > 0$ exists.
+  \begin{enumerate}
+    \item $H_\nu(Z) = H_\lambda(Z) + \E\big[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)\big]$, so the change of measure adds an expected log volume ratio.
+    \item Let $\nu_\beta$ for $\beta > 0$ rescale the log volume of $\nu$ relative to $\lambda$, $\dd\nu_\beta / \dd\lambda = (\dd\nu / \dd\lambda)^{\beta}$.
+    Then the first part gives $H_{\nu_\beta}(Z) = H_\lambda(Z) + \beta\, \E\big[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)\big]$.
+    \item For finite $\Scal$, $\Acal$ and $\Zcal$ and bounded $\ln \tfrac{\dd\nu}{\dd\lambda}$ there is a $\beta_0$ such that $\forall \beta > \beta_0$ the deterministic minimisers of $H_{\nu_\beta}(Z)$ first minimise $\E\big[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)\big]$, and $H_\lambda(Z)$ then orders the equally good solutions.
+  \end{enumerate}
+  For Conant and Ashby's good set, let $\dd\nu / \dd\lambda = e^{-1}$ on $G$ and $1$ on $G^c$.
+  This gives $\E\big[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)\big] = -\Pr(Z \in G)$.
+  So for a sufficiently large $\beta < \infty$ the minimisers first maximise $\Pr(Z \in G)$ and are then ordered by $H_\lambda(Z)$, which for feasible $G$ recovers the criterion of \citet[p.~91]{Conant-good70}.
+\end{proposition}
+\begin{proof}
+  Proof in Supplementary~\ref{sup:proof-alignment}.
+\end{proof}
+
+The theorem bounds the model from two sides.
+Necessity, the criterion depends only on the law of the observable class, so the regulator must resolve the history far enough to fix which laws it uses and how often, and nothing beyond that is charged.
+Sufficiency, it never needs more than the belief, which is the gooder regulator of \citet{Wentworth-fixing21}.
+If the state hides something that matters for the outcome, the minimal model is the posterior over the state given what the agent reads, kept because later information can select any task for which it matters.
+Between the two sits the minimal model, and two conditions make a statistic between them a model at all.
+Closed, the statistic can be updated from itself and the next observation, as the belief is through the filter and as Conant and Ashby's $h$ is as a homomorphism, so the minimal model is the coarsest closed quotient of the belief that still attains the minimum.
+Consistent, the predicted law is the true one, $\hat\kappa(x,a) = p(Z \mid x,a)$, and this is what makes \eqref{eq:classes} exact.
+A miscalibrated $\hat\kappa$ turns the noise term into the cross entropy $H_\lambda(Z \mid X,A) + \E[\KL(p(Z \mid X,A) \,\|\, \hat\kappa(X,A))]$, and the criterion pays the gap.
+Identifiability, whether the history can tell the laws apart, and minimality, which minimiser is the coarsest, are conditions on the path to the minimiser, not on the minimiser itself.
+\citet{Ni-bridging24} order the same conditions for learned representations, observation-predictive within self-predictive within $Q^\star$-irrelevant, which are our sufficiency, closure and a value-based necessity in turn.
+We now go through the terms of \eqref{eq:classes}.
+
+\paragraph{1) Criterion.}
+Our first main point concerns the atemporal structure of the good-regulator framework, which captures neither learning nor dynamics in any form.
+In the words of \citet{Conant-good70} a distribution $p(S)$ ``gives the relative frequencies of the events in $S$'', and it is assumed to exist and be constant \citep[pp.~95--96]{Conant-good70}.
+Over time, the measure theoretic form in \eqref{eq:objective} replaces $p(S)$ by the occupancy of the policy, so the marginal over outcomes $Z$ is defined by the occupancy the current policy $\pi$ induces, and like C\&A we call $G$ the 'Good' set of outcomes.
+The policy reads the history, but the criterion reads only the occupancy it induces, since the channel reads nothing else, so the occupancy is the object of the criterion and the history is the object of the regulator.
+Only at convergence to the $\pi^\star$ that satisfies the criterion is $p(S)$ static, as the state marginal of $d^{\pi^\star}$ that $P^{\pi^\star}$ leaves invariant, and there the atemporal property is easier to see.
+This relates to Ashby's law of Experience, that information about initial states is lost at equilibrium, with the policy as his parameter.
+
+In fact the criterion of minimal entropy cannot be stated in a sensible way without an occupancy.
+The per-pair reward $-H(Z \mid s,a)$ with return $-H(Z \mid S,A)$ is zero for every policy when $Z = \psi(s,a)$, and with noise it would only penalise noise, while the chain rule $H(Z) = H(Z \mid S,A) + I(S,A;Z)$ shows that the criterion also charges how the outcome law varies across visited pairs.
+Per-time entropies also fail on cycles, since $\sum_t \gamma^t H(Z_t)$ and $H(Z_T)$ are all zero there, and in general $\sum_t (1-\gamma)\gamma^t H(Z_t) \le H(\psi_\# \occ_\gamma)$ by concavity, the gap being the information time carries about the outcome.
+This differs from belief-dependent rewards in POMDPs \citep{Araya-pomdp10}, where $\sum_t H(S_t \mid X_t)$ is a sum of averages and hence linear in the occupancy, while $H(Z) = \E[H(Z \mid X)] + I(X;Z)$ also charges the information the history carries about the outcome.
+
+\paragraph{2) Alignment and the dark room.}
+The good regulator frames regulation as satisfying a desired outcome set $G$, but the criterion of \eqref{eq:objective} is stated purely in $\Zcal$, and minimising $H(Z)$ alone has pathologies.
+A regulator can collapse onto a quiet state where nothing happens, perfectly predictable while achieving nothing, the dark room problem \citep{Friston-dark12}.
+SMiRL escapes it only because its environments push the agent out of quiet regions \citep{Berseth-smirl21}, expected free energy by adding a prior over preferred outcomes next to the entropy \citep{Friston-dark12}, and a well-chosen space and channel $\psi$ rule it out but hide the goal in the choice of space.
+Each changes the underlying problem instead of stating the goal, where the change of measure states it.
+Here $\nu$ is Conant and Ashby's own $G$ carried as a measure rather than a set, so their second criterion is removed and one quantity scores both predictability and goal achievement.
+A set $G$ of good events becomes a measure $\nu$ that gives good events little volume, so concentrating on them costs little entropy, and Proposition~\ref{prop:alignment} shows that this recovers Conant and Ashby's criterion.
+The proposition recovers reward as a log volume ratio on the outcome space, $r := -\ln(\dd\nu / \dd\lambda)$, and the objective $H_{\nu_\beta}(Z) = H_\lambda(Z) - \beta\,\E[r(Z)]$ trades off surprise in the marginal outcome against expected reward, with $\beta$ a reward scale.
+For large enough $\beta$ the minimisers coincide with typical RL up to a preference ordering on entropy, and at $\beta = 0$ we are back at the dark room.
+In \eqref{eq:classes} the goal is the only term where $\nu$ enters, and it keeps the control term from collapsing onto a single quiet law.
+
+\paragraph{3) Irreducible noise, what the history leaves open and what to model.}
+The criterion asks for minimal entropy, yet the morphism argument behind the good regulator idiom is built on a deterministic $\psi$ on a perfect information state that the regulator reads in full \citep[p.~95]{Conant-good70}.
+C\&A admit that under error control some residual entropy always remains \citep[p.~92]{Conant-good70}, and we formalise this within their frame.
+In C\&A the disturbance $D$ causes the events in $S$ \citep[p.~91]{Conant-good70}, and the error-controlled regulator reads $D$ only through what it observes, so by the data processing inequality $I(A;D) \le I(X;D)$ the action knows no more about the disturbance than the history carries.
+The gap $H(D \mid X) > 0$ has three parts.
+First, the hidden state, what the state would reveal but the history does not.
+Second, what is a law rather than a draw, fixed or drifting, which the history reveals only slowly.
+Third, the noise, what is drawn afresh at every step and no reading recovers.
+Call the last part $\varepsilon \sim P_\varepsilon^D$, so that a perfect information regulator would face $Z = \psi((s,\varepsilon),a)$, while any regulator can only model the marginal law over $\varepsilon$, the kernel $K(\cdot \mid s,a) = \psi((s,\cdot),a)_\# P^D_\varepsilon$ of Definition~\ref{def:regulation}.
+Then $\pz = \E_{(s,a) \sim \occ}[K(\cdot \mid s,a)]$ stays linear in the occupancy, and deterministic policies stay optimal \citep{Derman-finite70ch7}.
+The noise $H_\lambda(Z \mid S,A) > 0$ is a floor that the regulator can lower by steering to narrow kernels but cannot remove, C\&A's ``residual variation'', so the criterion asks for minimal rather than zero entropy.
+Reading $D$, as a cause-controlled regulator does, removes $\varepsilon$ but makes regulation perfect only ``in principle'' \citep[p.~92]{Conant-good70}, since what it reads but cannot counter is bounded by the law of requisite variety, $H(Z) \ge H(D) - H(R)$ \citep[S.~11/8]{Ashby-introduction56}.
+What the regulator reads but cannot counter lies between the outcome laws it can tell apart, the noise lies within each law, and which laws it can tell apart decides what is reduced to noise.
+
+The main idiom of \citet{Conant-good70}, that ``every good regulator of a system must be a model of that system'', is catchy.
+But it is less intuitive for reinforcement learning agents that already observe the state, where every deterministic policy is a mapping from $S$ to $A$ and the model is trivially the policy.
+Their model is the mapping $h : S \to R$ of the theorem, and a regulator without one leaves no residual entropy but is at best equally optimal and ``unnecessarily complex'' \citep[pp.~95--96]{Conant-good70}.
+Our regulator reads the history, not $S$, the law or $\varepsilon$, so it can tell two situations apart only by the outcome law they reveal, the observable class, and its model is $h$ with the laws it can tell apart in place of the states.
+In the fully observed case with a known law the observable class is the kernel itself and the noise term is the channel noise alone, while in general the noise term also holds the hidden state and the unknown law.
+When the belief takes infinitely many values, the classes are coarsened to finitely many laws, or $\rho$ is replaced by a reference on the simplex.
+We extend the idiom to a more general one, ``\textit{any good reinforcement learner must model every distinction between observable outcome laws that reduces its own reference complexity}''.
+The reference is the measure $\nu$, and viable complexity must stay at a floor to preserve alignment, since collapsing the distinctions that reach the goal is the dark room.
+This floor is in the spirit of Ashby's law of requisite variety \citep[ch.~11]{Ashby-introduction56}, not to be confused with the noise above, since noise is variation that cannot reduce the reference complexity.
+The law bounds the model from below and the noise floor bounds the outcome, and because the occupancy is the regulator's own, the criterion steers it away from both floors, but only as far as $\nu$ allows.

@@ -1,0 +1,464 @@
+\documentclass[11pt]{article}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} % clear default header/footer
+\fancyhead[C]{Working Notes: Claims Not Verified}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{tikz}
+\usetikzlibrary{positioning}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,urlcolor=blue!55!black]{hyperref}
+\usepackage{natbib}
+\usepackage{dsfont}
+
+\newtheorem{definition}{Definition}
+\newtheorem{proposition}{Proposition}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\newcommand{\Acal}{\mathcal A}
+\newcommand{\Ocal}{\mathcal O}
+\newcommand{\Scal}{\mathcal S}
+\newcommand{\Zcal}{\mathcal Z}
+\newcommand{\Ycal}{\mathcal Y}
+\newcommand{\Rcal}{\mathcal R}
+\newcommand{\Dcal}{\mathcal D}
+\newcommand{\Ncal}{\mathcal N}
+\newcommand{\E}{\mathbb E}
+\newcommand{\1}{\mathds{1}}
+\newcommand{\dd}{\mathrm d}
+\newcommand{\given}{\,\middle|\,}
+
+% This note: occupancy, pushforward, outcome marginal, entropy functional.
+\newcommand{\occ}{d^{\pi}}
+\newcommand{\push}{\Phi_{\#}}
+\newcommand{\pz}{p_{\pi}}
+\newcommand{\Hf}[1]{H\!\left[#1\right]}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\new}[1]{\textcolor{blue!70!black}{#1}}
+\newcommand{\fix}[1]{\textcolor{red!75!black}{#1}}
+\newcommand{\todo}[1]{\textcolor{red!70!black}{[#1]}}
+
+\title{From Theory to Algorithm: Good Regulator inspired Optimization for $\min_\pi \Hf{p_\pi}$ over Trajectories\\
+\Large \textbf{Working Notes: Claims Not Verified}}
+\author{Joery A. de Vries}
+
+\begin{document}
+\maketitle
+
+\section{Setting}
+\label{sec:setting}
+
+The companion draft on action-sufficient representation suggests a minimization of the entropy for a regulated outcome $Z$ for a \emph{single} decision: $p(s)$ is given, a policy $\pi(a\mid s)$ is chosen, and $\pz(z)=\sum_{s,a}p(s)\pi(a\mid s)p(z\mid s,a)$.
+To turn this into a functional reinforcement learning algorithm let's consider control over trajectories where the state distribution is induced marginally by the policy.
+
+Consider an MDP $(\Scal,\Acal,P,\rho_0,\gamma)$ with transition probabilities $P(s'\mid s,a)$, initial distribution $\rho_0(s)$, discount $\gamma\in[0,1)$, and a stationary policy $\pi(a\mid s)$.
+Everything below is written for finite $\Scal,\Acal,\Zcal$, but $P$, $\pi$, for continuous spaces the sums become integrals and distributions become densities with respect to a reference measure.
+The policy induces the discounted state--action occupancy
+\begin{equation}
+  \occ(s,a)=(1-\gamma)\sum_{t\ge0}\gamma^t\Pr_\pi(s_t=s,a_t=a),
+  \label{eq:occ}
+\end{equation}
+the discounted fraction of time spent in each state--action pair.
+It satisfies the linear flow constraint
+\begin{equation}
+  \sum_a \occ(s',a)=(1-\gamma)\rho_0(s')+\gamma\sum_{s,a}\occ(s,a)P(s'\mid s,a),
+  \label{eq:flow}
+\end{equation}
+and conversely every distribution satisfying~\eqref{eq:flow} is the occupancy of some stationary policy.
+The set $\Dcal$ of occupancies is therefore convex, and its extreme points (vertices of the policy polytope in finite spaces) are the occupancies of deterministic policies~\citep{Puterman-markov94}.
+Standard RL maximises the return $J(\pi)=\tfrac{1}{1-\gamma}\sum_{s,a}\occ(s,a)\,r(s,a)$, which is \emph{linear} in $\occ$.
+Policy search is thus a linear programme over $\Dcal$, in practice run as gradient ascent on say a parametric policy $\pi_\theta$ or through dynamic programming.
+
+Now, let every step emit an outcome $z\in\Zcal$ through the channel $K(z\mid s,a)$ of the companion drafts, with $K(z\mid s,a)=\1\{\psi(s,a)=z\}$ in the deterministic case.
+This can be seen as either an augmentation or a sub-component of a more general observation kernel.
+The point is to use this kernel for framing control as an inverse-problem with respect to $z\in\Zcal$.
+Consider the push-forward,
+\begin{equation}
+  \pz(z)=(\push\occ)(z)=\sum_{s,a}\occ(s,a)\,K(z\mid s,a),
+  \label{eq:push}
+\end{equation}
+so $\pz(z)$ is the long-run frequency of outcome $z$.
+When the channel is deterministic, $\push\occ=\psi_{\#}\occ$ is the ordinary pushforward of measures\fix{, and only then.
+A pushforward $f_{\#}\mu$ is defined for a measurable map $f$, whereas a general $K$ is a Markov kernel, so the object is the composition of a measure with a kernel, often written $\occ K$.
+The deterministic case is exactly $\Hf{Z\mid S,A}=0$ in the decomposition $\Hf{Z}=I(S,A;Z)+\Hf{Z\mid S,A}$ of the companion note (Section~\ref{sec:budget}), and that term carries most of the objective for the stochastic channel~\eqref{eq:stoch-channel}.
+We keep the symbol $\push$ throughout as a shorthand for $\occ K$.}
+Entropy is taken against a reference measure $\mu$ on $\Zcal$, $\Hf{p}=-\int p\log p\,\dd\mu$, which is Shannon entropy for counting $\mu$ and differential entropy for Lebesgue $\mu$.
+Conant and Ashby's criterion~\citep{Conant-good70} becomes
+\begin{equation}
+  \min_{\pi}\Hf{\pz}=\min_{\occ\in\Dcal}\Hf{\push\occ}.
+  \label{eq:obj}
+\end{equation}
+This minimises a concave functional over a convex set.
+Its minimum sits at an extreme point, so a deterministic stationary policy is optimal and the good-regulator conclusion $H(A\mid S)=0$ carries over unchanged.
+The objective is not linear in $\occ$, however, so it is not the return of any reward $r(s,a)$ and local optima are expected.
+Behaviourally, the policy should reach a set of states whose outcomes are indistinguishable and low-noise, and stay there.
+
+
+\paragraph{Occupancy Homeostasis.}
+Consider for a moment that the channel $K$ is the identity, i.e., $p_\pi \equiv d^\pi$.
+This amounts to a similar objective like SMiRL~\citep{Berseth-smirl21}, which is a homeostasis objective over the state--action occupancy distribution.
+Such an optimization objective typically guarantees that the policy stays still and does nothing unless extraneous factors (environment, other agents, kernel noise, etc.) inject entropy into the agent.
+In practice, this can mean that staying still/ doing nothing can induce low-entropy, or even simply falling off a cliff and reaching the terminal state as fast as possible.
+
+The degenerate case makes this more precise.
+Suppose $\rho_0$ is a point mass, the kernel $P$ is deterministic and the channel $K$ is deterministic, then the optimal policy is deterministic too and no randomness enters the trajectory at all.
+Any policy that reaches an absorbing state--action pair and holds it pays entropy only for the transient state-actions (i.e., the trajectory up until the absorbing state), and doing nothing at the start, when the action space allows it, has entropy exactly zero.
+In that regime the objective is solved trivially and says nothing about which state is worth holding.
+What gives the objective actual meaning is a persistent disturbance in $P$.
+This is analogous to the disturbance $D$ that regulation exists to counteract in the good regulator setting of \citet{Conant-good70}.
+Thus, we are required to assume that $P$ carries such a disturbance.
+The working assumption is then that homeostasis can be formulated to favour a desirable set of states.
+
+
+\paragraph{Reward as a Deterministic Channel.}
+Naturally we may wonder whether a general linear reward can be expressed in terms of a channel $\phi$ under the homeostasis objective to recover the LP or traditional RL formulation.
+Under deterministic channels, the plain answer is no, since $\Hf{\push\occ}$ is never linear in $\occ$.
+Furthermore entropy is invariant to relabelling outcomes, so no assignment of symbols to state--action pairs can make one cell of the partition $\psi^{-1}(z)$ preferable to another.
+What a deterministic channel $z=\psi(s,a)$ does control is the granularity of that partition, which is where desirability in terms of state-occupancy can enter.
+Let the desirable set $G\subset\Scal\times\Acal$ map to a single symbol $z_0$ ($G$ must be strictly larger than a singleton), and give every undesirable pair its own symbol,
+\begin{equation}
+  \psi(s,a)=z_0 \ \text{if } (s,a)\in G,
+  \qquad
+  \psi(s,a)=z_{(s,a)} \ \text{otherwise}.
+  \label{eq:reward-channel}
+\end{equation}
+Recall that we assume finite spaces and thus a finite alphabet for simplicity.
+Now assume that the disturbance in $P$ moves the agent between nearby state--action pairs.
+A policy holding $G$ is moved between pairs that share the symbol $z_0$, which costs no entropy.
+A policy holding an undesirable pair is moved between pairs with distinct symbols, so the same disturbance does cost entropy.
+This requires the disturbance to be persistent, and $G$ to be large enough that the disturbance rarely leaves it.
+Write $R=\occ(G)$ for the mass held in $G$ and $\tilde d(s,a)=\occ(s,a)/(1-R)$ for the normalized occupancy on the complement.
+Pushing the occupancy through~\eqref{eq:reward-channel} gives
+\begin{equation}
+  \pz(z_0)=\sum_{(s,a)\in G}\occ(s,a)=R,
+  \qquad
+  \pz(z_{(s,a)})=\occ(s,a)=(1-R)\,\tilde d(s,a)\ \text{ for } (s,a)\notin G .
+\end{equation}
+Substituting into the entropy and splitting the logarithm of the product,
+\begin{align}
+  \Hf{\push\occ}
+  &=-R\log R-\sum_{(s,a)\notin G}(1-R)\,\tilde d(s,a)\log\big((1-R)\,\tilde d(s,a)\big) \notag\\
+  &=-R\log R-(1-R)\log(1-R)\underbrace{\sum_{(s,a)\notin G}\tilde d(s,a)}_{=1}-(1-R)\sum_{(s,a)\notin G}\tilde d(s,a)\log\tilde d(s,a) \notag\\
+  &=-R\log R-(1-R)\log(1-R)+(1-R)\,\Hf{\tilde d} \notag\\
+  &=h_b(R)+(1-R)\,\Hf{\tilde d},
+  \label{eq:det-channel-entropy}
+\end{align}
+where $h_b(R)=-R\log R-(1-R)\log(1-R)$ is the binary entropy of $G$ and its complement.
+The first term is bounded by $\log 2$, so the cost sits in the second term, the entropy of how the disturbance spreads the remaining mass over the individually labelled pairs.
+Holding $G$ is therefore preferred over holding any pair in its complement.
+This is an ordinal preference that depends on the disturbance, and cannot express, say, a linear continuous reward.
+The optimal policies are then those that hold the interior of $G$ so as to minimise the probability of leaving it under the disturbance.
+Their entropy is lower-bounded by the transient from $\rho_0$ and the $G$-excursions forced by the disturbance.
+
+\paragraph{Reward as a Stochastic Channel.}
+Alternatively the disturbance can be placed inside the channel.
+Instead of $P$ moving the agent across distinctly labelled pairs, the channel $K$ itself randomises the emitted symbol, more strongly where the reward is low.
+\textbf{Under these assumptions we can recover the typical RL solution}.
+Take a continuos reward $r(s,a)\in[0,1]$, a symbol $z_0$ and a noise alphabet $\Ncal$ of $N$ symbols disjoint from $z_0$.
+Let the channel emit $z_0$ with probability $r(s,a)$ and a uniformly random noise symbol otherwise,
+\begin{equation}
+  K(z\mid s,a)=r(s,a)\,\1\{z=z_0\}+\big(1-r(s,a)\big)\,\tfrac{1}{N}\,\1\{z\in\Ncal\}.
+  \label{eq:stoch-channel}
+\end{equation}
+Write $R=\sum_{s,a}\occ(s,a)\,r(s,a)$ for the return.
+Pushing the occupancy through the channel gives
+\begin{equation}
+  \pz(z)=\frac{1-R}{N}\ \text{ for } z\in\Ncal,
+\end{equation}
+so the outcome marginal depends on the occupancy only through $R$.
+Its entropy is
+\begin{equation}
+  \Hf{\push\occ}
+  =-R\log R-\sum_{z\in\Ncal}\frac{1-R}{N}\log\frac{1-R}{N}
+  =h_b(R)+(1-R)\log N=:F(R).
+  \label{eq:stoch-channel-entropy}
+\end{equation}
+We now connect this back to the LP.
+Recall that standard RL maximises the return $R(\pi)=\sum_{s,a}\occ(s,a)\,r(s,a)$, which equals $(1-\gamma)J(\pi)$.
+Write $R^\ast$ for its maximal value.
+Equation~\eqref{eq:stoch-channel-entropy} says that for this channel the homeostasis objective factors through the return,
+\begin{equation}
+  \min_{\pi}\Hf{\push\occ}=\min_{\pi}F\big(R(\pi)\big),
+  \label{eq:stoch-channel-factor}
+\end{equation}
+so the policy enters only through the scalar $R(\pi)\in[0,R^\ast]$ and it suffices to understand $F$ on that interval.
+$F$ is strictly concave in $R$, being the sum of the strictly concave $h_b$ and a term linear in $R$.
+Concavity gives $F(\lambda a+(1-\lambda)b)\ge\lambda F(a)+(1-\lambda)F(b)$ for $\lambda\in[0,1]$, so on $[0,R^\ast]$ we have $F(R)\ge\min\{F(0),F(R^\ast)\}$, with equality only at the endpoints.
+Hence if
+\begin{equation}
+  F(R^\ast)<F(0)
+  \quad\Longleftrightarrow\quad
+  h_b(R^\ast)+(1-R^\ast)\log N<\log N
+  \quad\Longleftrightarrow\quad
+  h_b(R^\ast)<R^\ast\log N,
+  \label{eq:stoch-channel-condition}
+\end{equation}
+then $F(R(\pi))>F(R^\ast)$ for every policy with $R(\pi)<R^\ast$, and the set of entropy minimisers is exactly the set of return maximisers,
+\begin{equation}
+  \argmin_{\pi}\Hf{\push\occ}=\argmax_{\pi}R(\pi). \label{eq:homeostasis_lp_equivalence}
+\end{equation}
+The condition~\eqref{eq:stoch-channel-condition} is a requirement on the alphabet size.
+Binary entropy is at most $\log 2$, so $h_b(R^\ast)<R^\ast\log N$ holds whenever $\log 2<R^\ast\log N$, that is whenever $N\ge\lfloor 2^{1/R^\ast} \rfloor +1$.
+For a fixed problem $R^\ast$ is fixed, so the condition holds for all large enough $N$.
+If instead $N$ is too small the ordering flips, $F(0)<F(R^\ast)$, and the entropy minimiser is the return minimiser, since ``reliable failure'' is then cheaper than ``intermittent success`` from a homeostasis point of view.
+The objectives themselves also agree in the limit.
+Dividing~\eqref{eq:stoch-channel-entropy} by $\log N$,
+\begin{equation}
+  \frac{F(R)}{\log N}=1-R+\frac{h_b(R)}{\log N}\ \xrightarrow[N\to\infty]{}\ 1-R,
+\end{equation}
+so the normalised homeostasis objective converges to $1-R(\pi)$ for a sufficiently large alphabet and minimising it recovers the standard LP.
+
+
+\section{Practical Algorithm v1}
+\label{sec:algorithm}
+
+% Notes (JdV):
+% first need to write H[p(z)] as an empirical quantity, ie the jenssen bound, H[E(p-hat(z))] >= E[H[p-hat(z)]] where E[p-hat(z)] = p(z). THis motivates learning an empirical occupancy with say a parametric mdoel p-hat. See smirl.
+%
+% My idea is to frame this in the FB representation, since it captures any successor measure for any reward, which actually allows us to adapt the policy on the fly. This is important since the homeostatis objective implies a non-stationary policy conditioned on the state measure.
+%
+% TBD exact implementation and how to relate this to desirable sets.
+
+\paragraph{The policy needs more than the state.}
+Section~\ref{sec:setting} showed that a homeostasis-optimal policy can be deterministic and stationary, so $\pi(a\mid s)$ suffices to represent the optimum, see~\eqref{eq:obj}.
+\textbf{However, it does not suffice to find it.}
+For a general channel the homeostasis objective cannot be expressed as a fixed MDP reward, so there is no single MDP to solve.
+This is also an insight made by convex-RL~\citep{Hazan-provably19,Zahavy-reward21}, from which we borrow ideas.
+
+The algorithm below is a policy iteration in which each step solves an MDP whose reward depends on the outcome marginal of the current policy.
+Since the policy is updated each iteration, so does the marginal, which is also the reward.
+Thus we write $\pi(a\mid s,w)$, where $w\in\mathbb R^{|\Zcal|}$ is a vector over the outcome alphabet, e.g., $w_i=\log\pz(z_i)$.
+This representation is sufficient because $\occ$ enters the objective only through $\pz=\push\occ$.
+
+\paragraph{Policy iteration through the Gibbs form.}
+We can make use of the Gibbs form for the pushforward-homeostasis objective to obtain a recipe for policy iteration.
+For this, let us use the properties of the entropy where for any distribution $q$ on $\Zcal$ we have,
+\begin{equation}
+  H[p, q] = \E_{z\sim p}\big[-\log q(z)\big]=\Hf{p}+\mathrm{KL}(p\,\|\,q)\ \ge\ \Hf{p},
+  \label{eq:gibbs}
+\end{equation}
+with equality iff $q=p$, so $\Hf{p}=\min_q\E_{p}[-\log q(z)]$.
+Apply this to $p=\pz$ and expand the expectation through the channel,
+\begin{align}
+  \E_{z\sim\pz}\big[-\log q(z)\big]
+  &=\sum_{s,a}\occ(s,a)\sum_z K(z\mid s,a)\big(-\log q(z)\big) =-\sum_{s,a}\occ(s,a)\,r_q(s,a),
+  \label{eq:gibbs-reward}\\[2pt]
+  r_q(s,a)
+  &:=\sum_z K(z\mid s,a)\log q(z) =\E_{z\sim K(\cdot\mid s,a)}\big[\log q(z)\big] . \notag
+\end{align}
+Hence
+\begin{equation}
+  \min_{\pi}\Hf{\push\occ}=\min_{\pi}\ \min_{q}\ \Big(-\sum_{s,a}\occ(s,a)\,r_q(s,a)\Big).
+  \label{eq:min-min}
+\end{equation}
+Thus, for fixed $q$ the inner problem is an ordinary MDP with reward $r_q$, linear in $\occ$.
+The task vector for the policy parametrization can thus be written as $w=\log q$.
+As written, computing $r_q$ needs a marginalization over $K$ which could be problematic, so the policy iteration method we derive below works through samples $\hat{r}_t = w_{z_t}$ instead.
+
+
+We can then define a policy iteration method by alternating the two minimisations in~\eqref{eq:min-min}.
+Given $\pi_k$, the inner minimiser is $q_k=p_{\pi_k}$, which we estimate by a (discounted) histogram $\hat q_k$ of observed outcomes with an $\varepsilon$-floor so that $\log\hat q_k$ stays finite.
+We then \emph{improve} $\pi_k$ on the MDP with reward $r_{\hat q_k}$ to obtain $\pi_{k+1}$.
+Since the objective is concave, the iteration converges to a local optimum which is determined (for a large part) by the initialisation point $\pi_0$.
+We can take $\pi_0$ to be a uniform table of logits or as a draw from an independent Dirichlet.
+For more general global optima guarantees, restarts are therefore a necessary condition, note also that minimising a concave function over a polytope is in general NP-hard~\citep{Pardalos-quadratic91}.
+The iteration is monotone,
+\begin{equation}
+  \Hf{p_{\pi_{k+1}}}
+  \ \le\ \E_{p_{\pi_{k+1}}}\big[-\log q_k\big]
+  \ \le\ \E_{p_{\pi_k}}\big[-\log q_k\big]
+  \ =\ \Hf{p_{\pi_k}},
+  \label{eq:mm-descent}
+\end{equation}
+where the first step is~\eqref{eq:gibbs}, the second is~\eqref{eq:gibbs-reward}, and the last is $q_k=p_{\pi_k}$.
+The above inequality asks only that $\pi_{k+1}$ \emph{improve} on $\pi_k$ under the frozen reward.
+Note that using $\hat q_k$ in place of $q_k$ turns the last equality into $\Hf{p_{\pi_k}}+\mathrm{KL}(p_{\pi_k}\,\|\,\hat q_k)$, so the descent holds up to approximation error.
+
+To represent the whole family $\pi(a\mid s,w)$ at once, use successor features with the channel as feature map, $\psi^\pi=K+\gamma P^\pi\psi^\pi$.
+Then $Q_w(s,a)=\psi^\pi(s,a)^\top w$ is the action value for reward $r_q$, and $\pz=(1-\gamma)\,\E_{\rho_0,\pi}[\psi^\pi]$ recovers the outcome marginal in the infinite horizon case.
+To include episodic termination, we know that $(1-\gamma)$ is the reciprocal of $\sum_{\tau\ge0}\gamma^{\tau}$, and that an episode ending at step $T$ leaves $\psi^\pi$ with only $\sum_{\tau<T}\gamma^{\tau}$ of the channel's mass.
+The observed mass then only becomes a proper distribution $\pz$ after normalizing by $\E\big[\sum_{\tau<T}\gamma^{\tau}\big]=\big(1-\E[\gamma^{T}]\big)/(1-\gamma)$.
+
+
+
+\paragraph{Tabular instantiation.}
+Define the following: tables are logits $\theta_t\in\mathbb R^{|\Scal|\times|\Acal|}$ with $\pi_t=\mathrm{softmax}(\theta_t)$, successor features $\psi_t\in\mathbb R^{|\Scal|\times|\Acal|\times|\Zcal|}$, and an outcome estimate $\hat q_t\in\Delta^{|\Zcal|-1}$ carried across the whole run, together with two scalars, a discount weight $\omega_t$ and a weight accumulator $W_t$.
+We can then obtain $Q_w=\psi_t^\top w$ such that a new task vector $w$ yields a new value function without retraining.
+
+At transition $t$ the environment emits $z_t\sim K(\cdot\mid s_t,a_t)$, and we write $e_{z_t}\in\{0,1\}^{|\Zcal|}$ for its indicator vector, so that $\E[e_{z_t}\mid s_t,a_t]=K(\cdot\mid s_t,a_t)$.
+Write $d_t\in\{0,1\}$ for the indicator that $s_t$ starts a new episode, and let it drive the discount weight, $\omega_t=1$ if $d_t=1$ and $\gamma\,\omega_{t-1}$ otherwise.
+Take $\omega_0=1$, $W_0=0$, $\psi_0=0$ and $\gamma\in[0,1]$.
+With learning rates $\alpha$ and $\eta$, episodic forgetting rate $\lambda\in[0,1)$, and the bootstrap action drawn as $a_{t+1}\sim\pi_t$, the updates are
+\begin{align}
+  \psi_{t+1}(s_t,a_t) &= \psi_t(s_t,a_t)+\alpha\big[e_{z_t}+\gamma\,(1-d_{t+1})\,\psi_t(s_{t+1},a_{t+1})-\psi_t(s_t,a_t)\big],
+  \label{eq:tab-sf}\\
+  \hat q_{t+1} &= \hat q_t+\beta_t\big(e_{z_t}-\hat q_t\big),
+  \qquad \beta_t=\frac{\omega_t}{W_{t+1}},
+  \qquad W_{t+1}=(1-\lambda\,d_t)\,W_t+\omega_t,
+  \label{eq:tab-w}\\
+  \theta_{t+1}(s_t,\cdot) &= \theta_t(s_t,\cdot)+\eta\,Q_{w_t}(s_t,\cdot),
+  \qquad w_t(z)=\log\max\{\hat q_t(z),\varepsilon\},
+  \label{eq:tab-pi}\\
+  Q_{w_t}(s,a) &= \psi_t(s,a)^\top\big(w_t\new{{}-\bar w_t}\big),
+  \qquad \new{\bar w_t=\tfrac{1}{|\Zcal|}\textstyle\sum_{z}w_t(z)} .
+  \label{eq:tab-q}
+\end{align}
+which is a type of SARSA inspired actor-critic.
+The scalar reward can be recovered as $\hat r_t=e_{z_t}^\top w_t$ if needed explicitly.
+For a fixed $w$, Eq.~\eqref{eq:tab-sf} is exactly SARSA on that scalar reward, since $Q\leftarrow Q+\alpha[\hat r_t+\gamma(1-d_{t+1})Q'-Q]$.
+The actor~\eqref{eq:tab-pi} is the natural policy gradient~\citep{Kakade-natural01} for a tabular softmax policy~\citep[\S5.3]{Agarwal-theory21}, since $Q_{w_t}$ and the advantage differ by a state-dependent baseline that the softmax absorbs\new{, once $\psi_t=\psi^{\pi_t}$}.\footnote{Although a greedy or Boltzmann policy taken directly from $Q_{w_t}$ is simpler, and it induces policy improvement over $\pi_t$. This improvement does not accumulate across iterations and conversely does not result in an optimal policy.}
+The update rule in~\eqref{eq:tab-w} is characterised by the following proposition.
+The rest follows from standard results.
+
+\new{A constant added to $w$ is a baseline: it shifts $r_q$ equally at every $(s,a)$ and leaves the optimum untouched.
+It does not leave~\eqref{eq:tab-q} untouched, since $Q_w$ is linear in $w$ and the constant multiplies $\sum_z\psi_t(s,a,z)$.
+That mass is the remaining discounted horizon once $\psi_t$ has converged, which the softmax absorbs, but a visitation count before then.
+A raw vector of log-probabilities is therefore not neutral, since every entry is negative: with $\psi_0=0$ it is a hidden optimism bonus of order $|\bar w_t|$, and $\bar w_t$ removes it.}
+
+
+\begin{proposition}[The discount as a gain]
+\label{prop:disc-step}
+The rule~\eqref{eq:tab-w} satisfies, for every $t\ge1$,
+\begin{equation}
+  \hat q_t=\Big(\sum_{j<t}(1-\lambda)^{\new{m_{t-1}-m_j}}\,\omega_j\,e_{z_j}\Big)\Big/\Big(\sum_{j<t}(1-\lambda)^{\new{m_{t-1}-m_j}}\,\omega_j\Big),
+  \label{eq:tab-disc}
+\end{equation}
+where \new{$m_j$} indexes the episode containing step $j$: the $\omega$-weighted empirical outcome distribution, with each earlier episode carrying a further factor $(1-\lambda)$ per episode elapsed since.
+\new{A common factor cancels in the ratio, so only the differences $m_{t-1}-m_j$ matter and not the point they are measured from.}
+\new{It is therefore the self-normalised estimator of the outcome marginal $\pz=\push\occ$ built from the observed symbols.
+For a fixed policy, $\lambda=0$ and \new{$\gamma<1$}, it converges to $\pz$ almost surely, for any distribution of the episode length $T$.
+Taking $\lambda>0$ replaces that average by an exponential window over the recent episodes.}
+\end{proposition}
+
+\begin{proof}
+\new{Write $V_t$ for the numerator of~\eqref{eq:tab-disc} and $W_t$ for its denominator, so that the claim is $\hat q_t=V_t/W_t$.
+The two are the same sum over $j<t$, one carrying the vector $e_{z_j}$ and one not.
+Passing from $t$ to $t+1$ scales every term already present by $(1-\lambda)^{m_t-m_{t-1}}=(1-\lambda\,d_t)$ and appends the term $j=t$, so
+\begin{equation*}
+  V_{t+1}=(1-\lambda\,d_t)\,V_t+\omega_t e_{z_t},
+  \qquad
+  W_{t+1}=(1-\lambda\,d_t)\,W_t+\omega_t ,
+\end{equation*}
+and the second recursion is exactly the accumulator in~\eqref{eq:tab-w}.}
+For $t=1$, $W_0=0$ gives $W_1=\omega_0=1$ and $\beta_0=1$, so $\hat q_1=e_{z_0}=\new{V_1/W_1}$ irregardless of $\hat q_0$.
+\new{Write $V_t=W_t\,\hat q_t$ and substitute that into the recursion for $V$, then use $(1-\lambda\,d_t)W_t=W_{t+1}-\omega_t$ from the recursion for $W$,}
+\begin{align*}
+  \new{V_{t+1}}
+  &=(1-\lambda\,d_t)\,\new{W_t\,\hat q_t}+\omega_t e_{z_t}
+  =(W_{t+1}-\omega_t)\,\hat q_t+\omega_t e_{z_t} ,
+\end{align*}
+\new{so dividing by $W_{t+1}$ gives}
+\begin{align*}
+  \frac{V_{t+1}}{W_{t+1}}
+  &=\hat q_t+\frac{\omega_t}{W_{t+1}}\big(e_{z_t}-\hat q_t\big)
+  =\hat q_{t+1} ,
+\end{align*}
+\new{which is~\eqref{eq:tab-w} and closes the induction.}
+\new{For the second claim, take $\lambda=0$, \new{$\gamma<1$}, and let $n$ episodes be drawn independently under a fixed policy.
+Both sums are then sums of $n$ i.i.d. episode contributions with finite mean, so dividing by $n$ and applying the strong law gives $\hat q_t\to\E\big[\sum_{\tau<T}\gamma^{\tau}e_{z_\tau}\big]\big/\E\big[\sum_{\tau<T}\gamma^{\tau}\big]$, the ratio over a single episode.
+In $\occ$ the $i$-th episode carries the extra factor $\gamma^{S_i}$ for the time $S_i$ elapsed before it, and $S_i$ is independent of that episode, so $\sum_i\E[\gamma^{S_i}]=\big(1-\E[\gamma^{T}]\big)^{-1}$ multiplies numerator and denominator alike and cancels.
+The single-episode ratio is therefore $\pz$ itself, whatever the spread of $T$.} \qedhere
+\end{proof}
+
+Since $0\le\omega_t\le W_{t+1}$ we have $\beta_t\in[0,1]$, so every update is a convex combination of vertices and $\hat q_t$ stays in $\Delta^{|\Zcal|-1}$.
+Within one episode the weights decay by $\gamma$ per step for any $\lambda$, since the forgetting fires only at boundaries.
+Across episodes it is the summed discounted mass over the summed discount weight, so long and short episodes are pooled with no per-episode bookkeeping.
+Forgetting is only done episodically, since doing this at every step would inflate the effective within-episode discount to $\gamma/(1-\lambda)$, inverting it once $\lambda\ge1-\gamma$.
+At $\gamma=1$ \new{and $\lambda=0$} the weights are flat and $\beta_t=1/(t+1)$, the plain sample inter-episode mean, so the undiscounted case is the boundary of the same rule.
+At $\gamma=0$ only the first step of each episode carries weight and $\beta_t=0$ elsewhere, this reduces $\occ$ to $\rho_0\pi$, which makes sense if we interpret $\gamma$ as a termination probability.
+That said $\gamma$ then conflates its role with our explicit use of $d_t$, we could in principle combine the two.
+
+We do have to be careful about the magnitude of the learning and forgetting rates.
+Both $\psi_t$ and $\hat q$ estimate quantities defined by the \emph{current} policy, namely $\psi^{\pi_t}$ and $p_{\pi_t}$.
+The forgetting factor $\lambda$ amortizes data-collection, but consequentially induces lag.
+Therefore, it makes sense to set $\eta$ to something relatively smaller compared to $\alpha$ and $\lambda$ for $\psi_t$ and $\hat q$ to follow the policy before jumping too far in the policy-improvement step.
+Otherwise the improvement step uses a stale value or a stale reward, and the residual error appears as the $\mathrm{KL}$ term in~\eqref{eq:mm-descent}.
+
+Since incrementing logits implies a multiplication of the softmax by the exponential of that increment, we can observe that Eq.~\eqref{eq:tab-pi} is the multiplicative update $\pi_{t+1}(\cdot\mid s)\propto\pi_t(\cdot\mid s)\exp\big(\eta\,Q_{w_t}(s,\cdot)\big)$.
+This maximises $\sum_a\pi'(a\mid s)Q_{w_t}(s,a)-\eta^{-1}\mathrm{KL}\big(\pi'(\cdot\mid s)\,\|\,\pi_t(\cdot\mid s)\big)$, so $\eta$ is the inverse of the KL weight.
+For non-degenerate $\pi_t$ we in principle have $\sum_a\pi_{t+1}(a\mid s)Q_{w_t}(s,a)\ge\sum_a\pi_t(a\mid s)Q_{w_t}(s,a)$ at $s_t$.
+Since in the tabular setting each update leaves all other states are kept invariant we get a policy improvement condition required by Eq.~\eqref{eq:mm-descent} with the iterate index $t$ now replacing $k$.
+Unlike a greedy step it also keeps full support due to the Boltzmann construction.
+
+\paragraph{Test setup.}
+We can use a simple tabular environment like DeepSea to test the base homeostasis framework and the proposed tabular algorithm.
+DeepSea is an $L\times L$ grid whose episodes last exactly $L$ steps, with a treasure (+1 reward) in the bottom-right corner that is reached only by moving right at every step.
+Taking one left turn guarantees zero reward.
+Our framework needs a redesign of the reward, however.
+Let's use the stochastic reward channel of Eq.~\eqref{eq:stoch-channel}, which makes the design relatively straight-forward.
+The treasure is reached only on the last step of an episode \new{and episodes restart, so it recurs every $L$ steps and the best return is $R^\ast=(1-\gamma)\gamma^{L-1}/(1-\gamma^L)$}, and the condition implied by Eq.~\eqref{eq:stoch-channel-condition} is satisfied for $N>\exp\big(h_b(R^\ast)/R^\ast\big)$.
+Above this alphabet size the entropy minimiser is the policy that seeks the treasure, below it the policy avoids it.
+\new{For $L=10$ and $\gamma=0.99$ this gives $R^\ast\approx0.096$ and a threshold of $27$ noise symbols, so both regimes are relatively cheap.}
+This experiment will also test whether the base framework and the $\log\hat q$ reward induces sufficient exploration on its own to even discover the treasure before locally converging (at least I have no theory yet on any guarantees).
+
+
+
+
+\section{The Entropy Budget and the Empowerment Term}
+\label{sec:budget}
+
+\fix{Moved to the separate note \texttt{notes\_joery/entropy\_budget\_empowerment.tex}, which restates the objects it needs from Sections~\ref{sec:setting} and~\ref{sec:algorithm} and now also records the $L=7$ experiment.
+In one line: under the joint law $(S,A)\sim\occ$, $Z\sim K(\cdot\mid S,A)$ the objective splits as $\Hf{Z}=I(S;Z)+I(A;Z\mid S)+\Hf{Z\mid S,A}$, and for the channel~\eqref{eq:stoch-channel} with binary reward the first two terms together are $h_b(R)\le\log2$, so the empowerment term is exactly as sparse as the reward and enters the algorithm only as a targeted temperature.}
+
+% \section{Stubs}
+
+% Each item is a claim to prove or a construction to write out.
+
+% \begin{enumerate}[leftmargin=*,itemsep=2pt]
+%   \item \textbf{Gibbs form.}
+%     $\Hf{\pz}=\min_q\E_{\occ}[-\sum_zK(z\mid s,a)\log q(z)]$, a cooperative min--min.
+%     For fixed $q$ the inner problem is an MDP with reward $\sum_zK(z\mid s,a)\log q(z)$.
+%     Contrast with the min--max of convex RL~\citep{Hazan-provably19,Zahavy-reward21,Mutti-convex23}.
+%   \item \textbf{Stop-gradient.}
+%     $\nabla_\theta \Hf{p_{\pi_\theta}}=-\nabla_\theta\E_{d^{\pi_\theta}}[\log p_{\bar\pi}(z)]$ with $\bar\pi$ frozen, since $\sum_z\nabla p(z)=0$.
+%   \item \textbf{Geometry.}
+%     Concave over $\Dcal$, so the optimum is a vertex (Prop.).
+%     Local optima solve their own linearised MDP.
+%     The global problem is plausibly NP-hard via the R\'enyi-2 surrogate.
+%   \item \textbf{Decomposition.}
+%     $H(Z)=\E_{\occ}\big[\Hf{K(\cdot\mid s,a)}\big]+I(Z;S,A)$, a linear noise-aversion reward plus an anti-empowerment term \citep{Klyubin-empowerment05}.
+%   \item \textbf{Expressability.}
+%     No reward of any memory depth has $\Hf{\pz}$ as return, because $\Hf{\cdot}$ is concave in the trajectory law.
+%     The empirical $\E[\Hf{\hat p_T}]$, with $\hat p_T$ the episode histogram, \emph{is} affine.
+%     It has the exact reward $r_t=g(n_{t+1})-g(n_t)$ with $g(n)=\Hf{n/T}$, solved by DP on $(s,n_t,t)$.
+%   \item \textbf{Population vs.\ single trial.}
+%     Jensen gives $\E[\Hf{\hat p_T}]\le \Hf{\pz}$, so minimising~\eqref{eq:obj} minimises an upper bound.
+%     History-dependence matters only for the single-trial objective.
+%   \item \textbf{Algorithms.}
+%     (a) MM: fit $q_k\approx p_{\pi_k}$, then solve the MDP with reward $\log q_k$.
+%     (b) Model-free: frozen histogram reward $\log\hat q(z_t)$ with an $\varepsilon$-floor~\citep{Berseth-smirl21}.
+%     (c) Successor features $\psi=K+\gamma P^\pi\psi$, with $\pz=(1-\gamma)\E_{\rho_0\pi}[\psi]$ and $Q=\psi^\top\log\hat p$.
+%     (d) FB: $\pz=(1-\gamma)\bar F^\top B_Z\,\rho_Z$.
+%     Native FB gives the ratio $\dd\pz/\dd\rho_Z$ only, so add a density model for $\rho_Z$.
+%   \item \textbf{Relaxations.}
+%     $H_\infty$ splits into one MDP per outcome $z$ with reward $K(z\mid\cdot)$ (finite $\Zcal$).
+%     Binary $Z$ is two MDPs.
+%     R\'enyi-2 is a quadratic in $\occ$.
+%   \item \textbf{Open.}
+%     Global complexity.
+%     Continuous spaces: regularity for extreme points of $\Dcal$ and for the extreme-point minimum (compactness, semicontinuity of $\Hf{\cdot}$), and bounded channel densities so that $\inf\Hf{\push d}>-\infty$.
+%     Discounted occupancy vs.\ the stationary distribution of $P^\pi$.
+%     FB rank truncation is the one non-vanishing bias.
+% \end{enumerate}
+
+\bibliographystyle{plainnat}
+% Overleaf compiles from the project root, a local latexmk -cd from this folder; resolve the .bib paths either way.
+\IfFileExists{notes_joery/joery.bib}
+  {\newcommand{\bibs}{action-sufficient,notes_joery/joery}}
+  {\newcommand{\bibs}{../action-sufficient,joery}}
+\bibliography{\bibs}
+
+\end{document}

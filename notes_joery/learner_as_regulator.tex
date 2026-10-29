@@ -1,0 +1,524 @@
+\documentclass[10pt]{article}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{Working Note: Claims Not Verified}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\usepackage[margin=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm,mathtools,mathrsfs}
+\usepackage{tikz-cd}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,urlcolor=blue!55!black]{hyperref}
+\usepackage[round]{natbib}
+
+\setlist{nosep,leftmargin=1.3em}
+\setlength{\bibsep}{1pt}
+\renewcommand{\bibfont}{\footnotesize}
+
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+
+\newcommand{\Hmu}[1]{H_\mu\!\left[#1\right]}
+\newcommand{\occ}{d^{\pi}}
+\newcommand{\E}{\mathbb E}
+\newcommand{\Scal}{\mathcal S}
+\newcommand{\Acal}{\mathcal A}
+\newcommand{\Zcal}{\mathcal Z}
+\newcommand{\Occ}{\mathscr D}
+\newcommand{\Kb}{\bar K}
+\newcommand{\Pb}{\bar P}
+\newcommand{\id}{\mathrm{id}}
+\newcommand{\copym}[1]{\mathrm{copy}_{#1}}
+\newcommand{\pair}[2]{\langle #1,#2\rangle}
+\newcommand{\Hom}{\operatorname{Hom}}
+\newcommand{\open}[1]{\textcolor{red!70!black}{[Open: #1]}}
+
+\title{The Learner as a Regulator:\\ Inference for Regulation in the Good-Regulator Lens}
+\author{Working note, 7 October 2026}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\noindent
+Conant and Ashby say which regulator is good and nothing about how it is found.
+This note poses the finding as a regulation problem of the same shape, so that their theorem applies a second time.
+Everything is written as morphisms in $\mathbf{FinStoch}$, in the notation of Neil's \texttt{good\_regulator\_categorical.tex}: a state on $X$ is a morphism $I \to X$, $\copym{X}$ duplicates a wire, and $\pair{f}{g}$ pairs two morphisms on a copied input.
+Section~\ref{sec:chain} first walks from their diagram to the named sequential problems, one arrow at a time.
+The categorical notation from Section~\ref{sec:loops} on is there to see three things at once: which object the loop runs on, where the occupancy lives, and which wires the regulator reads as opposed to which wires the world uses.
+
+\section{From Conant and Ashby to the sequential problems}
+\label{sec:chain}
+
+Start from Neil's deterministic form of the theorem: sets $D, S, A, Z$, a map $\varphi\colon D \to S$ from disturbance to state, a map $\psi\colon S \times A \to Z$ from state and action to outcome, a law $p$ on $D$, and a regulator that reads $S$ under error control, $\rho\colon S \to A$, or reads $D$ under cause control, $\rho\colon D \to A$.
+The criterion is $\min H(Z)$.
+The regulator is already a policy; what the moves below change is its domain, and the theorem says at every step that the regulator's model is the sufficient statistic of that domain.
+Each move changes one arrow of the diagram and nothing else, Figure~\ref{fig:moves}.
+
+\begin{figure}[t]
+\centering
+\tikzset{v/.style={inner sep=1pt, minimum size=5mm}, e/.style={-{Stealth[length=1.6mm]}}, c/.style={-{Stealth[length=1.6mm]}, dashed, gray}}
+\begin{minipage}{0.48\textwidth}\centering
+\begin{tikzpicture}
+  \foreach \t/\x in {t/0, t+1/2.2} {
+    \node[v] (D\t) at (\x,1.2) {$D_{\t}$};
+    \node[v] (S\t) at (\x,0.2) {$S_{\t}$};
+    \node[v] (A\t) at (\x,-0.8) {$A_{\t}$};
+    \node[v] (Z\t) at (\x+1.1,-1.7) {$Z_{\t}$};
+    \draw[e] (D\t) -- node[left, font=\tiny] {$\varphi$} (S\t);
+    \draw[e] (S\t) -- (A\t);
+    \draw[e] (S\t) -- (Z\t);
+    \draw[e] (A\t) -- (Z\t);
+    \draw[c] (D\t) to[bend right=55] (A\t);
+  }
+\end{tikzpicture}\\[1mm]
+{\small (a) Move 1: occasions.}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}\centering
+\begin{tikzpicture}
+  \foreach \t/\x in {t/0, t+1/2.2} {
+    \node[v] (D\t) at (\x,1.2) {$D_{\t}$};
+    \node[v] (S\t) at (\x,0.2) {$S_{\t}$};
+    \node[v] (A\t) at (\x,-0.8) {$A_{\t}$};
+    \node[v] (Z\t) at (\x+1.1,-1.7) {$Z_{\t}$};
+    \draw[e] (S\t) -- (A\t);
+    \draw[e] (S\t) -- (Z\t);
+    \draw[e] (A\t) -- (Z\t);
+    \draw[c] (D\t) to[bend right=55] (A\t);
+  }
+  \draw[e, thick] (Dt) -- node[above, font=\tiny] {$f$} (St+1);
+  \draw[e, thick] (St) -- (St+1);
+  \draw[e, thick] (At) -- (St+1);
+\end{tikzpicture}\\[1mm]
+{\small (b) Move 2: $\varphi$ becomes $f$.}
+\end{minipage}\\[3mm]
+\begin{minipage}{0.48\textwidth}\centering
+\begin{tikzpicture}
+  \foreach \t/\x in {t/0, t+1/2.2} {
+    \node[v] (D\t) at (\x,1.2) {$D_{\t}$};
+    \node[v] (S\t) at (\x,0.2) {$S_{\t}$};
+    \node[v] (A\t) at (\x,-0.8) {$A_{\t}$};
+    \node[v] (Z\t) at (\x+1.1,-1.7) {$Z_{\t}$};
+    \draw[e] (S\t) -- (A\t);
+    \draw[e] (S\t) -- (Z\t);
+    \draw[e] (A\t) -- (Z\t);
+    \draw[c] (D\t) to[bend right=55] (A\t);
+  }
+  \draw[e] (Dt) -- (St+1);
+  \draw[e] (St) -- (St+1);
+  \draw[e] (At) -- (St+1);
+  \draw[e, thick] (Dt) -- node[above, font=\tiny] {$g$} (Dt+1);
+\end{tikzpicture}\\[1mm]
+{\small (c) Move 3: $D$ has memory.}
+\end{minipage}\hfill
+\begin{minipage}{0.48\textwidth}\centering
+\begin{tikzpicture}
+  \foreach \t/\x in {t/0, t+1/2.2} {
+    \node[v] (D\t) at (\x,1.2) {$\theta_{\t}$};
+    \node[v] (S\t) at (\x,0.2) {$S_{\t}$};
+    \node[v] (A\t) at (\x,-0.8) {$A_{\t}$};
+    \node[v] (Z\t) at (\x+1.1,-1.7) {$Z_{\t}$};
+    \draw[e] (S\t) -- (A\t);
+    \draw[e] (S\t) -- (Z\t);
+    \draw[e] (A\t) -- (Z\t);
+    \draw[e, thick] (D\t) to[bend left=35] (Z\t);
+    \draw[c] (D\t) to[bend right=55] (A\t);
+  }
+  \draw[e] (Dt) -- (St+1);
+  \draw[e] (St) -- (St+1);
+  \draw[e] (At) -- (St+1);
+  \draw[e, thick] (Dt) -- node[above, font=\tiny] {$\delta_\eta$} (Dt+1);
+\end{tikzpicture}\\[1mm]
+{\small (d) Move 4: $D = \theta$.}
+\end{minipage}
+\caption{Four moves from Conant and Ashby's diagram, each adding the thick arrows and changing nothing else.
+The dashed grey arrow is the cause-controlled reading, in which the regulator reads $D_t$ as well as $S_t$; without it the regulator is error-controlled.}
+\label{fig:moves}
+\end{figure}
+
+\paragraph{Move 1: occasions are time steps.}
+Conant and Ashby's $p$ is a frequency over the occasions on which the regulator acts.
+Index them: $d_t \sim p$ independently, $s_t = \varphi(d_t)$, $a_t \sim \pi(\cdot \mid s_t)$, $z_t \sim K(\cdot \mid s_t,a_t)$, and nothing carries over from one occasion to the next.
+This is a contextual bandit with context $s_t$, and the criterion is the entropy of the outcome frequency, $\min_\pi H\big(\sum_s p(s)\,\pi(a \mid s)\,K(z \mid s,a)\big)$.
+The plain bandit is $\varphi$ constant: the disturbance then acts through $\psi$ alone, $z = \psi(d,a)$, and the error-controlled regulator is a single arm.
+Under cause control the context is $d_t$ itself.
+
+\paragraph{Move 2: the action moves the next state.}
+A system that persists has a state at the next occasion that depends on the previous state and action.
+Replace $\varphi\colon D \to S$ by $f\colon S \times A \times D \to S$ and change nothing else.
+With $d_t$ independent, $P(s' \mid s,a) = \sum_d p(d)\, f(s' \mid s,a,d)$, the frequency over occasions is the occupancy, and the error-controlled regulator is a stationary policy on the MDP $(\Scal,\Acal,P)$ with outcome kernel $K$.
+This is Section~3.3 of the paper.
+The cause-controlled regulator reads $d_t$ as well, which is the MDP on $(s,d)$ with $d$ independent across steps.
+
+\paragraph{Move 3: the disturbance has memory.}
+Replace $d_t \sim p$ independent by $d_{t+1} \sim g(\cdot \mid d_t)$.
+The pair $(s,d)$ is Markov, and the error-controlled regulator sees $s$ alone, so it faces a POMDP with hidden state $d$.
+A memoryless policy on $s$ loses the polytope and may need to be stochastic \citep{Singh-learning94}.
+The belief $b_t$ over $d_t$ restores the MDP on $(s,b)$, and that belief is the internal model of the disturbance generator \citep{Francis-internal76}.
+Under cause control the regulator reads $d_t$ and the problem stays the MDP on $(s,d)$; no belief is needed.
+Partial observation of $s$ itself, $o = h(s)$, is the same move with $s$ in place of $d$, and the belief over $s$ is Wentworth's case.
+
+\paragraph{Move 4: the generator is the identity.}
+Let $d_t = \theta$, constant, or drifting at rate $\eta$ by $\delta_\eta$.
+The hidden disturbance is now the parameter of the kernels, $P_\theta$ and $K_\theta$, and the error-controlled regulator faces a POMDP whose hidden state never moves: the Bayes-adaptive MDP, with the posterior over $\theta$ as its belief \citep{Duff-optimal02}.
+Under cause control $\theta$ is read and the problem is the known MDP of Move 2.
+Without Move 2, so with $S$ trivial, it is the Bayesian bandit of \texttt{entropy\_budget\_empowerment.tex}.
+
+\paragraph{What is and is not Conant and Ashby.}
+Move 1 is their model: $p$ is already a frequency over occasions, and the contextual bandit is their diagram with the occasions written out.
+Move 2 is the one extension of the diagram.
+In their model the action reaches only $Z$; the arrow from $(S_t,A_t)$ into $S_{t+1}$ makes the regulator a cause of its own next state.
+It stays inside their frame if the disturbance at occasion $t+1$ is taken to contain $(S_t,A_t)$, so that the regulator's own past is part of what disturbs it, and the theorem survives because the state marginal of the occupancy plays the role of $p(s)$.
+Moves 3 and 4 do not change the diagram; they change what $S$ means.
+Their $S$ is whatever the regulator reads, and under memory that is the history, so the theorem says the regulator is a function of the history's sufficient statistic, which is \citet{Wentworth-fixing21}.
+Two slots are enlarged, $D$ by the regulator's past and $S$ by the history, and the outcome map, the criterion, concavity, determinism and the model as a quotient are untouched.
+What does not survive is in the paper's assumption table: $\psi$ becomes the kernel $K$, $H(Z \mid S) = 0$ fails under noise, and "every" becomes "some" unless equivalence is taken on $(K,P)$.
+Throughout, $\psi$ is the outcome map, as in Conant and Ashby and the paper; $\varphi$ is Neil's name for the arrow from $D$ to $S$, which the paper leaves unnamed.
+
+\paragraph{Where the chain ends.}
+Table~\ref{tab:cells} lists the cells.
+In every one of them the criterion is the same, $\min_d \Hmu{dK}$ over the occupancy polytope of the policy's domain, the optimum is at a vertex, and the regulator is deterministic on that domain and a model of its sufficient statistic.
+What the moves change is only the domain, from $s$ to $(s,d)$ to $(s,b)$, and so what the model is, from a quotient of $S$ to a belief over the generator to a posterior over the kernels.
+Level~1 of Section~\ref{sec:loops} is the cell (Move 2, error); Level~2 is the cell (Move 4, error); the rest of this note is about those two cells.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}lXX@{}}
+\toprule
+Disturbance & Error-controlled: reads $s$ & Cause-controlled: reads $(s,d)$ \\
+\midrule
+Independent across steps (Moves 1--2) & Contextual bandit; with $f$, the MDP on $s$. Policy $\pi(a \mid s)$. Model: the coarsest quotient of $S$ that fixes $a$. & Contextual bandit with full context; with $f$, the MDP on $(s,d)$. Policy $\pi(a \mid s,d)$. Model: a quotient of $S \times D$. \\
+Markov, generator $g$ (Move 3) & POMDP with hidden $d$; the belief MDP on $(s,b)$. Policy $\pi(a \mid s,b)$. Model: $b$, the internal model of $g$. & The MDP on $(s,d)$, as above. No belief. \\
+Constant, or drifting by $\delta_\eta$ (Move 4) & Bayesian bandit; with $f$, the Bayes-adaptive MDP on $(s,b_\theta)$. Policy $\pi(a \mid s,b_\theta)$. Model: the posterior, the gooder regulator. & Known bandit; with $f$, the known MDP. \\
+\bottomrule
+\end{tabularx}
+\caption{The sequential problems as cells of Conant and Ashby's diagram.
+Rows are what the disturbance remembers; columns are what the regulator reads; "with $f$" is Move 2.
+The objective and the vertex argument are the same in every cell.}
+\label{tab:cells}
+\end{table}
+
+\section{Three loops}
+\label{sec:loops}
+
+\paragraph{Level 0: one decision.}
+Neil's stochastic regulation problem is $(S, A, Z, \psi, p)$ with $p\colon I \to S$ exogenous and the closed loop
+\begin{equation}
+\begin{tikzcd}[column sep=large]
+I \arrow[r,"p"] & S \arrow[r,"\copym{S}"] & S \otimes S \arrow[r,"\id \otimes \pi"] & S \otimes A \arrow[r,"K"] & Z
+\end{tikzcd}
+\qquad
+\omega_\pi = K \circ (\id \otimes \pi) \circ \copym{S} \circ p .
+\label{eq:level0}
+\end{equation}
+The map $\pi \mapsto \omega_\pi$ is affine, entropy is strictly concave, so some optimal $\pi$ is deterministic.
+The regulator reads $S$ and nothing feeds back.
+
+\paragraph{Level 1: the loop in time.}
+Replace the outcome map by the pair $P\colon S \otimes A \to S$ and $K\colon S \otimes A \to Z$.
+The arrow $P$ closes the diagram,
+\begin{equation}
+\begin{tikzcd}[column sep=large]
+I \arrow[r,"p_\pi"] & S \arrow[r,"\copym{S}"] & S \otimes S \arrow[r,"\id \otimes \pi"] & S \otimes A \arrow[r,"K"] \arrow[ll, bend left=40, "P"] & Z
+\end{tikzcd}
+\label{eq:level1}
+\end{equation}
+and $p$ is no longer exogenous.
+Write $T_\pi = P \circ (\id \otimes \pi) \circ \copym{S}\colon S \to S$ for one turn of the loop.
+The state on the loop object is its fixed point, $p_\pi = T_\pi \circ p_\pi$ in the average case and $p_\pi = (1-\gamma)\rho_0 + \gamma\, T_\pi \circ p_\pi$ in the discounted case.
+The occupancy is the state one wire later, $\occ = (\id \otimes \pi) \circ \copym{S} \circ p_\pi\colon I \to S \otimes A$, and the outcome law is $\omega_\pi = K \circ \occ$.
+Two things changed against \eqref{eq:level0}.
+The map $\pi \mapsto \occ$ is no longer affine, because $p_\pi$ depends on $\pi$ through the fixed point; the map $d \mapsto K \circ d$ still is, and the set of all $\occ$ is the polytope $\Occ$ with deterministic policies at its vertices \citep{Derman-finite70ch7}, so the vertex argument is run on $d$ instead of on $\pi$.
+And the regulator still reads only $S$; the loop uses $P$ and $K$, but $\pi$ does not.
+
+\paragraph{Level 2: the parameter joins the loop.}
+Let $\theta \in \Theta$ index the kernels, $P_\theta$ and $K_\theta$, so that the world's step is a single morphism $\pair{P}{K}\colon \Theta \otimes S \otimes A \to S \otimes Z$ that reads the $\Theta$ wire.
+The regulator cannot read $\Theta$.
+It reads the history, and the history is summarised by the posterior $b_t = q(\theta \mid h_t)$, so the regulator is $\pi\colon S \otimes B \to A$ and carries a Bayes update $u\colon B \otimes S \otimes A \otimes S \otimes Z \to B$.
+The loop object is $\Theta \otimes S \otimes B$ and one turn is
+\begin{equation}
+\begin{tikzcd}[column sep=large, row sep=large]
+\Theta \otimes S \otimes B \arrow[r, "\id_\Theta \otimes \pair{\id}{\pi}"] & \Theta \otimes S \otimes B \otimes A \arrow[r, "\pair{\id}{\pair{P}{K}}"] & \Theta \otimes S \otimes B \otimes A \otimes S \otimes Z \arrow[d, "\mathrm{proj}_Z"] \arrow[ll, bend left=25, "\delta_\eta \otimes \mathrm{proj}_{S'} \otimes u"'] \\
+& & Z
+\end{tikzcd}
+\label{eq:level2}
+\end{equation}
+where $\delta_\eta\colon \Theta \to \Theta$ is the drift, which keeps $\theta$ with probability $1-\eta$ and redraws it from $q_0$ otherwise, and $\mathrm{proj}_{S'}$ keeps the new state.
+Call this turn $T_{\pi,\eta}$.
+Its fixed point is a state on $\Theta \otimes S \otimes B$, the occupancy is that state one wire later, $d\colon I \to \Theta \otimes S \otimes B \otimes A$, and the outcome law is the $Z$ wire, $\omega = \mathrm{proj}_Z \circ \pair{\id}{\pair{P}{K}} \circ d$.
+Setting $B = I$ and $\Theta = I$ recovers \eqref{eq:level1}, and setting $B = I$ with a point mass on $\Theta$ recovers it with $\theta$ known.
+Table~\ref{tab:loops} records what each level reads.
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{}lXXXX@{}}
+\toprule
+Level & Loop object & Occupancy, a state on & Regulator reads & World's step reads \\
+\midrule
+0 & none, $p$ given & $S \otimes A$ & $S$ & $S \otimes A$ \\
+1 & $S$ & $S \otimes A$ & $S$ & $S \otimes A$, through $P$ and $K$ \\
+2 & $\Theta \otimes S \otimes B$ & $\Theta \otimes S \otimes B \otimes A$ & $S \otimes B$ & $\Theta \otimes S \otimes A$, through $P_\theta$ and $K_\theta$ \\
+\bottomrule
+\end{tabularx}
+\caption{One occupancy per level, always the fixed-point state of the loop pushed one wire forward.
+The regulator never reads $\Theta$; it reads $B$, and $B$ is its model of $\Theta$.}
+\label{tab:loops}
+\end{table}
+
+\section{The regulator on the loop}
+\label{sec:belief}
+
+The question "does the outer level depend on $b$ and no longer on $(P,K)$" is answered by the wires in \eqref{eq:level2}.
+The action depends on $(s,b)$ and on nothing else.
+The outcome depends on $(\theta,s,a)$ and on nothing else.
+The only route from $\theta$ to the action runs through past outcomes, into $h_t$, into $b_t$, which is Wentworth's diagram with $\theta$ as the system and $b$ as the memory \citep{Wentworth-fixing21}.
+Figure~\ref{fig:wires} draws one step as a graph, which is the same information as \eqref{eq:level2} read wire by wire.
+
+\begin{figure}[h]
+\centering
+\tikzset{v/.style={inner sep=1.5pt, minimum size=5mm}, e/.style={-{Stealth[length=1.8mm]}}}
+\begin{tikzpicture}
+  \node[v] (th) at (0,1.6) {$\theta_t$};
+  \node[v] (th1) at (3.2,1.6) {$\theta_{t+1}$};
+  \node[v] (s) at (0,0.4) {$s_t$};
+  \node[v] (s1) at (3.2,0.4) {$s_{t+1}$};
+  \node[v] (a) at (1.6,-0.6) {$a_t$};
+  \node[v] (z) at (3.2,-0.6) {$z_t$};
+  \node[v] (b) at (0,-1.8) {$b_t$};
+  \node[v] (b1) at (3.2,-1.8) {$b_{t+1}$};
+  \draw[e] (th) -- node[above, font=\scriptsize] {$\delta_\eta$} (th1);
+  \draw[e] (th) -- (s1);
+  \draw[e] (th) -- (z);
+  \draw[e] (s) -- (s1);
+  \draw[e] (s) -- (a);
+  \draw[e] (b) -- (a);
+  \draw[e] (a) -- (s1);
+  \draw[e] (a) -- (z);
+  \draw[e] (s) -- (z);
+  \draw[e] (b) -- (b1);
+  \draw[e] (z) -- (b1);
+  \draw[e] (s1) -- (b1);
+  \draw[e] (a) -- (b1);
+\end{tikzpicture}
+\caption{One turn of \eqref{eq:level2} as a graph.
+Arrows into $a_t$ are what the regulator reads; arrows into $s_{t+1}$ and $z_t$ are what the world uses; arrows into $b_{t+1}$ are the Bayes update $u$.
+The two levels are one regulator on $(s,b)$: the "outer" map $b \mapsto \pi(\cdot \mid \cdot, b)$ is $\pi$ curried, and the "inner" regulator is $\pi$ at a fixed $b$.}
+\label{fig:wires}
+\end{figure}
+
+\begin{proposition}[The predictive law is the law of the run]
+\label{prop:run}
+Let $d$ be the occupancy of \eqref{eq:level2} and $d_{SBA}$ its marginal on $S \otimes B \otimes A$.
+Then $d = (b \otimes \id) \circ d_{SBA}$, that is $d(\theta,s,b,a) = d_{SBA}(s,b,a)\, b(\theta)$, and the outcome law is $\omega = \Kb \circ d_{SBA}$ with $\Kb(z \mid s,b,a) = \E_{\theta \sim b} K_\theta(z \mid s,a)$.
+\end{proposition}
+\begin{proof}
+$(s_t,b_t)$ is a function of $h_t$ and $b_t = q(\cdot \mid h_t)$ is the same on every history in the fibre, so $P(\theta \mid s_t,b_t) = b_t(\theta)$; multiply by $P(s_t,b_t)\,\pi(a \mid s_t,b_t)$, sum over $t$ with the occupancy weights, and push the $\Theta$ wire through $K_\theta$.
+With the drift $\delta_\eta$ the posterior is over the current $\theta_t$ and the same argument applies.
+\end{proof}
+
+So the objective on this loop, $\min \Hmu{\Kb \circ d_{SBA}}$, is Conant and Ashby's criterion over everything the regulator does not control, $\theta$ included, with no approximation, and the learning phase is inside the occupancy because the chain on $(s,b)$ counts every step of the run.
+The set of $d_{SBA}$ is again cut out by a flow constraint, so it is convex with deterministic policies at its extreme points, finite when $B$ is finite and countable for conjugate posteriors \citep{Altman-markov91}.
+
+\begin{proposition}[The gooder regulator]
+\label{prop:gooder}
+Some optimal $\pi\colon S \otimes B \to A$ is deterministic, $H(A \mid S,B) = 0$, and in general no optimal regulator is deterministic in $S$ alone.
+\end{proposition}
+
+\noindent
+This is Wentworth's theorem on the loop: the regulator's minimal model of $\theta$ is $b$, and its action is a function of the state and the model.
+It also answers how the good regulator finds $\pi$.
+It does not search.
+The morphism $\pi\colon S \otimes B \to A$ is fixed, the belief moves by the fixed morphism $u$, and the policy on $S$ that an observer sees, $\pi(\cdot \mid \cdot, b_t)$, drifts with $b_t$.
+Learning is the deterministic motion of the model wire inside a fixed regulator, which is the Bayes-adaptive MDP \citep{Duff-optimal02}.
+Without the drift $\delta_\eta$ and with the average occupancy, the $B$ wire converges, the learning steps have weight zero, and the objective does not price them; the drift is the persistent disturbance of v1, applied to the $\Theta$ wire, and in the discounted case $\gamma$ supplies it as a reset with $1-\gamma = \eta$.
+
+\section{Empirical Bayes: the search appears}
+\label{sec:eb}
+
+Computing the fixed $\pi$ of Proposition~\ref{prop:gooder} is intractable beyond bandits, so replace the $B$ wire by a point estimate $w$ and the Bayes update $u$ by maximum likelihood.
+The inner step needs $\theta$ only through the outcome law, by the Gibbs identity
+\begin{equation}
+  \Hmu{p} = \min_q \E_{p}[-\ln q],
+  \qquad
+  \E_{\omega_\pi}[-\ln q] = -\sum_{s,a} \occ(s,a)\, r_q(s,a),
+  \qquad
+  r_q(s,a) = \E_{K(\cdot \mid s,a)}[\ln q(z)],
+  \label{eq:gibbs}
+\end{equation}
+so $w$ parametrises $q$ and the regulator is $\pi(a \mid s,w)$ as in v1.
+Now the loop of \eqref{eq:level1} runs with $\pi_k$ fixed, and a second loop runs on the hom-set,
+\begin{equation}
+\begin{tikzcd}[column sep=huge]
+\pi_k \in \Hom(S,A) \arrow[r, "\text{run \eqref{eq:level1}}"] & d^{\pi_k} \arrow[r, "K"] & q_k = \omega_{\pi_k} \arrow[r, "\ln"] & r_{q_k} \arrow[r, "\text{solve MDP}"] & \pi_{k+1}
+\end{tikzcd}
+\label{eq:mm}
+\end{equation}
+The second arrow is the regulator producing its own data, the third is type-II maximum likelihood, since $q$ is the hyperparameter of the inner reward and is fit to the data the inner problem generates, and the last arrow is the search that Conant and Ashby never discuss.
+In \eqref{eq:level2} both loops were one morphism $T_{\pi,\eta}$; here they are separated, the inner one run to its fixed point before the outer one moves.
+At a fixed point $q^\star = \omega_{\pi^\star}$ and $\pi^\star$ solves control as inference with likelihood $q^\star$ \citep{Toussaint-probabilistic06,Levine-reinforcement18}.
+
+\paragraph{What the separation costs.}
+Each $\pi_k$ is scored by $\Hmu{\omega_{\pi_k}}$, the entropy of its own fixed point.
+The run is the sequence, and its outcome law is, up to transients, $\bar\omega = \sum_k \lambda_k\, \omega_{\pi_k}$ with $\lambda_k$ the fraction of time under $\pi_k$, so by concavity
+\begin{equation}
+  \Hmu{\bar\omega} = \sum_k \lambda_k \Hmu{\omega_{\pi_k}} + I(Z;k).
+  \label{eq:run-gap}
+\end{equation}
+MM descends the first term and does not see $I(Z;k)$, the information the outcome carries about which iterate produced it.
+In \eqref{eq:level2} the iterate index is the $B$ wire, which is inside the loop object, so Proposition~\ref{prop:run} scores $\bar\omega$ and charges this term.
+It is the across-episode term that separates the occupancy from SMiRL \citep{Berseth-smirl21,Mutti-importance22}, with the iterate in place of the episode.
+\open{Whether $I(Z;k)$ is small for the MM loop in practice.}
+
+\section{What must be modelled}
+\label{sec:sf}
+
+The outer regulator must model the second arrow of \eqref{eq:mm}, the map from a policy to its outcome law, and the minimal model of that map is not $\theta$.
+With $\phi\colon Z \to \mathbb R^m$ the one-hot feature, or the feature family of v2, the map factors,
+\begin{equation}
+\begin{tikzcd}[column sep=huge]
+\Hom(S,A) \arrow[r, "\pi \mapsto \psi^\pi"] \arrow[rr, bend right=20, "\pi \mapsto \omega_\pi"'] & \mathbb R^{S \times A \times m} \arrow[r, "(1-\gamma)\,\E_{\rho_0,\pi}"] & \mathrm{Dist}(Z)
+\end{tikzcd}
+\qquad
+\psi^\pi = \E_K[\phi] + \gamma\, P^\pi \psi^\pi ,
+\label{eq:sf}
+\end{equation}
+and the inner MDP's action value is $w^\top \psi^\pi$ up to the gauge term of v2.
+Two parameters $\theta, \theta'$ with the same $\psi^\pi$ for every $\pi$ give the same bent arrow, so the coarsest quotient of $\Theta$ that preserves $\psi$ is the outer regulator's minimal non-faithful model.
+Successor-feature abstractions are exactly the abstractions that predict every reward linear in $\phi$ \citep{Lehnert-successor19}, and $r_q$ in \eqref{eq:gibbs} is linear in $\phi$ for every $q$ in the family, so this is the quotient the paper's Section~4 should define: the outcome-bisimulation quotient of the state, relative to $Z$.
+At level 2 the same reduction says the $B$ wire need only carry the posterior over $\psi$, not over $\theta$.
+\open{Prove that the posterior over $\psi^\pi$ is sufficient for the level-2 objective; immediate for the bandit, where $\psi = \theta$.}
+
+\section{The criterion as a fixed point, and what a model is}
+\label{sec:fixedpoint}
+Added 7 October 2026, after the discussion above.
+
+\paragraph{A property of the argmin, not a method.}
+Conant and Ashby state a property of optimal regulators, as Bellman optimality states a property of $V^\star$.
+Neither says how to get there.
+Bellman's statement is already a fixed-point equation; theirs is not, and the occupancy objective is what turns it into one.
+Written out, the analogue of Bellman optimality is two coupled conditions,
+\begin{equation}
+  q^\star = d^{\pi^\star} K,
+  \qquad
+  \pi^\star \in \arg\max_\pi \sum_{s,a} \occ(s,a)\, \E_{K(\cdot \mid s,a)}\big[\ln q^\star(z)\big],
+  \label{eq:fp}
+\end{equation}
+the second an ordinary Bellman problem with reward $r_{q^\star}$, the first closing it on the regulator's own outcome law.
+A good regulator is a policy that is optimal for the reward defined by the outcomes it produces.
+The method analogues follow: MM is policy iteration on the pair, the SARSA and natural-gradient actor of v1 is the Q-learning analogue, and the analogy breaks at uniqueness, since the objective is concave on the polytope and \eqref{eq:fp} has many solutions.
+This is the fixed point that \texttt{frame.tex} calls variational EM and that Section~\ref{sec:eb} reaches from the empirical-Bayes side.
+
+\paragraph{Model as the statistics of the fixed point.}
+Under Bellman, model-free means carrying $Q$ and model-based means carrying $P$, both sufficient statistics for the fixed point.
+Read the same way, "having a model" under the good-regulator criterion means carrying the statistics in which \eqref{eq:fp} is written, and the minimal model depends on what the regulator has to do with them.
+\begin{itemize}
+\item \emph{Act at the fixed point.} The reward $r_{q^\star}$ is fixed, so $Q$ for that reward, or the greedy action, suffices. This is Bellman's model-free level and Conant and Ashby's quotient of $S$.
+\item \emph{Hold the fixed point.} The regulator also needs $q^\star$, to check that the outcomes it produces are the ones its reward was built from. $q$ is the pushforward $dK$, a histogram over $Z$ estimated from outcome samples; the occupancy itself is never needed. It is a model of the regulator's own outcome law, not of the environment.
+\item \emph{Find the fixed point.} $q$ moves, so the reward moves, and $Q$ is needed for every $q$ along the way: either relearned per $q$, which is model-free on a moving reward and is v1's sampled reward $\ln \hat q(z_t)$, or carried as $\psi^\pi$, which gives $Q_w = w^\top \psi^\pi$ for every $q$ at once. $\psi$ is a model along the reward axis and model-free along the dynamics axis \citep{Lehnert-successor19}: it answers any reward linear in $\phi$ without new data and answers nothing about a different policy, which is why GPI is needed to move between policies \citep{Barreto-successor17}.
+\end{itemize}
+The environment model $P$ is never needed on any rung; what the top rung needs is $\psi$, a quotient of $P$ relative to $Z$, which is where "minimal, not faithful" gets its content here.
+Our setting is the regime successor features were built for, a reward that moves at every step and dynamics that do not; the cost is the on-policy tie, $\psi$ is stale after a policy step until it tracks, which is why v1 keeps the actor rate small.
+This ladder is the Part~3 fallback of \texttt{plan.md} (23 September), derived here from the criterion rather than from the algorithm.
+
+\paragraph{Do we need occupancies, or can we use control as inference directly?}
+Control as inference adds a binary optimality variable $O_t$ with $p(O_t = 1 \mid s,a) = r(s,a)$ \citep{Toussaint-probabilistic06,Levine-reinforcement18}.
+A natural question is whether we can skip occupancies and minimise $H(O)$ instead.
+
+\emph{A binary $O$ alone does not work.}
+The long-run fraction of steps with $O = 1$ is the average reward $R(\pi)$, so the per-step entropy is $H(O) = h_b(R)$.
+Over the achievable interval $R \in [R_{\min}, R^\star]$ this is minimised at whichever endpoint is further from $\tfrac12$.
+In a sparse-reward task $R_{\min} = 0$ is achievable and $h_b(0) = 0$, so the minimiser is the policy that never succeeds.
+
+\emph{Enlarging the alphabet of $O$ is exactly our reward channel.}
+Let $O$ emit the good symbol with probability $r(s,a)$ and one of $N$ noise symbols uniformly otherwise.
+Its per-step law under $\pi$ is the channel $K_{R(\pi)}$ of v1, with entropy $F(R) = h_b(R) + (1-R)\ln N$.
+For $N$ above the threshold $h_b(R^\star) < R^\star \ln N$ the minimiser is the return maximiser.
+So the optimality variable with a noise alphabet and our outcome $Z$ on the reward channel are one and the same random variable, and the binary case is $N = 1$.
+
+\emph{What differs is which entropy of the run is taken.}
+Given the same per-step variable, there are three different criteria.
+\begin{enumerate}
+\item The entropy of the long-run per-step law, $\Hmu{\occ K}$. This is our objective. It is concave in the occupancy and has a deterministic optimum.
+\item The entropy of the single event "$O_t = 1$ at every step". Its probability is $\E_\pi \exp\sum_t r_t$ when $r \le 0$ is read as a log-likelihood, so this criterion is a binary entropy of an exponential utility. It is a different objective from ours.
+\item The entropy of the whole symbol string, $H(Z_{1:T})$, or its rate per step. This is the criterion of PARL. It is never larger than criterion~1 and differs from it by how predictable each outcome is from the earlier ones, see the next paragraph.
+\end{enumerate}
+The paper uses criterion~1, and \texttt{plan.md} Section~6 records why against SMiRL and PARL.
+
+\emph{Algorithmically the occupancy is never estimated.}
+The MM loop of \eqref{eq:fp} estimates only $q$, the histogram of outcomes, and its inner step is a standard RL problem with reward $r_q(s,a) = \E_{K(\cdot \mid s,a)}[\ln q(z)]$.
+The occupancy is the space on which the criterion is defined, so that \eqref{eq:fp} has a solution and that solution is a deterministic policy.
+On the reward channel, write $\rho_k = q_k(\text{good symbol})$ for the current estimated success rate.
+By v2 the inner reward is then $w_k\, r(s,a)$ plus a constant, with gain
+\begin{equation*}
+  w_k = \ln\frac{\rho_k}{1-\rho_k} + \ln N ,
+\end{equation*}
+which is positive exactly when $\rho_k > 1/(N+1)$.
+With a policy-entropy term added, the inner step is the soft-RL problem of control as inference at inverse temperature $w_k$.
+The difference from \citet{Toussaint-probabilistic06} is that their temperature is fixed and their target is always $O = 1$.
+Here $w_k$ is re-estimated each iteration from the agent's own outcomes, and when $\rho_k < 1/(N+1)$ the sign of $w_k$ flips and the iteration moves towards failure.
+
+\paragraph{Two open branches.}
+\emph{Branch 1: inferring the state from outcomes.}
+Suppose the regulator saw only the symbols $z_{1:t}$ and not the state.
+Then the posterior over $s_t$ given $z_{1:t}$ is a hidden-Markov filter with $P$ as the transition and $K$ as the emission.
+That posterior is the belief of Move~3, here over the state instead of over the disturbance.
+Control as inference runs the same message passing, but conditions on the desired symbols $O_{1:T} = 1$ instead of on observed ones, so it infers how to act rather than where the agent is.
+Whether the two can be combined into one inference for the error-controlled regulator is open.
+
+\emph{Branch 2: entropy of the string against entropy of the marginal.}
+By the chain rule,
+\begin{equation*}
+  H(Z_{1:T}) = \sum_{t=1}^{T} H(Z_t) - \sum_{t=1}^{T} I(Z_t ; Z_{<t}) .
+\end{equation*}
+The first sum is our criterion, up to normalisation.
+The second sum is how predictable each outcome is from the earlier ones, and the string criterion gives credit for it.
+Example: outcomes that alternate $A, B, A, B, \dots$ have marginal entropy $\ln 2$ and string entropy rate zero.
+Our criterion charges the alternation; the string criterion does not.
+
+Consider $Z = S$ and a deterministic policy, which both criteria may assume since both are minimised at a vertex.
+The state sequence is then a Markov chain with entropy rate
+\begin{equation*}
+  \bar h = \sum_{s} d(s)\, H\big(P(\cdot \mid s, \pi(s))\big),
+\end{equation*}
+which is linear in the occupancy.
+Minimising it is ordinary average-reward RL with the reward $-H(P(\cdot \mid s,a))$, a local penalty on transition noise.
+Our criterion is the marginal entropy $H(d_S)$, and $H(d_S) = \bar h + I(S_{t+1} ; S_t)$.
+So ours charges the transition noise plus the part of the motion that is predictable from the current state, and theirs charges the noise only.
+
+On transients: in the long-run average neither criterion charges them.
+With discounting or a finite horizon, the marginal criterion charges how spread out the transient outcomes are, while the string criterion charges only how unpredictable they are given the past, so a deterministic approach from a known start is free under the string criterion.
+
+The internal-model reading: a periodic disturbance that the regulator can predict but not cancel produces periodic outcomes.
+Their string entropy is near zero and their marginal entropy is positive.
+So the string criterion rewards a regulator for having a model of the disturbance even when it cannot use it to cancel the disturbance, while the marginal criterion rewards only cancellation.
+Put differently, the string criterion asks for outcomes predictable by an observer who knows the past, and ours asks for outcomes predictable by an observer who knows nothing.
+Conant and Ashby's $H(Z)$ is the second.
+\open{Whether the paper wants a sentence on this against PARL, or whether it is a later note.}
+
+\section{What this gives the paper}
+
+One regulator on $(s,b)$, drawn as \eqref{eq:level2}, replaces the two-level story: the inner regulator is $\pi$ at fixed $b$, the learner is $\pi$ curried in $b$, the model is the $B$ wire, and the occupancy is the fixed-point state of the loop.
+The MM algorithm is the same loop with $B$ replaced by a point estimate and the two turns separated, which is empirical Bayes and loses $I(Z;k)$.
+What both levels must model is $\psi^\pi$, which is what representation learning should keep.
+The categorical notation earns its place here as a bookkeeping of wires, not as a source of theorems; the results still come from concavity on the occupancy, as Neil's note says.
+
+\bibliographystyle{plainnat}
+\IfFileExists{notes_joery/joery_survey.bib}
+  {\newcommand{\surveybib}{notes_joery/joery_survey}}
+  {\newcommand{\surveybib}{joery_survey}}
+\bibliography{\surveybib}
+
+\end{document}

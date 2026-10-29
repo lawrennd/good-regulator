@@ -1,0 +1,226 @@
+\documentclass[10pt]{article}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{Working Note: Claims Not Verified}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\usepackage[margin=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black]{hyperref}
+
+\setlist{nosep,leftmargin=1.3em}
+\newcommand{\KL}{\mathrm{KL}}
+\newcommand{\E}{\mathbb E}
+
+\title{Outcome entropy under partial observability\\\large Summary of a side discussion, 10--11 Oct 2026}
+\author{Joery}
+\date{12 Oct 2026}
+
+\begin{document}
+\maketitle
+
+\noindent\textbf{Status.}
+Summary of ideas worked out in a separate chat, recorded for history.
+Nothing here is checked against the literature or proven beyond the one-line derivations shown.
+Notation follows the skeleton: $\psi$ is the outcome map, $p(z \mid s,a)$ its channel, $X$ the agent's history, and $H(\cdot)$ always entropy.
+The agent sees observations $o$, not the latent state $s$.
+
+\section{Setup and the four-term decomposition}
+\begin{itemize}
+  \item Occupancy joint. Draw $t \sim \mathrm{Geom}(1-\gamma)$ and set $(X,S,A,Z) = (x_t,s_t,a_t,z_t)$.
+  \item The one assumption doing all the work is $Z \perp X \mid (S,A)$, the outcome depends on the history only through state and action.
+  \item The chain rule on $I(Z;X,A,S)$ together with $H(Z \mid X,A,S) = H(Z \mid S,A)$ gives
+  \begin{equation*}
+    H(Z) = \underbrace{I(Z;X)}_{\text{1 regulation}} + \underbrace{I(Z;A \mid X)}_{\text{2 policy randomness}} + \underbrace{I(Z;S \mid X,A)}_{\text{3 belief uncertainty}} + \underbrace{H(Z \mid S,A)}_{\text{4 noise floor}}.
+  \end{equation*}
+  \item Term 1 is $\E_x \KL(p(z \mid x) \,\|\, \bar p)$, so the outcome should not depend on circumstance.
+  \item Term 2 is at most $H(A \mid X)$ and vanishes for deterministic policies, the theorem's ``the regulator is a mapping''.
+  \item Term 3 is the Jensen gap of the belief mixture, $\E_{x,a}\E_{s \sim b}\KL(p(z \mid s,a) \,\|\, p(z \mid x,a))$.
+    Sensing or robust actions reduce it, so active perception sits inside the objective rather than being added to it.
+  \item Term 4 is reducible only by visiting quiet $(s,a)$.
+  \item With random model parameters $\Theta$, the Bayes-adaptive case, a term $I(Z;\Theta \mid X,A,S)$ appears.
+    The preferred ordering credits shared uncertainty to $\Theta$, which is removable once, $I(Z;\Theta \mid X,A) + I(Z;S \mid X,A,\Theta)$.
+  \item Splitting discipline.
+    Keep a split only if its halves differ in control lever, likelihood channel or timescale.
+    Epistemic versus aleatoric is a cross-reference to terms 3 and 4, not a new split.
+\end{itemize}
+
+\section{Which occupancy is needed}
+\begin{itemize}
+  \item Neither a history nor an observation occupancy is needed.
+    Only the pushforward through the outcome channel matters, $\bar p(z) = \sum_{s,a} d^\pi(s,a)\, p(z \mid s,a)$, together with $p(z \mid f(x),a)$ for a representation $f$.
+  \item Linearising the concave objective gives the pseudo-reward $r = \E_{z \mid x,a} \log \bar p(z)$, or $\log p^\star - \log \bar p$ with a setpoint $p^\star$.
+  \item The critic is the successor measure over outcomes $M(f,a;z)$, successor features with one-hot $z$ and weights $w = \log \bar p$ refitted every round.
+  \item This is Hazan et al.\ 2019 with the sign flipped.
+    Minimising a concave functional over the occupancy polytope gives a vertex, a deterministic history-dependent policy, but Frank--Wolfe guarantees are lost and local minima are generic.
+  \item Honest demotion.
+    With a fixed setpoint the reward $\log p^\star(\psi(s,a))$ is linear, and $\E_{\bar p} \log p^\star = -H(\bar p) - \KL(\bar p \,\|\, p^\star)$, a mode-seeking cross-entropy.
+    The practical regulator is then an ordinary (PO)MDP reward problem.
+    Convex RL is needed only for free-setpoint entropy or exact KL matching.
+  \item Reward is a proper subclass.
+    With $z \sim \mathrm{Bernoulli}(\tilde r)$, $\tilde r \in [\tfrac12,1]$, one gets $H(Z) = h_b(\E \tilde r)$, decreasing in $\E\tilde r$, so minimising $H(Z)$ is expected-reward maximisation.
+    A Gaussian variance channel gives a consistency or risk preference.
+    The converse fails, occupancy entropy is not Markov-reward expressible, Abel et al.\ 2021.
+\end{itemize}
+
+\section{What $z$ must be}
+\begin{itemize}
+  \item Exogenous, a fixed kernel with respect to the learnable parameters, and contestable.
+  \begin{itemize}
+    \item Grounded, some observable depends on it.
+    \item Controllable, $\mathcal E_z(f) = \max_{p(a \mid f)} I(A;Z' \mid f) > 0$.
+    \item Disturbed, the world moves it.
+  \end{itemize}
+  \item Grounding is the likelihood channel; controllable and disturbed are priors over $\psi$.
+  \item Biological reading is an interoceptive or allostatic variable.
+    $\psi$ is inherited from an outer loop, evolution or a designer, and the individual learns forecasts.
+    ``Fear'' is $\E_{z \sim M}[-\log p^\star(z)]$.
+  \item Reward-to-noise and predictability of observation trajectories were flagged as weak and dark-room prone.
+    Predictability belongs on $z$ only.
+\end{itemize}
+
+\section{The representation $f$}
+\begin{itemize}
+  \item The minimal $z$-sufficient statistic is the belief projected onto the $\psi$-bisimulation quotient, the ancestral set of $Z_{t:\infty}$ in the latent dynamic Bayes net.
+  \item It must be closed under the dynamics, otherwise it cannot be maintained recursively.
+  \item It is policy dependent.
+    The agent can shrink the ancestral set by cutting causal edges, Ashby's block versus compensate.
+  \item Compress by the deterministic information bottleneck, safe because $\psi$ is exogenous.
+    ``Most of $s$ is irrelevant'' is a heuristic, the compression ratio is a property of the causal graph under $\pi$.
+  \item A $2 \times 2$ split of state factors, controllable by $z$-ancestor, gives lever, wasted capacity, disturbance and noise.
+    Inverse models recover the controllable row, $z$-prediction the ancestral column, and an inverse model inside the quotient separates levers from disturbances.
+    Related are Denoised MDPs, Wang et al.\ 2022, and ASR, Huang et al.\ 2022.
+  \item Hierarchy, after Li, Walsh and Littman 2006 with $\psi$ in the reward slot, from fine to coarse.
+  \begin{enumerate}
+    \item $\psi$-bisimulation.
+    \item $z$-successor-feature equivalence under $\Pi$, value equivalence for the span of $z$-functions, Grimm et al.\ 2020.
+    \item $Q^\pi$-irrelevance, too coarse because $w$ changes every iteration.
+    \item $a^\star$-irrelevance, the regulator map itself and the literal level of Conant and Ashby.
+  \end{enumerate}
+    Learning under partial observability forces the second level.
+  \item Special case $z = s$.
+    $f$ is the full belief and the objective is state-marginal matching, Lee et al.\ 2019.
+    The decomposition reduces to $I(S;X) + H(S \mid X)$, regulation plus active localisation as in $\rho$-POMDPs.
+    In LQG the separation principle holds and term 3 is present but policy independent, no dual effect.
+\end{itemize}
+
+\section{Empowerment, requisite variety, collapse}
+\begin{itemize}
+  \item Term 2 is empowerment spent, behavioural mutual information.
+    $\mathcal E_z$ is empowerment held, a counterfactual maximum.
+  \item Regulation drives the spend to zero and must keep the budget, $\min H(Z)$ subject to $\mathcal E_z(f) \ge c$.
+  \item Requisite variety, Ashby 1956, Conant 1969, Touchette and Lloyd 2000, is feasibility, budget at least the disturbance variety.
+    The dark room satisfies it at $0 \ge 0$.
+    The floor $c > 0$ insures against unmodelled disturbances and is permanent.
+  \item The anchor must be counterfactual, since inverse models go blind as regulation succeeds, as in closed-loop identification and dual control.
+    Path empowerment $I(A^n; Z_{t+1:t+n})$ is the right budget, not the endpoint version.
+  \item Collapse taxonomy.
+    $H(Z) \to 0$ is the goal, $f$ tends to minimal sufficient, term 2 and probing tend to zero, and $\mathcal E_z$ stays.
+  \item For a learned $\hat z$, empowerment is the defining anchor, a regulated variable is one the actions can move, and grounding selects which one.
+  \item Error control only supports an inverse or empowerment anchored $f$; a latent $z$ needs cause control, so disturbances must be in $f$.
+\end{itemize}
+
+\section{Perception, learning, posteriors}
+\begin{itemize}
+  \item A BAMDP is a POMDP with a static latent.
+    State information decays and parameter information accumulates.
+  \item Regulation feeds perception, since it must track disturbances, and starves learning, since it removes action variation and keeps $z$ away from the viability boundary.
+  \item A point estimate of $\theta$ hides the learning term, certainty equivalence.
+    Meta-RL such as RL$^2$ or VariBAD is the genuine merge.
+  \item Posteriors are indexed by likelihood channel.
+    Observations inform state and dynamics; $z$ informs the outcome map composed with the quotient, a $z$-valued PSR, not $\psi$ on the true state, which is unidentifiable; a viability signal $v$ informs which $\psi$.
+  \item Representation is a rate--distortion decision, not a posterior.
+  \item Self-sealing pathology.
+    Hedging regulation never fires $v$, and a survival-only likelihood gives a survivorship-biased posterior over $\psi$, maximised by ``everything visited is safe''.
+    The fix is a graded signal, pain before death.
+\end{itemize}
+
+\section{Control as inference}
+\begin{itemize}
+  \item Do not replace the optimality variable $\mathcal O$ by $z$; factor through it, $p(\mathcal O = 1 \mid s,a) = \sum_z p^\star(z)\, p(z \mid s,a)$.
+  \item The reward is then log viability marginalised over outcome noise.
+    The CaI temperature is the noise floor, term 4, plus the setpoint width, and normalisation is automatic.
+    Generic CaI is the case of a binary unobserved $z$.
+  \item Optimism comes from conditioning on the unobserved future, which tilts disturbances to be benign, the worst bias for a regulator.
+    Use the variational fix or a pessimistic, Whittle-type tilt.
+  \item When $z$ is observed, $p(a \mid s,z')$ is a legitimate posterior, an inverse model, and hindsight is exact.
+  \item The soft value is a log survival probability, a Doob $h$-transform.
+    Policy entropy conflicts with term 2.
+  \item Three conditioning events on $z$ eliminate $\mathcal O$.
+
+  \medskip
+  \begin{tabular}{@{}p{0.27\linewidth}p{0.33\linewidth}p{0.3\linewidth}@{}}
+    \toprule
+    event & posterior & objective \\
+    \midrule
+    $z_t = g$ for all $t$, $g \sim p^\star$ & $p(\tau)\sum_g p^\star(g)\prod_t p(g \mid s_t,a_t)$ & per-episode entropy, goal-conditioned RL, non-Markov \\
+    $\hat p_\tau = p^\star$ & exponential tilt, Sanov & KL matching, reward as Lagrange multiplier \\
+    each $z_t$ viable & $p(\tau)\prod_t \sum_z p^\star(z)\, p(z \mid s_t,a_t)$ & cross-entropy, mode-seeking \\
+    \bottomrule
+  \end{tabular}
+  \medskip
+
+  \item Occupancy versus evidence.
+    $H(Z) = -\E\log\bar p$ uses the marginal, $-\E\log p(z \mid s,a) = H(Z \mid S,A)$ the conditional, and their difference $I(Z;S,A)$ is terms 1 to 3.
+  \item Product versus sum over time gives multiplicative Bellman, survival and risk sensitivity, versus additive Bellman, homeostatic and excursion tolerant.
+  \item The occupancy is order blind; marginal entropy is not an entropy rate.
+    Regulate stocks, not flows, and use windows if a pattern is the regulated thing.
+  \item Predictability of behaviour is the rate term $I(A_t; X_t \mid A_{<t})$, Tishby and Polani's relevant information, a rate--distortion problem with a requisite-variety floor.
+  \item Sequences of $z$ conditioned on a higher outcome $y$ give a time-varying setpoint, allostasis, with planning above and regulation below.
+\end{itemize}
+
+\section{Novelty and framing}
+\begin{itemize}
+  \item The components are known: Ashby, Conant, Touchette and Lloyd, Sagawa and Ueda, BALD, dual control, the epistemic value of active inference, $\rho$-POMDPs, Tishby and Polani, Hazan, Mutti, Zahavy, Lee, Attias, Toussaint, Rudner, Lehnert and Littman, Grimm, Li, Walsh and Littman, the empowerment literature, Keramati and Gutkin, Pezzulo, Rigoli and Friston.
+  \item Claims to push, moderate confidence that they are unpublished in this form, search first.
+  \begin{itemize}
+    \item The epistemic term is derived by the chain rule rather than postulated as in expected free energy.
+    \item Two-channel sign structure, $I(S;O \mid X)$ high and $I(Z;S \mid X,A)$ low; the dark room is where the two channels coincide.
+    \item Empowerment--regulation duality with a counterfactual anchor.
+    \item A policy-dependent requisite-variety floor, niche construction by cutting edges.
+    \item Regulation strictly contains reward.
+    \item $\mathcal O$ factored through $z$, with temperature equal to the noise floor, and the $\mathcal O$-free conditioning events.
+  \end{itemize}
+  \item Reviewer line to pre-empt: ``this is active inference''.
+  \item Exclusions the framing implies: no predictability terms on $o$, no learned $z$ without grounding, no anchors from behaviour-data inverse models.
+\end{itemize}
+
+\section{Planned experiment}
+\begin{itemize}
+  \item A latent factored environment with a designer-controlled causal graph into $z$, varying ancestor count, controllable ancestors and cuttable edges.
+  \item Interoceptive discrete $z$ with $p^\star$, forecast pseudo-reward, $f$ trained by $z$-successor-feature prediction plus deterministic IB with stop-gradient from $H(Z)$ into the encoder, an inverse head on $f$, an empowerment floor swept in $c$, and all four or five terms logged.
+  \item Predictions.
+  \begin{itemize}
+    \item Compression tracks the ancestral set under $\pi$.
+    \item The agent cuts edges before modelling them.
+    \item A predictive constraint gives a static region; an action or empowerment constraint gives a bounded cycle growing with $c$.
+    \item Agents with learned $\psi$ either over-regulate and stay ignorant, or take damage to learn.
+  \end{itemize}
+\end{itemize}
+
+\section{Open}
+\begin{itemize}
+  \item The exact form of the sequential requisite-variety inequality.
+  \item References for pessimistic CaI.
+  \item Whether path and endpoint empowerment are distinguished in the literature.
+  \item The posterior over $\psi$ needs the $v$ channel specified first.
+  \item Finite-trial versus infinite-trial choice for the main objective.
+\end{itemize}
+
+\section{Links to the skeleton}
+\begin{itemize}
+  \item Fully observed, with $X = S$, term 3 vanishes and terms 1 and 2 add up to $I(Z;S,A)$.
+    The four terms reduce to the skeleton's $H(Z \mid S,A) + I(Z;S,A)$, and a deterministic $\pi$ removes term 2.
+  \item The pseudo-reward $\log \bar p$ is the skeleton's $\ln q$ at $q = p_\pi$, and the successor measure over $z$ is the value of the indicator $\mathbf 1\{z = \psi(s,a)\}$.
+  \item ``The occupancy is order blind'' is the same fact as the skeleton's per-step and snapshot counterexamples, read from the other side.
+\end{itemize}
+
+\end{document}

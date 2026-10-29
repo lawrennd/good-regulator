@@ -1,0 +1,169 @@
+\documentclass[10pt]{article}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{Parked Idea: Candidate Workshop Paper, Not Checked Against the Literature}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\usepackage[margin=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,citecolor=blue!55!black,urlcolor=blue!55!black]{hyperref}
+\usepackage[round]{natbib}
+
+\setlist{nosep,leftmargin=1.3em}
+\setlength{\bibsep}{1pt}
+\renewcommand{\bibfont}{\footnotesize}
+
+\newcommand{\Hmu}{H_\mu}
+\newcommand{\dpi}{d^\pi}
+\newcommand{\E}{\mathbb E}
+\newcommand{\Dcal}{\mathcal D}
+\newcommand{\open}[1]{\textcolor{red!70!black}{[Open: #1]}}
+
+\title{Control as Inference for Occupancy Objectives}
+\author{Parked note, 29 September 2026}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\noindent
+Parked from the frame discussion of 29 September; see \texttt{frame.tex}, Section~4. A possible second workshop paper, separate from the RLC submission. The space around it has not been searched: the neighbours listed at the end come from the survey knowledge base only.
+
+\section{The optimality event, derived}
+
+The aim is an optimality variable built the way control as inference builds one: a per-step event with a likelihood given by the model, not a functional inserted by hand. The event we use is \emph{the regulator predicts its outcome}.
+
+\paragraph{The event.} The regulator carries a predictive model $q$ of its outcome. At each step $t$ the channel emits $z_t \sim K(\cdot \mid s_t,a_t)$ and the model issues one guess $\hat z_t \sim q$. Set $O_t = 1$ when the guess is right. For discrete $Z$,
+\begin{equation}
+  p(O_t = 1 \mid z_t;\, q) = q(z_t), \qquad
+  p(O_t = 1 \mid s_t,a_t;\, q) = \sum_z K(z \mid s_t,a_t)\, q(z).
+  \label{eq:event}
+\end{equation}
+This is a probability for any $q$, so nothing needs normalising.
+
+\paragraph{Reference measure as tolerance.} For continuous $Z$, call the guess right when it lands in a cell $C_\varepsilon(z_t)$ of $\mu$-mass $\varepsilon$ around $z_t$. Then $p(O_t=1\mid z_t) = Q(C_\varepsilon(z_t)) = \varepsilon\,\frac{dq}{d\mu}(z_t)\,(1+o(1))$. So $\mu$ is the resolution at which a prediction counts as correct, and $\ln \frac{dq}{d\mu}$ appears without being put in.
+
+\paragraph{The trajectory model.} Discounting enters as in \citet{Levine-reinforcement18}, through termination with probability $1-\gamma$ per step. Under the prior policy $\pi_0$, the dynamics $P$, the channel $K$ and the events $O_{0:T}$, the joint over a trajectory $\tau = (s_t,a_t,z_t)_t$ is
+\begin{equation}
+  p(\tau, O_{0:T}=1;\, q) = \nu(s_0) \prod_t \pi_0(a_t\mid s_t)\, K(z_t\mid s_t,a_t)\, P(s_{t+1}\mid s_t,a_t)\; \prod_t q(z_t).
+\end{equation}
+
+\paragraph{Variational posterior with nature fixed.} Take the variational family that keeps $\nu$, $P$ and $K$ and varies only the policy, $p_\pi(\tau)$. This is the variational fix that removes the optimism of exact inference: the posterior may not bend the dynamics or the channel towards the event. The evidence lower bound is
+\begin{equation}
+  \ln p(O=1;\, q) \;\ge\; \E_{p_\pi}\Big[\sum_t \ln q(z_t)\Big] - \mathrm{KL}\big(p_\pi \,\|\, p_{\pi_0}\big)
+  \;=\; \tfrac{1}{1-\gamma}\Big( \E_{z\sim \dpi K} \ln q(z) \;-\; \E_{s \sim \dpi} \mathrm{KL}\big(\pi(\cdot\mid s)\,\|\,\pi_0(\cdot\mid s)\big) \Big).
+  \label{eq:elbo}
+\end{equation}
+The outcome enters only through the occupancy, because $\sum_{s,a} \dpi(s,a) K(z\mid s,a) = p_\pi(z)$.
+
+\paragraph{Variational EM.} The E-step maximises \eqref{eq:elbo} over $\pi$ for fixed $q$: soft RL with reward $r_q(s,a) = \sum_z K(z\mid s,a) \ln q(z)$. The M-step maximises over $q$ for fixed $\pi$, and $\max_q \E_{p_\pi} \ln q$ is attained at $q = p_\pi$ with value $-H[p_\pi]$ by Gibbs' inequality. At the joint optimum,
+\begin{equation}
+  \max_{\pi, q} \text{\eqref{eq:elbo}} \;=\; \tfrac{1}{1-\gamma}\max_\pi \Big( -\Hmu[\dpi K] - \E_{s\sim\dpi} \mathrm{KL}(\pi\,\|\,\pi_0) \Big) + \text{const}.
+\end{equation}
+The entropy is not inserted. It is the optimal log-likelihood of the prediction event, once the regulator's model is learned by maximum likelihood. The M-step is empirical Bayes on the optimality likelihood, and the loop is the MM loop we already have. Tempering the event, $q(z_t)^{\beta}$, weights the entropy against the policy KL, and $\beta\to\infty$ recovers the unregularised objective and its deterministic vertex.
+
+\paragraph{Tabular check.} On 30 random MDPs, with 5 states, 2 actions, 4 outcomes, a stochastic channel and $\gamma = 0.9$, the loop was run with soft value iteration as the E-step, a uniform $\pi_0$ and $\beta = 200$. The best of 5 random initial models reached the brute-force minimum of $H[\dpi K]$ over deterministic policies in 27 of 30 MDPs. Single runs stop at local optima, as expected for a concave minimisation. Script: \texttt{notes\_joery/scripts/cai\_check.py}.
+
+\section{The order of the entropy is set by the event}
+
+The same event, scored differently, gives different Rényi entropies $H_\alpha$.
+\begin{itemize}
+\item \emph{One guess, model chosen to win.} $P(O=1) = \langle p_\pi, q\rangle$, maximised over $q$ at the mode: $\max_z p_\pi(z) = e^{-H_\infty[p_\pi]}$.
+\item \emph{One guess, drawn from the true outcome law.} $q = p_\pi$ gives $\sum_z p_\pi(z)^2 = e^{-H_2[p_\pi]}$, the probability that two independent outcomes coincide. This is the exact-likelihood version, and Toussaint's EM applies to it as written \citep{Toussaint-probabilistic06,Toussaint-expectation11}. $\sum p^2$ is convex in $d$, so the vertex survives, and its MM step is RL with reward $p_k(z)$.
+\item \emph{Many guesses, log-likelihood, model learned.} The derivation above: $\max_q \E_{p_\pi} \ln q = -H_1[p_\pi]$, Shannon.
+\end{itemize}
+Every order is minimised by a concentrated outcome law, and they weight the tail differently, so they can pick different optima where size and leakage trade off.
+
+\section{Pooled or per-episode: where the model is fitted}
+
+The M-step decides between our objective and SMiRL. A model $q$ fitted once, across all episodes, gives $-H[p_\pi]$, the pooled objective. A model refitted within each episode $e$, as in SMiRL \citep{Berseth-smirl21}, gives $-\E_e H[\hat p_e]$ for the episode's own outcome law $\hat p_e$. With $\bar p = \E_e[\hat p_e]$, concavity gives
+\begin{equation}
+  H(\bar p) - \E_e H(\hat p_e) = I(Z;\, E) \ge 0,
+\end{equation}
+checked numerically. So the per-episode ELBO exceeds the pooled one by exactly the information the episode carries about the outcome, the $I(Z;\text{trial})$ term of \citet{Mutti-convex23}. The same identity applies to a posterior over policies, with the policy in place of the episode.
+
+\section{Working backwards from a regularised objective}
+
+The sections above start from an event and derive the objective. The converse starts from an objective and reads off the event. Any objective in Gibbs form is an ELBO,
+\begin{equation}
+  \E_Q[f] - \mathrm{KL}(Q\,\|\,P) = \ln Z - \mathrm{KL}\big(Q \,\big\|\, P e^{f}/Z\big), \qquad Z = \E_P e^{f},
+\end{equation}
+so the prior is $P$, the likelihood $e^f$, the evidence $Z$ and the posterior $P e^f/Z$. Which KL regularises the objective decides what the posterior is over.
+
+\paragraph{Occupancy KL.} Take
+\begin{equation}
+  \min_\pi\; H[\dpi K] + \lambda\, \mathrm{KL}(\dpi \,\|\, \mu), \qquad \mu \text{ a law on } \mathcal S\times\mathcal A .
+  \label{eq:occkl}
+\end{equation}
+With $H[p] = \min_q \E_p[-\ln q]$, for fixed $q$ and any law $d$ on state-action pairs, the KL is an expectation under $d$ and joins the cross-entropy under one expectation over $(s,a,z) \sim dK$:
+\begin{equation}
+  \E_{dK}\big[-\ln q(z)\big] + \lambda\, \E_d\Big[\ln \frac{d(s,a)}{\mu(s,a)}\Big]
+  = \lambda\, \E_{dK}\Big[ \ln \frac{d(s,a)\,K(z\mid s,a)}{\mu(s,a)\,K(z\mid s,a)\,q(z)^{1/\lambda}} \Big]
+  = \lambda\Big( \mathrm{KL}\big(dK \,\big\|\, \Pi_q\big) - \ln Z_q \Big),
+  \label{eq:jointkl}
+\end{equation}
+where $K$ has been multiplied in above and below, and
+\begin{equation}
+  \Pi_q(s,a,z) = \frac{\mu(s,a)\,K(z\mid s,a)\,q(z)^{1/\lambda}}{Z_q}, \qquad Z_q = \sum_{s,a,z} \mu(s,a)\,K(z\mid s,a)\,q(z)^{1/\lambda}.
+\end{equation}
+Read backwards, the prior is $\mu K$ over state, action and outcome, the likelihood is exactly the prediction event $q(z)^{1/\lambda}$ of Section~1, and the posterior is $\Pi_q$. At $\lambda=1$ the evidence $Z_q = P_{\mu K}(O=1)$ is the probability that a pair drawn from the reference has its outcome guessed, for any channel. Nothing about the event is assumed; it is what the objective says.
+
+\paragraph{The channel is held fixed.} The variational family in \eqref{eq:jointkl} is $dK$: the regulator chooses $d$, and nature keeps $K$. Minimising over unconstrained $d$ gives
+\begin{equation}
+  d^\star_q(s,a) \propto \mu(s,a)\, e^{r_q(s,a)/\lambda}, \qquad r_q(s,a) = \sum_z K(z\mid s,a)\ln q(z),
+\end{equation}
+not the $(s,a)$-marginal $\mu(s,a)\sum_z K(z\mid s,a)\, q(z)^{1/\lambda}$ of $\Pi_q$. The two differ by Jensen, $e^{\sum_z K \ln q} \le \sum_z K q$, and agree for a deterministic channel. So the geometric-mean form of the reward is the price of not letting the posterior pick the channel's outcome, the same fix that removes optimism over the dynamics.
+
+\paragraph{The policy is an I-projection.} The posterior $d^\star_q$ is in general not an occupancy. The policy's occupancy is its I-projection onto the occupancy polytope, $\arg\min_{d\in\Dcal}\mathrm{KL}(d\,\|\,d^\star_q)$. With multipliers $V$ for the Bellman flow constraints, stationarity gives
+\begin{equation}
+  d_\pi(s,a) \propto \mu(s,a)\, \exp\!\Big( \tfrac1\lambda \big( r_q(s,a) + \gamma \textstyle\sum_{s'} P(s'\mid s,a) V(s') - V(s) \big) \Big),
+\end{equation}
+with $V$ minimising the convex dual $(1-\gamma)\,\nu^\top V + \lambda \sum_{s,a} \mu(s,a)\, e^{\delta_V(s,a)/\lambda - 1}$, where $\delta_V$ is the bracket above. This is the form of relative entropy policy search \citep{Peters-relative10}. So \eqref{eq:occkl} is REPS on the prediction event, with $q$ refitted by maximum likelihood between projections.
+
+\paragraph{Policy KL instead.} The trajectory KL of Section~1 keeps the dynamics fixed, and only the policy term survives: soft Bellman backups and a posterior over trajectories. The two regularisers differ by the state marginal,
+\begin{equation}
+  \mathrm{KL}(\dpi \,\|\, \mu) = \E_{s\sim \dpi} \mathrm{KL}\big(\pi(\cdot\mid s)\,\|\,\mu(\cdot\mid s)\big) + \mathrm{KL}(d_S \,\|\, \mu_S).
+\end{equation}
+Both entropy regularisers, joint and conditional, are unified by \citet{Neu-unified17}; the state-marginal term alone is state-marginal matching \citep{Lee-efficient19}.
+
+\paragraph{What the state-marginal term does.} Take $\mu$ uniform on $n$ state-action pairs and a deterministic channel. Then $H(S,A) = H(Z) + H(S,A\mid Z)$, and
+\begin{equation}
+  H[\dpi K] + \lambda\,\mathrm{KL}(\dpi\,\|\,\mu) = (1-\lambda)\, H(Z) - \lambda\, H(S,A\mid Z) + \lambda \ln n .
+\end{equation}
+For $\lambda < 1$ the outcome still concentrates, and among the pairs that give the same outcome the policy spreads as widely as it can: predictable in what matters, free in what does not. At $\lambda \ge 1$ the outcome no longer concentrates. For $\lambda > 0$ the objective is concave minus convex, so the deterministic vertex is lost, and it returns as $\lambda \to 0$. The within-level-set spread links to the maximum-occupancy principle \citep{Ramirez-Ruiz-complex22} and to action-state entropy regularisation \citep{Grytskyy-general23}.
+
+\paragraph{Checks.} On a random MDP with 4 states, 3 actions, $\gamma = 0.9$ and $\lambda = 0.5$, the REPS form from the dual satisfies the flow constraints to $3\times10^{-8}$ and matches the objective of direct policy search to $10^{-7}$. The joint-KL form \eqref{eq:jointkl} and the level-set identity hold to machine precision. Script: \texttt{notes\_joery/scripts/reps\_check.py}, run with \texttt{uv run --with numpy --with scipy}.
+
+\open{Which regulariser for the paper: the policy KL, with a posterior over trajectories and a deterministic optimum in the limit; or the occupancy KL, with a posterior over state-action pairs, REPS, and spread within the outcome's level set?}
+
+\section{Neighbours to check before anything is written}
+
+From the survey knowledge base, node \texttt{S5/convex-twins/exponential-kl-inference}, coded opposite sign:
+\begin{itemize}
+\item The duality $-\lambda \ln \E_P e^{-J/\lambda} = \inf_Q \E_Q J + \lambda\,\mathrm{KL}(Q\|P)$ in path-integral control \citep{Theodorou-relative12,Kappen-path05} is the Gibbs principle used here, with a linear cost.
+\item VAPOR \citep{Tarbouriech-probabilistic23} maximises $\lambda^\top \E r + H_\tau(\lambda)$, an occupancy entropy with the opposite sign, and shows the mean Thompson occupancy is a mixture of deterministic vertices.
+\item \citet{Milosevic-dually26} give the geometry of planning as inference; \citet{Milosevic-active26} pose active inference as a convex MDP, the convex mirror.
+\item \citet{ODonoghue-making20}: the probability-of-optimality surrogate ignores epistemic uncertainty and fails on DeepSea. Relevant to whether the event should sit on the belief MDP.
+\item Variational policy gradient for general utilities \citep{Zhang-variational20}.
+\item Gibbs posteriors in generalised Bayes, Bissiri, Holmes and Walker 2016, not yet in the bibliography.
+\end{itemize}
+
+\open{Is the prediction event with a maximum-likelihood optimality model, and the entropy it yields, stated anywhere? A targeted search is needed, not the survey's.}
+\open{Venue and scope: a workshop on probabilistic inference in RL, or a section of the main paper.}
+\open{A minimal experiment: tabular Shannon versus Rényi-2 loops on the two-goal maze, where size and leakage trade off.}
+
+\bibliographystyle{plainnat}
+\IfFileExists{notes_joery/joery_survey.bib}
+  {\newcommand{\surveybib}{notes_joery/joery_survey}}
+  {\newcommand{\surveybib}{joery_survey}}
+\bibliography{\surveybib}
+
+\end{document}

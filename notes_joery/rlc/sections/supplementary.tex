@@ -1,0 +1,122 @@
+% !TEX root =../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Proofs}
+\label{sup:proofs}
+
+Throughout, $\lambda$ is the base measure on $\Zcal$, all laws are absolutely continuous with respect to the references they are measured against, and conditional entropies are averaged over the conditioning variable.
+
+\subsection{Proof of Theorem~\ref{thm:criterion}}
+\label{sup:proof-criterion}
+\emph{Identity.}
+Given $\hat Z = k$ the event $Z$ has law $k$ by definition of the observable class, so $H_\rho(\hat Z) + H_\lambda(Z \mid \hat Z) = H_\lambda(Z) + H_\rho(\hat Z \mid Z)$, both sides being the entropy of the pair against $\rho \otimes \lambda$, whose density factorises in either order.
+Part 1 of Proposition~\ref{prop:alignment} gives $H_\nu(Z) = H_\lambda(Z) + \E[\ell(Z)]$ with $\ell := \ln \tfrac{\dd\nu}{\dd\lambda}$, and substituting gives \eqref{eq:classes}.
+The joint law of $(\hat Z, Z)$ is the law of $\hat Z$ with $Z \mid \hat Z = k \sim k$, so every term is a functional of the law of $\hat Z$.
+
+\emph{Belief.}
+The belief is the state of the belief MDP, which the history policy drives as a history policy \citep{Astrom-optimal65,Kaelbling-planning98}, so there is a Markov policy on the belief with the same marginal laws of $(b_t, A_t)$ for every $t$ \citep{Puterman-markov94}.
+Since $\Pr(S_t = s, A_t = a) = \E[b_t(s)\, \mathbf 1\{A_t = a\}]$ is a functional of that marginal, the state-action occupancy and with it $\pz$ and $H_\nu(Z)$ are unchanged.
+When the belief takes finitely many values the belief MDP is finite, its occupancy set is a polytope whose vertices are the deterministic stationary policies \citep{Derman-finite70ch7}, $\pz$ is linear in the occupancy and $H_\nu$ is concave, so a minimum is attained at a vertex.
+\hfill$\square$
+
+\subsection{Proof of Proposition~\ref{prop:alignment}}
+\label{sup:proof-alignment}
+\emph{Part 1.}
+By the chain rule for Radon--Nikodym derivatives, $\tfrac{\dd p}{\dd\nu} = \tfrac{\dd p}{\dd\lambda} \tfrac{\dd\lambda}{\dd\nu}$, so $-\ln \tfrac{\dd p}{\dd\nu} = -\ln \tfrac{\dd p}{\dd\lambda} + \ln \tfrac{\dd\nu}{\dd\lambda}$.
+Integrating against $p$ gives $H_\nu(p) = H_\lambda(p) + \E_p\big[\ln \tfrac{\dd\nu}{\dd\lambda}\big]$.
+
+\emph{Part 2.}
+Part 1 applied to $\nu_\beta$, with $\ln \tfrac{\dd\nu_\beta}{\dd\lambda} = \beta \ln \tfrac{\dd\nu}{\dd\lambda}$, gives $H_{\nu_\beta}(p) = H_\lambda(p) + \beta\, \E_p\big[\ln \tfrac{\dd\nu}{\dd\lambda}\big]$.
+
+\emph{Part 3.}
+For each $\beta$ the criterion $H_{\nu_\beta}$ is concave in the occupancy, because the event law is linear in it and $H_\lambda$ is concave while the second term is linear, so a minimiser exists among the finitely many vertices, the deterministic stationary policies.
+Let $V$ be that finite set, $\pi_\nu \in V$ minimise $\E_\pi\big[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)\big]$ with value $g^\star$, and $\delta > 0$ the smallest gap $\E_\pi\big[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)\big] - g^\star$ over vertices $\pi$ with a strictly larger value.
+On finite $\Zcal$ with counting $\lambda$, $0 \le H_\lambda \le \ln |\Zcal|$, so for $\beta > \beta_0 := \ln|\Zcal| / \delta$ the second term grows by more than $\beta\delta > \ln|\Zcal|$ on every vertex with a larger value, which puts its $H_{\nu_\beta}$ strictly above that of $\pi_\nu$.
+Among the vertices that attain $g^\star$ the second term is the same constant, so they are ordered by $H_\lambda$ alone.
+\hfill$\square$
+
+\subsection{Proof of Corollary~\ref{prop:split}}
+\label{sup:proof-split}
+The direct proof follows, and the derivation from Proposition~\ref{prop:split-pomdp} is given in the main text.
+Write $\ell := \ln \tfrac{\dd\nu}{\dd\lambda}$, so that Proposition~\ref{prop:alignment} reads $H_\nu(q) = H_\lambda(q) + \E_q[\ell]$ for every law $q$, in particular for the law of $Z$ given each class.
+The left-hand side is fixed and each line names the step that produces it.
+\begin{align*}
+ H_\nu(Z) &= H_\lambda(Z) + \E[\ell(Z)] && \text{Proposition~\ref{prop:alignment}} \\
+      &= H_\rho(\tilde Z) + H_\lambda(Z \mid \tilde Z) - H_\rho(\tilde Z \mid Z) + \E[\ell(Z)] && \text{chain rule on } (\tilde Z, Z) \text{, both orders} \\
+      &= H_\rho(\tilde Z) + H_\nu(Z \mid \tilde Z) - H_\rho(\tilde Z \mid Z) && \text{Proposition~\ref{prop:alignment} given each class} \\
+      &= I(S;\tilde Z) + I(A;\tilde Z \mid S) + H_\nu(Z \mid \tilde Z) - H_\rho(\tilde Z \mid Z) && \text{chain rule on } H_\rho(\tilde Z).
+\end{align*}
+The second line uses $H_\rho(\tilde Z) + H_\lambda(Z \mid \tilde Z) = H_\lambda(Z) + H_\rho(\tilde Z \mid Z)$, both sides being the entropy of the pair against $\rho \otimes \lambda$, whose density factorises in either order.
+The third line uses $\E[\ell(Z)] = \E\big[\E[\ell(Z) \mid \tilde Z]\big]$.
+The last line is the chain rule $H_\rho(\tilde Z) = I(S;\tilde Z) + I(A;\tilde Z \mid S) + H_\rho(\tilde Z \mid S,A)$ for counting $\rho$, whose residual is zero because $\tilde Z$ is a function of $(S,A)$.
+\hfill$\square$
+
+\subsection{Proof of Corollary~\ref{cor:freebits}}
+\label{sup:proof-freebits}
+Given $S = s$ the class $\kappa(s,A)$ is a function of $A$, and a function of $A$ is independent of $A$ exactly when it is constant on the support of $\pi(\cdot \mid s)$.
+The identity is the definition of conditional mutual information, and by Corollary~\ref{prop:split} only $I(A;\tilde Z \mid S)$ enters the criterion.
+\hfill$\square$
+
+\subsection{Proof of Proposition~\ref{prop:split-pomdp}}
+\label{sup:proof-split-pomdp}
+The first step of the proof of Corollary~\ref{prop:split} holds unchanged, since it uses only that $Z$ given $\tilde Z$ has law $\tilde Z$.
+The chain rule on $H_\rho(\tilde Z)$ over $(X, A, P, \kappa, S)$ in that order gives the five information terms plus the residual $H_\rho(\tilde Z \mid X,A,P,\kappa,S)$.
+The residual is zero because $\tilde Z = \kappa(S,A)$ is a function of $(S,A,\theta)$.
+Part 1 of Proposition~\ref{prop:alignment} within each class splits $H_\nu(Z \mid \tilde Z)$ into the noise and the goal.
+\hfill$\square$
+
+\subsection{Proof of Proposition~\ref{prop:budget}}
+\label{sup:proof-budget}
+\emph{Right inequality.}
+Write $p_T := \Pr(B = 1 \mid X_T)$.
+Deciding $B$ with error at most $\delta$ means $p_T \le \delta$ or $p_T \ge 1 - \delta$ almost surely, and since $h$ is symmetric about $\tfrac12$ and increasing on $[0, \tfrac12]$ this gives $H(B \mid X_T) = \E[h(p_T)] \le h(\delta)$.
+Hence $I(B; X_T) = h(q) - H(B \mid X_T) \ge h(q) - h(\delta)$, and $I(\theta; X_T) \ge I(B; X_T)$ because $B$ is a function of $\theta$.
+By the chain rule over the steps, $I(\theta; X_T) = \sum_{t < T} I(\theta; A_t, Z_t \mid X_t) = \sum_{t < T} I(\theta; Z_t \mid X_t, A_t)$, where $I(\theta; A_t \mid X_t) = 0$ because the action is chosen from the history and independent randomness.
+
+\emph{Left inequality.}
+Given $(X_t, A_t)$ the outcome $Z_t$ is drawn from the class $\tilde Z_t$, so $\theta$ and $Z_t$ are independent given $(\tilde Z_t, X_t, A_t)$ and the data processing inequality gives $I(\theta; Z_t \mid X_t, A_t) \le I(\theta; \tilde Z_t \mid X_t, A_t)$.
+The chain rule on $\theta = (P, \kappa)$ gives $I(\theta; \tilde Z_t \mid X_t, A_t) = \bar I_{P,t} + \bar I_{\kappa,t}$.
+\hfill$\square$
+
+\subsection{Proof of Proposition~\ref{prop:plugin}}
+\label{sup:proof-plugin}
+\emph{Descent.}
+For any law $p$ and any $\hat q$ with positive density against $\nu$, $\E_p[-\ln \tfrac{\dd\hat q}{\dd\nu}] = H_\nu(p) + \KL(p \,\|\, \hat q)$, so the inner objective of \eqref{eq:game} with $\hat q_k$ in place of $q$ equals $\Lcal(\pi) + \KL(p_\pi \,\|\, \hat q_k)$ for every policy, the floor terms being exact.
+Since $\pi_{k+1}$ minimises it and $\pi_k$ is feasible, $\Lcal(\pi_{k+1}) + \KL(p_{\pi_{k+1}} \,\|\, \hat q_k) \le \Lcal(\pi_k) + \KL(p_{\pi_k} \,\|\, \hat q_k)$, which is \eqref{eq:plugin}.
+
+\emph{Finite trials.}
+Let $\hat p_n$ be the empirical law of the outcomes of $n$ trials and let $Z$ be drawn from $\hat p_n$ given $\hat p_n$, so that the marginal of $Z$ is $\E[\hat p_n] = p_\pi$.
+Then $H_\nu(Z) = H_\nu(p_\pi)$ and $H_\nu(Z \mid \hat p_n) = \E[H_\nu(\hat p_n)]$, and $I(Z; \hat p_n) = H_\nu(Z) - H_\nu(Z \mid \hat p_n)$ gives the identity, where the change of measure cancels because it is linear in the law.
+\hfill$\square$
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Extended related work}
+\label{sup:related}
+\intent{Full positioning behind Section~\ref{sec:related}, one subsection per cluster of the survey, each ending on its relation to the split \eqref{eq:split}; the main text keeps one paragraph per cluster.}
+
+\subsection{Cybernetics and the good regulator}
+\intent{Ashby, essential variables within limits and ultrastability, requisite variety in Shannon form; Conant 1976 partition law, thruput, blockage, coordination and noise, as a fourth accounting; Conant and Ashby 1970; reformulations, Wentworth's posterior form and gooder regulator, Virgo et al.'s set-valued embodied version, Richens et al.'s competence route, Baez on the internal model principle.}
+
+\subsection{Internal models in control}
+\intent{Internal model principle of Francis and Wonham, the model is of the exosystem rather than the plant; internal model control and model predictive control; minimum-entropy control of the Wang school, same objective but myopic with a known model.}
+
+\subsection{Homeostasis, surprise minimisation and viability}
+\intent{SMiRL and within-episode surprise, entropy-rate predictability of Jarne Ornia et al.\ and van Zutphen et al., homeostatic RL, viability kernels; pooled versus within-episode entropy, the $I(Z;\text{trial})$ gap.}
+
+\subsection{Free energy principle and active inference}
+\intent{Self-entropy statements of the free energy principle, Friston 2012 and Friston and Ao 2012; decompositions of the expected free energy and their sign against ours, risk plus ambiguity and the flat-preference form $-H(Z) + H(Z \mid S)$; Millidge et al.'s free energy of the expected future, which restores our sign; floor versus bonus on information.}
+
+\subsection{Control as inference in full}
+\intent{Derivations behind the main-text paragraph, the posterior on outcomes, the recovery of maximum entropy RL for $Z = (S,A)$ at $\lambda_A = 1 + \alpha\beta$, the round as the concave-convex procedure and unit-weight KL proximal step, relative entropy policy search and mirror descent with learning rate $\beta$, the replay-state expectation step of MPO, the closed form $\pi_{k+1} \propto \pi_k^{1/\lambda_A} e^{-Q_k/\lambda_A}$, the fixed point with the state-cost shift, the support fixed points at $\lambda_A = 0$, and the noise scale for $Z = (S,A,S')$. Candidate home for the noise and $\lambda_A = 0$ sentences of the main text.}
+
+\subsection{Objectives on the occupancy measure}
+\intent{Vertex theorems of Derman 1970 and Piunovskiy 1998, variance MDPs of Filar et al.\ and Sobel, hardness of concave minimisation and minimum-entropy set cover, convex RL with its finite-trial theory and online regret; our curvature is the opposite of convex RL, hence no averaging.}
+
+\subsection{Reward through channels, uncertainty and belief}
+\intent{Belief MDPs, Thompson sampling as a baseline, information-directed and value-of-information exploration, open-loop minimum-entropy control of Adurthi et al.}
+
+\subsection{Representation and multiple regulators}
+\intent{What a regulator must represent, the criteria ladder of Ni et al., observation-predictive, self-predictive and $Q^\star$-irrelevant, against sufficiency, closure and necessity; forward-backward representations of Touati and Ollivier as the amortised form, since each round of \eqref{eq:game} is RL with the reward $-\ln \tfrac{\dd\hat q_k}{\dd\nu}$ and needs only the embedding $z_k = \E_\rho[\ln \hat q_k(Z)\, B(Z)]$ when $\ln \hat q_k$ lies in the span of $B$, so $B$ is sufficient for every reward the regulator generates; plain FB contains our deterministic optimum, soft FB of Bagatella et al.\ the soft rounds at $\lambda_A > 1$; multiple regulators and the multi-agent reading of predictability.}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Additional environments and ablations}
+\todo{Extra seeds, sensitivity, remaining environments.}

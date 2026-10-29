@@ -1,0 +1,22 @@
+% Cart-pole, schematic. Z is the pole angle on the circle, kicks act on the angular velocity.
+\begin{tikzpicture}[scale=0.8]
+  \draw[thick] (-2.2,0) -- (2.2,0);
+  \fill[gray!25, draw=black] (-0.6,0.15) rectangle (0.6,0.65);
+  \fill[black] (-0.35,0.15) circle (0.12) (0.35,0.15) circle (0.12);
+  \coordinate (pivot) at (0,0.65);
+  \coordinate (tip) at ($(pivot)+(70:2.2)$);
+  \draw[dashed, gray] (pivot) -- ++(0,2.4);
+  \draw[line width=2pt, brown!70!black] (pivot) -- (tip);
+  \fill[black] (pivot) circle (0.06);
+  \draw[->] ($(pivot)+(0,1.1)$) arc (90:70:1.1);
+  \node[font=\scriptsize] at ($(pivot)+(82:1.4)$) {$\theta$};
+  \draw[-{Stealth[length=1.5mm]}, red!70!black, thick] ($(tip)+(-0.7,0.3)$) to[bend left=30] node[above left, font=\scriptsize] {kick} ($(tip)+(-0.1,0.15)$);
+  \draw[<->] (-1.1,0.4) -- (-1.9,0.4) node[above, font=\scriptsize] {$a$};
+  % outcome circle with nu
+  \begin{scope}[shift={(3.4,1.6)}]
+    \draw (0,0) circle (0.8);
+    \fill[blue!40, opacity=0.6] (0,0) -- (75:0.8) arc (75:105:0.8) -- cycle;
+    \node[font=\scriptsize] at (0,-1.1) {$Z = \theta$ on the circle};
+    \node[font=\scriptsize, blue!60!black] at (0,1.05) {$\nu$};
+  \end{scope}
+\end{tikzpicture}

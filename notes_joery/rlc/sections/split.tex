@@ -1,0 +1,105 @@
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Former Subsection 3.1, promoted to a section on 2026-10-26. Tracked edits up to commit e6f28df were accepted and the text compressed; superseded lines in sections/parked.tex.
+\section[Identifiability through empowerment]{Identifiability through empowerment}
+\label{sec:pomdp}
+
+Section~\ref{sec:objective} scores the regulator on the observable class, which merges the belief over the state and the posterior over the laws into one predictive law.
+Here we split them on the true class $\tilde Z = \kappa(S,A)$, the kernel at the pair under the true law $\theta = (P,\kappa)$, show that the criterion drives every split term to zero, and ask what must be kept alive for the minimiser to be reached at all.
+
+\paragraph{What the criterion cannot see.}
+By Theorem~\ref{thm:criterion} the score of a regulator depends only on the law of its observable class, which is calibrated on the pairs the regulator visits.
+\begin{definition}[Confusing set]
+\label{def:confusing}
+Given a regulator $\pi$ and the true law $\theta$, the confusing set $\Theta_c(\pi)$ is the set of laws that agree with $\theta$ on the support of $\occ$ and under which $\pi$ is not a minimiser of \eqref{eq:objective}.
+\end{definition}
+\noindent Every law in $\Theta_c(\pi)$ gives $\pi$ the same criterion value as $\theta$, so from its own support the regulator cannot tell whether it is at the minimum, or at the minimum of a world that is not its own.
+A regulator calibrated on its own support is a fixed point of its posterior and of the criterion restricted to that support, so identifiability, emptying the confusing set, is a condition on the path that the criterion does not impose, and it has to be met before alignment can be.
+
+\paragraph{The split.}
+\begin{proposition}[Split under partial observation and learning]
+\label{prop:split-pomdp}
+Let $(X,A,S,\theta,Z)$ have the law of the belief-state occupancy, with $\theta = (P,\kappa)$ drawn from the prior, discounted from $\rho_0$ or its long-run limit where that exists, and let $\tilde Z = \kappa(S,A)$ be the true class with $\rho$ counting on classes.
+Then
+\begin{equation}
+\begin{split}
+  H_\nu(Z)
+  = I(X;\tilde Z) + \underbrace{I(A;\tilde Z \mid X)}_{\bar I_A} + \underbrace{I(P;\tilde Z \mid X,A)}_{\bar I_P} + \underbrace{I(\kappa;\tilde Z \mid X,A,P)}_{\bar I_\kappa} + \underbrace{I(S;\tilde Z \mid X,A,P,\kappa)}_{\bar I_S} \\
+  + H_\lambda(Z \mid \tilde Z) + \E\big[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)\big] - H_\rho(\tilde Z \mid Z).
+\end{split}
+  \label{eq:split-pomdp}
+\end{equation}
+\end{proposition}
+\noindent Proof in Supplementary~\ref{sup:proof-split-pomdp}.
+The chain rule is taken in the order the regulator spends, the history it has, the action it chooses, what the outcome teaches about the dynamics and the outcome law, and last the hidden state, as what remains once the laws are known.
+The dynamics law comes before the state, since once the state and the outcome law are known it adds nothing to the class, and before the outcome law by convention.
+The fully observed case with a known law keeps only the first two terms.
+\begin{corollary}[Split of the criterion, fully observed, $\kappa$ and $P$ known]
+\label{prop:split}
+Let $\tilde Z = \kappa(S,A)$ be the regulator's class under $O_t = S_t$, a point prior and a Markov policy.
+Then
+\begin{equation}
+  H_\nu(Z) = \underbrace{I(S;\tilde Z)}_{\text{regulation}} + \underbrace{I(A;\tilde Z \mid S)}_{\text{empowerment}}  + \underbrace{\E\big[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)\big]}_{\text{goal}} + \underbrace{H_\lambda(Z \mid \tilde Z)}_{\text{noise}} - \underbrace{H_\rho(\tilde Z \mid Z)}_{\text{ambiguity}}.
+  \label{eq:split}
+\end{equation}
+\end{corollary}
+\noindent In \eqref{eq:split-pomdp}, $\bar I_P$ and $\bar I_\kappa$ vanish because $\theta$ is a point mass, $\bar I_S$ vanishes because the state is a function of the history, and for a Markov policy $X$ is independent of $\tilde Z$ given $S$, so $I(X;\tilde Z) = I(S;\tilde Z)$ and $I(A;\tilde Z \mid X) = I(A;\tilde Z \mid S)$.
+Because $\tilde Z = \kappa(S,A)$ is a sufficient statistic of $(S,A)$ for the event, the noise term $H_\lambda(Z \mid \tilde Z) = H_\lambda(Z \mid S,A)$ is exactly the channel noise.
+Proof in Supplementary~\ref{sup:proof-split}.
+
+\begin{corollary}[Empowerment as free bits]
+\label{cor:freebits}
+$I(A;\tilde Z \mid S) = 0$ exactly when at every state all actions the policy uses share one outcome law $\kappa(s,a)$, and the action entropy $H(A \mid S, \tilde Z) = H(A \mid S) - I(A;\tilde Z \mid S)$ never enters the criterion.
+\end{corollary}
+\noindent Proof in Supplementary~\ref{sup:proof-freebits}.
+These bits are free at fixed occupancy, since two actions with the same outcome law may have different transition laws, and swapping between them moves $\occ$ and with it every term.
+The same holds on the hypothesis space, the posterior entropy $H(\theta \mid X,A,\tilde Z)$ never enters the criterion, so hypotheses that give the same class are free to stay unresolved.
+
+\paragraph{The second regulator.}
+The first regulator sees $\bar I_P + \bar I_\kappa + \bar I_S$ as one noise, since the three marginalise into the law it can observe.
+The learner reads them as a regulation problem of its own, with the belief as its state, the drift in $P$ and $\kappa$ as its disturbance, and its surprises about the class as its events, the consistency gap $\KL(p(Z \mid X,A) \,\|\, \hat\kappa(X,A))$ of Section~\ref{sec:objective}, which is zero on a calibrated model.
+In its terms, $\bar I_P$ and $\bar I_\kappa$ are what its posterior still has to resolve about the laws, $\bar I_S$ is what its filter still has to resolve about the state, and $\bar I_A$ is its reach, how far its actions change the class at all.
+This is the ``time-varying model'' that Conant and Ashby ask for under a slowly changing $p(S)$ \citep[p.~96]{Conant-good70}.
+On a fixed law it has nothing left to regulate at stationarity, since the posterior concentrates on every pair that is visited infinitely often, while on a drifting law its terms keep a stationary residual.
+\todo{The second-regulator reading is stated in prose through drift, formalise it if it stays.}
+
+\paragraph{Sign and collapse.}
+Every information term enters \eqref{eq:split-pomdp} with a positive sign, so the criterion on its own lowers each of them, which for the law terms means visiting pairs whose outcome law agrees under every plausible $\theta$.
+This is the dark room of the second regulator, the first keeps the laws unidentified wherever identifying them would cost class entropy.
+Expected free energy enters the same terms with the opposite sign and seeks what the criterion avoids \citep{Friston-free12c}, and both pay the noise term with the same sign.
+So the criterion does not empty the confusing set of Definition~\ref{def:confusing} but protects it, and the information that empties it has to be bought.
+
+\paragraph{The budget.}
+How much has to be bought depends on the laws alone, and it has a lower bound.
+\begin{proposition}[Budget for identifiability]
+\label{prop:budget}
+Let $\Theta_c$ be any set of laws of prior mass $q$, let $B = \mathbf 1\{\theta \in \Theta_c\}$, and let the history grow by the action and the outcome, $X_{t+1} = (X_t, A_t, Z_t)$.
+If after $T$ steps the posterior decides $B$ with error at most $\delta < \tfrac12$, then
+\begin{equation}
+  \sum_{t < T} \big( \bar I_{P,t} + \bar I_{\kappa,t} \big) \;\ge\; \sum_{t < T} I(\theta; Z_t \mid X_t, A_t) \;\ge\; h(q) - h(\delta),
+  \label{eq:budget}
+\end{equation}
+with $h$ the binary entropy and $\bar I_{P,t}$, $\bar I_{\kappa,t}$ the per-step terms of \eqref{eq:split-pomdp}.
+\end{proposition}
+\noindent Proof in Supplementary~\ref{sup:proof-budget}.
+The middle term is the information the outcomes actually carry about the laws, spent rather than held, and the class terms bound it because the outcome is drawn from the class.
+So a floor $c$ on $\bar I_P + \bar I_\kappa$ has to hold for at least $(h(q) - h(\delta)) / c$ steps before the confusing set can be empty, the same accounting as the regret lower bound of \citet{Lai-asymptotically85}, where the cost of learning is the information needed to exclude the arms that could still be optimal.
+The bound is necessary but not sufficient, since the information has to be spent on the pairs that discriminate $\Theta_c$.
+A sufficient condition needs assumptions on the components, the hypothesis class, the prior and the policy's reach, which we leave to future work, here we only identify the floor.
+By the chain rule in both orders, $I(\kappa;\tilde Z \mid X,P) + I(A;\tilde Z \mid X,P,\kappa) = I(A;\tilde Z \mid X,P) + \bar I_\kappa$, so $\bar I_\kappa$ is positive only where actions make the class depend on the hypothesis.
+A floor on the law term can be reached only through empowerment, which is the sense of the title, and the action term is not a target but what the law floor consumes.
+
+\paragraph{The Lagrangian.}
+We buy the information as floors, $\bar I_i \ge c_i$ for the four terms $i \in \{A, P, \kappa, S\}$ of \eqref{eq:split-pomdp}, which in Lagrangian form with the hinge of free bits reads
+\begin{equation}
+  \Lcal(\pi) = H_\nu(Z) - \sum_{i} \lambda_i \min(\bar I_i, c_i),
+  \label{eq:lagrangian}
+\end{equation}
+with every term under the discounted law from $\rho_0$, which for the law terms is necessary, since their long-run value is zero.
+While a floor binds, its term has net coefficient $1 - \lambda_i$ in $\Lcal$, so $\lambda_i = 0$ is the bare criterion, $\lambda_i = 1$ cancels the term, and $\lambda_i > 1$ seeks it, the sign of expected free energy on that one term.
+Once $\bar I_i \ge c_i$ the hinge is flat and the criterion alone orders the minimisers.
+$\lambda_\kappa$ buys identifiability of the outcome law, the term that collapses on a fixed law.
+$\lambda_P$ buys identifiability of the dynamics through the state they locate, since the criterion sees $P$ only through where it puts $S$, and if the outcome carries the next observation the dynamics enter the class directly and this floor merges with the previous one, a case we leave open.
+$\lambda_S$ keeps the belief informative, which the filter does on its own when the laws are known, so this floor is for a drifting law.
+$\lambda_A$ is reach, not a target, and at weight one it cancels the empowerment term into a random walk.
+The sequence is then set, the floors bind, identifiability is bought in the order the chain rule spends, the floors go slack, and minimality takes over as Conant and Ashby's tie-break against the unnecessarily complex regulator, with the free bits as what it removes.

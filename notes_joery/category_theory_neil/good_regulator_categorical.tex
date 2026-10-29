@@ -1,0 +1,485 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{tikz-cd}
+\usepackage[margin=2.7cm]{geometry}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,citecolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\Set}{\mathbf{Set}}
+\newcommand{\FinSet}{\mathbf{FinSet}}
+\newcommand{\Rel}{\mathbf{Rel}}
+\newcommand{\FinStoch}{\mathbf{FinStoch}}
+\newcommand{\Stoch}{\mathbf{Stoch}}
+\newcommand{\cC}{\mathcal{C}}
+\newcommand{\Dist}{\mathcal{D}}
+\newcommand{\copym}[1]{\mathrm{copy}_{#1}}
+\newcommand{\delm}[1]{\mathrm{del}_{#1}}
+\newcommand{\id}{\mathrm{id}}
+\newcommand{\supp}{\operatorname{supp}}
+\newcommand{\im}{\operatorname{im}}
+\newcommand{\aseq}[1]{\overset{#1\text{-a.s.}}{=}}
+\newcommand{\Hom}{\operatorname{Hom}}
+\newcommand{\ent}{\mathsf{H}}
+\newcommand{\refines}{\sqsubseteq}
+\newcommand{\pair}[2]{\langle #1,#2\rangle}
+
+\title{A categorical reformulation of the\\Conant--Ashby ``good regulator'' argument}
+\author{Draft notes}
+\date{October 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+Conant and Ashby's 1970 paper \cite{ConantAshby1970} makes two claims that are
+usually run together: a set-theoretic (indeed relational) characterisation of
+\emph{successful} regulation in terms of a goal set $G\subseteq Z$, and a
+probabilistic theorem about \emph{entropy-minimising} regulators being
+deterministic functions of the regulated system. These notes restate both layers
+in categorical language. The relational layer lives in $\Set$ (or $\Rel$): a
+regulator is good iff a certain pair of maps factors through a pullback, and it
+is a ``model'' iff it factors through the system map. The probabilistic layer
+lives in the Markov category $\FinStoch$: an optimal regulator is a morphism
+$\rho\colon S\to R$ whose closed loop $S\to Z$ is almost-surely deterministic,
+and the ``simplest'' optimal regulators are exactly the minimal elements of a
+support preorder on $\Hom(S,R)$, which are the morphisms lying in the
+deterministic subcategory $\FinSet\hookrightarrow\FinStoch$. The rewrite makes
+explicit which parts of the argument are categorical (determinism as commuting
+with copy, almost-sure equality, factorisation) and which part is not (strict
+concavity of Shannon entropy), repairs a gap in the original proof, and shows
+that the ``every'' in the title holds in the error-controlled configuration but
+only an ``exists'' version holds in the cause-controlled one.
+\end{abstract}
+
+\section{What Conant and Ashby actually assert}
+
+Conant and Ashby (henceforth C\&A) present their result in two stages that use
+different mathematics.
+
+\paragraph{The relational layer (their \S2).}
+Following Sommerhoff and Ashby's 1967 set-theoretic reformulation, they posit
+five sets and three maps:
+\[
+\begin{tikzcd}[column sep=large]
+D \arrow[r,"\varphi"] \arrow[d,"\rho"'] & S \\
+R & S\times R \arrow[r,"\psi"] & Z \supseteq G
+\end{tikzcd}
+\]
+with $D$ the disturbances, $S$ the states of the reguland, $R$ the states of the regulator, $Z$ the outcomes and $G\subseteq Z$ the good outcomes.
+``$R$ is a good regulator'' is defined to mean: for every $d\in D$,
+$\psi(\varphi(d),\rho(d))\in G$. C\&A write this in relational notation as
+$\rho\subset[\psi^{-1}(G)]\varphi$. Separately, they say that $R$ ``is a
+model of'' $S$ when the two are related by a mapping; their equation (8) is
+\[
+\exists h\;\forall i:\ \rho(i)=h[\sigma(i)],
+\]
+where $\rho$ and $\sigma$ are the maps that $R$ and $S$ impose on a common input.
+In the diagram above this is $\rho=h\circ\varphi$.
+
+\paragraph{The probabilistic layer (their \S4, proof of the Theorem).}
+Here $D$ and $\varphi$ disappear. One is given a distribution $p$ on $S$, the
+map $\psi\colon S\times R\to Z$, and a regulator is a conditional distribution
+$p(R\mid S)$. ``Optimal'' means the entropy $H(Z)$ of the induced outcome
+distribution is minimal. ``Simplest'' is explained only inside the proof: an
+optimal $p(R\mid S)$ ``consisting entirely of ones and zeroes''. The Lemma
+says that for any optimal regulator and any $s$ of positive probability, all
+$r$ in the support of $p(R\mid s)$ give the same $\psi(s,r)$; the Theorem says
+the simplest optimal regulators are functions $h\colon S\to R$.
+
+Two things are worth flagging before translating. First, the goal set $G$ plays
+no role in the probabilistic layer, as Baez observed \cite{Baez2016}. Second,
+C\&A's proof of the Lemma assumes, ``to avoid complicating the proof'', that all
+optimal regulators induce the same $p(Z)$; this assumption is unnecessary and
+the categorical version below drops it.
+
+\section{Categorical preliminaries}
+
+\subsection{Markov categories}
+
+We use the synthetic approach to probability of Fritz \cite{Fritz2020} and
+Cho--Jacobs \cite{ChoJacobs2019}. A \emph{Markov category} is a symmetric
+monoidal category $(\cC,\otimes,I)$ in which every object $X$ carries a
+commutative comonoid structure
+\[
+\copym{X}\colon X\to X\otimes X,\qquad \delm{X}\colon X\to I,
+\]
+natural in $X$ for $\delm{}$ (every morphism is ``causal'': $\delm{Y}\circ f=\delm{X}$) and compatible with $\otimes$. A morphism $f\colon X\to Y$ is
+\emph{deterministic} if it commutes with copying:
+\begin{equation}\label{eq:det}
+\copym{Y}\circ f=(f\otimes f)\circ\copym{X}.
+\end{equation}
+Deterministic morphisms form a wide cartesian monoidal subcategory
+$\cC_{\mathrm{det}}\hookrightarrow\cC$. A \emph{state} on $X$ is a morphism
+$p\colon I\to X$. Two morphisms $f,g\colon X\to Y$ are \emph{$p$-almost-surely
+equal}, written $f\aseq{p}g$, if
+\begin{equation}\label{eq:as}
+(\id_X\otimes f)\circ\copym{X}\circ p=(\id_X\otimes g)\circ\copym{X}\circ p .
+\end{equation}
+$f$ is \emph{$p$-a.s.\ deterministic} if $f\aseq{p}g$ for some deterministic $g$.
+
+\subsection{The example that matters: $\FinStoch$}
+
+$\FinStoch$ has finite sets as objects and stochastic maps as morphisms: a
+morphism $f\colon X\to Y$ is a function $f\colon X\to\Dist(Y)$, written
+$f(y\mid x)$, with composition by the Chapman--Kolmogorov formula. It is the
+Kleisli category of the finite-distribution monad $\Dist$ on $\FinSet$.
+The tensor is cartesian product of sets with $(f\otimes g)((y,y')\mid(x,x'))=f(y\mid x)g(y'\mid x')$; $\copym{X}$ is $x\mapsto\delta_{(x,x)}$ and $\delm{X}$ is the unique map to the one-point set.
+
+The following standard facts are the ones we need.
+\begin{enumerate}[label=(F\arabic*)]
+\item A morphism $f$ is deterministic in the sense of \eqref{eq:det} iff each
+$f(-\mid x)$ is a Dirac measure. Hence the Kleisli inclusion
+$\FinSet\hookrightarrow\FinStoch$, $h\mapsto\delta_h$, is an isomorphism onto
+$\FinStoch_{\mathrm{det}}$. We will not distinguish $h$ from $\delta_h$.
+\item States $p\colon I\to X$ are distributions on $X$; $\supp p=\{x: p(x)>0\}$.
+\item $f\aseq{p}g$ iff $f(-\mid x)=g(-\mid x)$ for every $x\in\supp p$.
+\item Each hom-set $\FinStoch(X,Y)\cong\Dist(Y)^X$ is a convex polytope, and
+composition is affine in each argument. The vertices of $\Dist(Y)^X$ are exactly
+the deterministic morphisms.
+\end{enumerate}
+
+\subsection{Entropy}
+
+Shannon entropy $\ent\colon\Dist(Z)\to[0,\infty)$ is \emph{not} part of the
+Markov-category structure. The only property of it used below is
+\begin{enumerate}[label=(E)]
+\item \emph{Strict concavity.} If $\lambda_1,\dots,\lambda_k>0$ sum to $1$ and
+$q_1,\dots,q_k\in\Dist(Z)$, then $\ent\big(\sum_i\lambda_i q_i\big)\ge\sum_i\lambda_i\ent(q_i)$, with equality iff $q_1=\dots=q_k$.
+\end{enumerate}
+Baez, Fritz and Leinster \cite{BFL2011} characterise $\ent$ as the essentially
+unique convex-linear, continuous, functorial ``information loss'' on the
+category $\mathbf{FinStat}$; one can read (E) as saying that the one
+non-diagrammatic ingredient of the C\&A argument is precisely the structure that
+singles out Shannon entropy among all functionals on states. Everything else in
+the argument is diagrammatic.
+
+\section{The relational layer, categorically}
+
+Throughout this section we work in $\Set$ (finiteness is irrelevant).
+
+\begin{definition}[Regulation problem, deterministic form]\label{def:relprob}
+A \emph{regulation problem} consists of sets $D,S,R,Z$, a subobject
+$\iota\colon G\hookrightarrow Z$, and maps $\varphi\colon D\to S$ and
+$\psi\colon S\times R\to Z$. A \emph{regulator} is a map $\rho\colon D\to R$.
+\end{definition}
+
+Form the pullback of the goal along the outcome map:
+\[
+\begin{tikzcd}
+A \arrow[r,hook,"\alpha"] \arrow[d] \arrow[dr,phantom,"\lrcorner",very near start] & S\times R \arrow[d,"\psi"] \\
+G \arrow[r,hook,"\iota"] & Z
+\end{tikzcd}
+\qquad\qquad A=\psi^{-1}(G)=\{(s,r):\psi(s,r)\in G\}.
+\]
+
+\begin{proposition}[Good regulators are liftings through the pullback]\label{prop:good}
+$\rho$ is a good regulator in C\&A's sense (for all $d$, $\psi(\varphi(d),\rho(d))\in G$) iff the pairing $\pair{\varphi}{\rho}\colon D\to S\times R$ factors through $\alpha\colon A\hookrightarrow S\times R$:
+\[
+\begin{tikzcd}
+D \arrow[r,dashed,"\exists !"] \arrow[dr,"\pair{\varphi}{\rho}"'] & A \arrow[d,hook,"\alpha"] \\
+& S\times R
+\end{tikzcd}
+\]
+\end{proposition}
+\begin{proof}
+Immediate from the universal property of the pullback: $\pair{\varphi}{\rho}$ factors through $A$ iff $\psi\circ\pair{\varphi}{\rho}$ factors through $G$ iff $\psi(\varphi(d),\rho(d))\in G$ for all $d$.
+\end{proof}
+
+\begin{remark}
+C\&A's formula $\rho\subset[\psi^{-1}(G)]\varphi$ is this statement read in
+$\Rel$. Regard $A$ as a relation $A\colon S\nrightarrow R$ and $\varphi$ as a
+relation $D\nrightarrow S$; the composite $A\circ\varphi\colon D\nrightarrow R$
+relates $d$ to every $r$ with $(\varphi(d),r)\in A$. Then $\rho\subseteq A\circ\varphi$ as relations says exactly that $(\varphi(d),\rho(d))\in A$ for all $d$. The square-bracket notation is just the relation $A$ curried as a map $S\to\mathcal{P}(R)$.
+\end{remark}
+
+\begin{definition}[Model, deterministic form]\label{def:relmodel}
+A regulator $\rho\colon D\to R$ \emph{is a model of} $S$ (C\&A eq.\ (8)) if it factors through $\varphi$:
+\[
+\begin{tikzcd}
+D \arrow[r,"\varphi"] \arrow[dr,"\rho"'] & S \arrow[d,dashed,"h"] \\ & R
+\end{tikzcd}
+\qquad \rho=h\circ\varphi .
+\]
+\end{definition}
+
+The categorical content of ``being a model'' is thus: the regulator's dependence
+on the disturbance passes through the reguland. The standard characterisation of
+factoring through a map is via its kernel pair.
+
+\begin{proposition}\label{prop:kernelpair}
+Let $(K,k_1,k_2)$ be the kernel pair of $\varphi$ (the pullback of $\varphi$ along itself). Then $\rho$ factors through $\varphi$ iff $\rho\circ k_1=\rho\circ k_2$, i.e.\ iff $\rho$ is constant on the fibres of $\varphi$. The factorisation $h$ is unique on $\im\varphi$, and unique outright iff $\varphi$ is epi.
+\end{proposition}
+\begin{proof}
+In $\Set$ every epi is a regular epi, so $\varphi$ is the coequaliser of its kernel pair onto its image; $\rho$ factors through the image iff it coequalises $k_1,k_2$. Extending from $\im\varphi$ to $S$ is arbitrary.
+\end{proof}
+
+Putting \ref{prop:good} and \ref{def:relmodel} together gives a clean statement
+of what a \emph{good model} is.
+
+\begin{proposition}[Good models are sections of the goal projection]\label{prop:section}
+A model regulator $h\circ\varphi$ is good iff the map $\pair{\id_S}{h}\colon S\to S\times R$, restricted to $\im\varphi$, factors through $A$; equivalently iff $h|_{\im\varphi}$ is a section of the projection $\pi_S\circ\alpha\colon A\to S$ over $\im\varphi$:
+\[
+\begin{tikzcd}[column sep=large]
+\im\varphi \arrow[r,dashed,"\tilde h"] \arrow[dr,hook] & A \arrow[d,"\pi_S\circ\alpha"] \\ & S
+\end{tikzcd}
+\]
+Consequently a good model regulator exists iff $\pi_S\circ\alpha\colon A\to S$ is surjective over $\im\varphi$, i.e.\ iff for every reachable state $s$ there is some $r$ with $\psi(s,r)\in G$.
+\end{proposition}
+
+\begin{remark}[Requisite variety]
+The surjectivity condition in \ref{prop:section} is the set-theoretic skeleton
+of Ashby's law of requisite variety \cite{Ashby1956}: $R$ must have enough
+elements that the fibres of $\pi_S\circ\alpha$ over $\im\varphi$ are all
+non-empty. Nothing about entropy has been used; this is pure $\Set$.
+\end{remark}
+
+\begin{remark}[The two configurations]
+C\&A's Figure~1 (``cause-controlled'') has the regulator reading $D$, so
+$\rho\colon D\to R$ and ``model'' is the nontrivial factorisation of
+\ref{def:relmodel}. Their Figure~2 (``error-controlled'') has the regulator
+reading $S$, so $D=S$, $\varphi=\id$, and \emph{every} regulator is
+tautologically a model with $h=\rho$. C\&A note that the Figure~1 modelling is
+``stronger''; categorically it is the only one of the two with content at this
+layer. We return to this in \S\ref{sec:config}.
+\end{remark}
+
+\section{The probabilistic layer in $\FinStoch$}
+
+\subsection{The data}
+
+\begin{definition}[Regulation problem, stochastic form]\label{def:stochprob}
+A \emph{stochastic regulation problem} is a quadruple $(S,R,Z,\psi,p)$ with $S,R,Z$ finite sets, $\psi\colon S\times R\to Z$ a deterministic morphism (a function), and $p\colon I\to S$ a state. A \emph{regulator} is a morphism $\rho\colon S\to R$ in $\FinStoch$.
+\end{definition}
+
+The regulator and the reguland jointly determine the outcome. Diagrammatically,
+the \emph{closed loop} of $\rho$ is the composite
+\begin{equation}\label{eq:closedloop}
+\zeta_\rho\;:=\;\psi\circ(\id_S\otimes\rho)\circ\copym{S}\;\colon\;S\to Z,
+\qquad\qquad
+\begin{tikzcd}[column sep=large]
+S \arrow[r,"\copym{S}"] & S\otimes S \arrow[r,"\id\otimes\rho"] & S\otimes R \arrow[r,"\psi"] & Z
+\end{tikzcd}
+\end{equation}
+which in coordinates is $\zeta_\rho(z\mid s)=\sum_{r:\psi(s,r)=z}\rho(r\mid s)$. The \emph{outcome state} is
+\begin{equation}\label{eq:outcome}
+\omega_\rho:=\zeta_\rho\circ p\colon I\to Z,\qquad \omega_\rho(z)=\sum_s p(s)\,\zeta_\rho(z\mid s).
+\end{equation}
+By (F4), $\rho\mapsto\zeta_\rho$ and $\rho\mapsto\omega_\rho$ are affine maps of convex polytopes.
+
+\begin{definition}[Optimal]\label{def:optimal}
+A regulator $\rho$ is \emph{optimal} if $\ent(\omega_\rho)\le\ent(\omega_\sigma)$ for every regulator $\sigma$. Write $\Pi\subseteq\FinStoch(S,R)$ for the set of optimal regulators. $\Pi$ is non-empty because $\FinStoch(S,R)$ is compact and $\ent\circ\omega$ is continuous.
+\end{definition}
+
+\subsection{``Simplest'': a preorder on the hom-set}
+
+C\&A never define ``unnecessarily complex''. Their proof shows what they mean:
+a regulator is simplified by discarding, for each $s$, all but one of the
+$r$'s it may choose. That is a statement about supports.
+
+\begin{definition}[Support refinement]\label{def:refine}
+For $\sigma,\rho\in\FinStoch(S,R)$ write $\sigma\refines\rho$ (``$\sigma$ refines $\rho$'') if $\supp\sigma(-\mid s)\subseteq\supp\rho(-\mid s)$ for every $s\in S$. A \emph{selection} of $\rho$ is a deterministic $h\refines\rho$, i.e.\ a function $h\colon S\to R$ with $\rho(h(s)\mid s)>0$ for all $s$.
+\end{definition}
+
+$\refines$ is a preorder on each hom-set. It is a genuinely categorical gadget
+in the sense that it is the hom-wise order of the \emph{possibilistic
+collapse} $\FinStoch\to\Rel$, $\rho\mapsto\supp\rho$, which is a strict monoidal
+functor (the support of a composite is the composite of supports).
+
+\begin{lemma}\label{lem:minimal}
+The $\refines$-minimal elements of $\FinStoch(S,R)$ are exactly the deterministic morphisms, and every $\rho$ has a deterministic $h\refines\rho$ (a selection).
+\end{lemma}
+\begin{proof}
+If $h$ is deterministic and $\sigma\refines h$ then $\supp\sigma(-\mid s)\subseteq\{h(s)\}$ is non-empty, so $\sigma=h$. If $\rho$ is not deterministic, any selection $h$ (which exists since supports are non-empty) satisfies $h\refines\rho$, $h\neq\rho$.
+\end{proof}
+
+So ``simplest'' $=$ ``$\refines$-minimal'' $=$ ``deterministic'' $=$ ``lies in the subcategory $\FinSet\hookrightarrow\FinStoch$''. This is the first half of C\&A's theorem, with no optimality involved yet. The content of the theorem is that optimality interacts well with $\refines$.
+
+\subsection{The Lemma}
+
+\begin{lemma}[Closed-loop determinism]\label{lem:CA}
+If $\rho$ is optimal then its closed loop $\zeta_\rho\colon S\to Z$ is $p$-almost-surely deterministic: there is a function $g\colon S\to Z$ with
+\[
+\psi\circ(\id_S\otimes\rho)\circ\copym{S}\;\aseq{p}\;g .
+\]
+In coordinates: for every $s\in\supp p$ and all $r,r'\in\supp\rho(-\mid s)$, $\psi(s,r)=\psi(s,r')$.
+\end{lemma}
+\begin{proof}
+Suppose not. Then there is $s_0\in\supp p$ such that $Z_0:=\supp\zeta_\rho(-\mid s_0)$ has at least two elements. Put $\lambda_z:=\zeta_\rho(z\mid s_0)>0$ for $z\in Z_0$, so $\sum_{z\in Z_0}\lambda_z=1$. For each $z\in Z_0$ choose $r_z\in\supp\rho(-\mid s_0)$ with $\psi(s_0,r_z)=z$ and define $\rho_z\colon S\to R$ to agree with $\rho$ on $s\neq s_0$ and to have $\rho_z(-\mid s_0)=\delta_{r_z}$. Then $\rho_z\refines\rho$ and, by affinity of $\omega$ in the $s_0$-fibre,
+\[
+\omega_\rho=\sum_{z\in Z_0}\lambda_z\,\omega_{\rho_z}.
+\]
+Explicitly, both sides equal $\sum_{s\neq s_0}p(s)\zeta_\rho(-\mid s)+p(s_0)\sum_z\lambda_z\delta_z$. The states $\omega_{\rho_z}$ are pairwise distinct, since $p(s_0)>0$ and they differ in the $z$-coordinate. By strict concavity (E),
+\[
+\ent(\omega_\rho)\;>\;\sum_z\lambda_z\ent(\omega_{\rho_z})\;\ge\;\min_z\ent(\omega_{\rho_z}),
+\]
+contradicting the optimality of $\rho$.
+\end{proof}
+
+\begin{remark}
+C\&A's proof moves mass $\Delta$ between two $r$'s and appeals to the fact that
+``increasing imbalance decreases entropy''. That is strict concavity in
+disguise, but their argument additionally assumes that all optimal regulators
+induce the same $p(Z)$; the mixture form above makes no such assumption. Note
+also what the Lemma does \emph{not} say: it does not say $\rho$ itself is
+deterministic. Only the composite $\zeta_\rho$ is. This is the distinction
+between an optimal regulator and a simplest optimal one.
+\end{remark}
+
+\subsection{The Theorem}
+
+\begin{theorem}[Good regulator theorem, categorical form]\label{thm:main}
+Let $(S,R,Z,\psi,p)$ be a stochastic regulation problem and $\Pi\subseteq\FinStoch(S,R)$ the set of optimal regulators.
+\begin{enumerate}[label=(\roman*)]
+\item If $\rho\in\Pi$ and $\sigma\refines\rho$ then $\zeta_\sigma\aseq{p}\zeta_\rho$; hence $\omega_\sigma=\omega_\rho$ and $\sigma\in\Pi$. That is, \emph{$\Pi$ is a down-set of $(\FinStoch(S,R),\refines)$}.
+\item The $\refines$-minimal elements of $\Pi$ are exactly the deterministic optimal regulators, i.e.\ $\Pi\cap\FinSet(S,R)$, and every $\rho\in\Pi$ lies above at least one of them.
+\item Consequently every simplest ($\refines$-minimal) optimal regulator is a function $h\colon S\to R$, and its closed loop $\psi\circ\pair{\id_S}{h}\colon S\to Z$ is deterministic and optimal.
+\end{enumerate}
+\end{theorem}
+\begin{proof}
+(i) By Lemma \ref{lem:CA} there is $g$ with $\zeta_\rho(-\mid s)=\delta_{g(s)}$ for $s\in\supp p$, i.e.\ $\psi(s,r)=g(s)$ for all $r\in\supp\rho(-\mid s)$. If $\sigma\refines\rho$ then $\supp\sigma(-\mid s)\subseteq\supp\rho(-\mid s)$, so $\zeta_\sigma(-\mid s)=\delta_{g(s)}$ as well, for every $s\in\supp p$. Thus $\zeta_\sigma\aseq{p}\zeta_\rho$ by (F3), so $\omega_\sigma=\zeta_\sigma\circ p=\zeta_\rho\circ p=\omega_\rho$ (almost-sure equality is exactly what is needed for post-composition with $p$ to agree), and $\sigma$ is optimal.
+
+(ii) Since $\Pi$ is a down-set, an element of $\Pi$ is minimal in $\Pi$ iff it is minimal in the whole hom-set, and by Lemma \ref{lem:minimal} these are the deterministic morphisms. Any selection $h$ of $\rho\in\Pi$ satisfies $h\refines\rho$, hence $h\in\Pi$ by (i).
+
+(iii) is a restatement of (ii) using (F1).
+\end{proof}
+
+\begin{corollary}[C\&A's first comment, made precise]
+Not every optimal regulator is deterministic, but every optimal regulator that is not deterministic is ``unnecessarily complex'' in the exact sense that it is strictly above, in $\refines$, an optimal regulator that is.
+\end{corollary}
+
+\begin{corollary}[C\&A's second comment]
+$\min_{\rho\in\FinStoch(S,R)}\ent(\omega_\rho)=\min_{h\in\FinSet(S,R)}\ent\big(\psi\circ\pair{\id}{h}\circ p\big)$: the search for an optimal regulator may be restricted to the deterministic subcategory.
+\end{corollary}
+\begin{proof}
+Either from Theorem \ref{thm:main}, or directly: $\ent\circ\omega$ is a concave function on the polytope $\FinStoch(S,R)$ (composite of an affine map with a concave one), so its minimum is attained at a vertex, and by (F4) the vertices are the deterministic morphisms.
+\end{proof}
+
+The second proof is worth noting because it is the \emph{existence} half of the
+theorem with no use of the Lemma, and it uses only ordinary (not strict)
+concavity. The Lemma, and strict concavity, are needed only for the
+\emph{every} half: the claim that all optimal regulators sit above a
+deterministic one.
+
+\subsection{``Model'' at this layer}
+
+Theorem \ref{thm:main} says a simplest optimal regulator is a morphism
+$h\colon S\to R$ in $\FinSet$. What C\&A add in words is that $h$ makes $R$ a
+``homomorphic image'' of $S$. Categorically that is the image factorisation of
+$h$ in $\FinSet$:
+\[
+\begin{tikzcd}
+S \arrow[rr,"h"] \arrow[dr,two heads,"e"'] && R \\ & \im h \arrow[ur,hook,"m"']
+\end{tikzcd}
+\]
+together with the kernel pair of $h$, i.e.\ the equivalence relation
+$\ker h=\{(s,s'):h(s)=h(s')\}$ on $S$. The ``model'' is the quotient
+$S\twoheadrightarrow S/\!\ker h\cong\im h$: it records exactly those
+distinctions among reguland states that the regulator acts on. Two consequences
+of Theorem \ref{thm:main} that C\&A gesture at become visible:
+\begin{itemize}
+\item \emph{Unused capacity.} The complement $R\setminus\im h$ is never visited; a regulator with $|R|>|\im h|$ is unnecessarily large. ``Simplest'' in the $\refines$ sense does not minimise $|\im h|$, however; see Remark \ref{rem:entropic}.
+\item \emph{Fibre-wise constancy of the outcome.} Since $\zeta_h=\psi\circ\pair{\id}{h}$, the outcome depends on $s$ through the pair $(s,h(s))$; the Lemma does \emph{not} make $\psi\circ\pair{\id}{h}$ factor through $e$. The ``model'' is a model of $S$ in the regulator, not a model of the outcome map.
+\end{itemize}
+
+\begin{remark}[An entropic reading of ``simplest'']\label{rem:entropic}
+Baez \cite{Baez2016} guessed that C\&A's lemma was: for any joint state $q$ on $S\times R$ with $S$-marginal $p$, $\ent(q)\ge\ent(p)$ with equality iff $R$ is a.s.\ a function of $S$. In the present notation $q=(\id_S\otimes\rho)\circ\copym{S}\circ p$, and the chain rule gives $\ent(q)=\ent(p)+\ent(R\mid S)$, with $\ent(R\mid S)=\sum_s p(s)\ent(\rho(-\mid s))=0$ iff $\rho$ is $p$-a.s.\ deterministic. So if one instead \emph{defines} ``simplest'' as ``minimises the joint entropy $\ent(q)$ among optimal regulators'', one gets exactly the $p$-a.s.\ deterministic optimal regulators. This agrees with the $\refines$-minimal ones on $\supp p$ and is indifferent off it. Neither notion minimises $|\im h|$ or $\ent(h\circ p)$; a further ``requisite variety'' minimisation would be a separate criterion.
+\end{remark}
+
+\section{Which configuration does the theorem cover?}\label{sec:config}
+
+C\&A claim their theorem ``applies equally well'' to the error-controlled
+configuration (regulator reads $S$) and the cause-controlled one (regulator reads
+$D$). Theorem \ref{thm:main} is stated for the first. For the second, a
+regulator is a morphism $\rho\colon D\to R$ with a state $p_D$ on $D$ and
+$\varphi\colon D\to S$ deterministic; the closed loop is
+$\psi\circ(\varphi\otimes\rho)\circ\copym{D}\colon D\to Z$, and ``model'' means
+factoring through $\varphi$ as in Definition \ref{def:relmodel}.
+
+\begin{proposition}[Cause-controlled configuration: existence, not universality]\label{prop:config1}
+In the cause-controlled configuration:
+\begin{enumerate}[label=(\roman*)]
+\item There exists an optimal regulator of the form $h\circ\varphi$ with $h\colon S\to R$ deterministic.
+\item There need not be any optimal deterministic regulator that is $\refines$-minimal and factors through $\varphi$ only: a $\refines$-minimal optimal regulator $D\to R$ can fail to be a model of $S$.
+\end{enumerate}
+\end{proposition}
+\begin{proof}
+(i) Let $h'\colon D\to R$ be any deterministic regulator (by the vertex argument one is optimal). Write $p_S=\varphi\circ p_D$ and, for $s\in\supp p_S$, let $w_s\in\Dist(R)$ be the distribution of $h'$ on the fibre $\varphi^{-1}(s)$ under $p_D(-\mid s)$. Then
+\[
+\omega_{h'}=\sum_s p_S(s)\sum_r w_s(r)\,\delta_{\psi(s,r)}
+=\sum_{(r_s)_s}\Big(\prod_s w_s(r_s)\Big)\;\omega_{h_{(r_s)}},
+\]
+where $h_{(r_s)}\colon S\to R$, $s\mapsto r_s$, ranges over functions and $\omega_{h_{(r_s)}}=\sum_s p_S(s)\delta_{\psi(s,r_s)}$ is the outcome of the model regulator $h_{(r_s)}\circ\varphi$. By concavity, $\ent(\omega_{h'})\ge\min_{(r_s)}\ent(\omega_{h_{(r_s)}})$, so some model regulator does at least as well as $h'$.
+
+(ii) Take $S=\{s_0\}$, $D=\{d_1,d_2\}$ with $p_D$ uniform, $R=\{r_1,r_2\}$, $Z=\{z\}$. Every regulator is optimal ($\ent\equiv0$). The deterministic regulator $d_i\mapsto r_i$ is $\refines$-minimal but does not factor through $\varphi\colon D\to\{s_0\}$.
+\end{proof}
+
+So the slogan ``\emph{every} good regulator is a model'' is correct, in the
+$\refines$ sense, for the error-controlled configuration---where, as noted,
+being a model is tautological at the relational layer and the content is
+determinism. For the cause-controlled configuration, where being a model is
+non-trivial, the categorical statement one can actually prove is existential.
+To recover ``every'' there one would need a stronger simplicity criterion that
+penalises distinctions in $D$ invisible in $S$; minimising $\ent(\rho\circ p_D)$
+among optimal regulators is one candidate, and in the example above it does
+select the constant (hence factoring) regulators. Whether it does so in general
+is left open here.
+
+\section{What the reformulation buys, and what it does not}
+
+\begin{itemize}
+\item \emph{Separation of layers.} The goal set $G$ lives in $\Set$ and is handled by pullbacks (Prop.\ \ref{prop:good}); the entropy criterion lives in $\FinStoch$ plus one extra axiom (E). The two never interact in C\&A's argument, and the diagrams make this unavoidable to see. A version of the theorem that actually uses $G$ would have to add a link, e.g.\ by taking $\ent$ of the pushforward of $\omega$ along the indicator of $G$.
+\item \emph{``Simplest'' gets a definition.} It is $\refines$-minimality, the hom-wise order induced by the support functor $\FinStoch\to\Rel$. Theorem \ref{thm:main}(i), that optimality is a down-set for $\refines$, is the real content of the C\&A Theorem and is not stated in the original.
+\item \emph{Determinism is intrinsic.} ``Is a function'' becomes ``commutes with $\mathrm{copy}$'', so the statement of Theorem \ref{thm:main} makes sense in any Markov category $\cC$ equipped with a strictly concave functional on states and a convex structure on hom-sets making composition affine. The proof of the Lemma goes through verbatim in any such $\cC$ in which almost-sure equality is detected on a support (e.g.\ $\Stoch$ with countable objects); for general measurable spaces the selection in Lemma \ref{lem:minimal} becomes a measurable-selection problem.
+\item \emph{A gap is closed.} The original proof's assumption that all optimal regulators share one $p(Z)$ is unnecessary.
+\item \emph{A limit is exposed.} The ``every'' claim holds only in the configuration where ``model'' is trivial (Prop.\ \ref{prop:config1}).
+\item \emph{What is not categorical.} The engine of the Lemma is strict concavity of Shannon entropy on $\Dist(Z)$. No Markov-category axiom supplies it. By \cite{BFL2011} this is unsurprising: entropy is characterised by convex-linearity plus functoriality on $\mathbf{FinStat}$, which is precisely the structure a bare Markov category lacks.
+\end{itemize}
+
+\section{Relation to other work}
+
+Virgo, Biehl, Baltieri and Capucci \cite{Virgo2025} keep the regulatory
+intuition but replace C\&A's notion of model by an observer-relative
+``interpretation'' of a Moore machine as doing Bayesian filtering, formalised
+with Markov categories; their theorem is an iff between being a good regulator
+and admitting such an interpretation, and does not pass through entropy
+minimisation at all. The present notes are complementary: they take C\&A's own
+argument at face value and ask what its categorical skeleton is. Wentworth
+\cite{Wentworth2021} reworks the probabilistic layer so that the regulator sees
+only an observation $X$ of $S$ and shows the simplest optimal regulator is a
+function of the posterior $P[S\mid X]$; in the present language that is the
+statement that the regulator factors through the Bayesian inverse of the
+observation channel, which is a natural next thing to write down in
+$\FinStoch$. Francis and Wonham's internal model principle
+\cite{FrancisWonham1976} is the linear-systems theorem that C\&A are usually
+cited as anticipating; its notion of ``internal model'' (the compensator
+contains a copy of the exosystem's dynamics) is a statement about dynamics
+that the static set-up here does not reach.
+
+\begin{thebibliography}{9}
+\bibitem{ConantAshby1970} R.~C.~Conant and W.~R.~Ashby, Every good regulator of a system must be a model of that system, \emph{Int.\ J.\ Systems Sci.} 1(2) (1970) 89--97.
+\bibitem{Ashby1956} W.~R.~Ashby, \emph{An Introduction to Cybernetics}, Chapman \& Hall, 1956.
+\bibitem{Baez2016} J.~C.~Baez, The internal model principle, \emph{Azimuth} blog, 27 January 2016. \url{https://johncarlosbaez.wordpress.com/2016/01/27/the-good-regulator-theorem/}
+\bibitem{BFL2011} J.~C.~Baez, T.~Fritz and T.~Leinster, A characterization of entropy in terms of information loss, \emph{Entropy} 13(11) (2011) 1945--1957.
+\bibitem{ChoJacobs2019} K.~Cho and B.~Jacobs, Disintegration and Bayesian inversion via string diagrams, \emph{Math.\ Struct.\ Comput.\ Sci.} 29(7) (2019) 938--971.
+\bibitem{FrancisWonham1976} B.~A.~Francis and W.~M.~Wonham, The internal model principle of control theory, \emph{Automatica} 12 (1976) 457--465.
+\bibitem{Fritz2020} T.~Fritz, A synthetic approach to Markov kernels, conditional independence and theorems on sufficient statistics, \emph{Adv.\ Math.} 370 (2020) 107239.
+\bibitem{Virgo2025} N.~Virgo, M.~Biehl, M.~Baltieri and M.~Capucci, A ``good regulator theorem'' for embodied agents, arXiv:2508.06326 (2025).
+\bibitem{Wentworth2021} J.~Wentworth, Fixing the good regulator theorem, \emph{AI Alignment Forum}, 2021. \url{https://www.alignmentforum.org/posts/Dx9LoqsEh3gHNJMDk/fixing-the-good-regulator-theorem}
+\end{thebibliography}
+
+\end{document}

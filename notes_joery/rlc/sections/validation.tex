@@ -1,0 +1,87 @@
+% !TEX root = ../main.tex
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Merged from sections/algorithm.tex and sections/experiments.tex on 2026-10-26; their stubs are parked in sections/parked.tex.
+\section[Empirical validation]{Empirical validation \budget{3.5 pp}}
+\label{sec:experiments}
+
+\subsection{Mechanism}
+\label{sec:algorithm}
+The Lagrangian \eqref{eq:lagrangian} is a function of the history-action occupancy $d(x,a)$, and three facts turn it into a problem that convex reinforcement learning already solves \citep{Zahavy-reward21,Mutti-convex23}.
+First, $H_\nu(Z)$ is concave in $d$, and by Gibbs' inequality $H_\nu(p) = \min_q \E_p[-\ln \tfrac{\dd q}{\dd\nu}]$ with the minimum at $q = p$, so for a fixed $q$ the criterion is ordinary reinforcement learning with the per-pair cost $r_q(x,a) := \E_{Z \sim \hat\kappa(x,a)}[-\ln \tfrac{\dd q}{\dd\nu}(Z)]$.
+Second, the floors on $P$, $\kappa$ and $S$ are linear in $d$, since each is conditioned on $(X,A)$ and the posterior given a history does not depend on the policy, so $\bar I_i = \E_d[r_i]$ with $r_i(x,a)$ the information the pair's outcome carries about the law or the state, a reward the regulator computes from its own belief.
+Third, the hinge has the exact dual $-\lambda \min(u, c) = \max_{\mu \in [0,\lambda]} [-\mu u - (\lambda - \mu) c]$.
+Together,
+\begin{equation}
+  \min_{q}\ \min_{\pi}\ \max_{\mu \in [0,\lambda]}\ \E_{\occ}\Big[ r_q - \sum_i \mu_i r_i \Big] - \sum_i (\lambda_i - \mu_i)\, c_i,
+  \label{eq:game}
+\end{equation}
+where the inner min--max is a constrained MDP with the Gibbs cost and multiplier-weighted information rewards, the Fenchel game of convex reinforcement learning with the entropy taken out by majorisation.
+The multiplier $\mu_i$ rises while floor $i$ is violated and falls to zero once it is slack, which is the sequence of Section~\ref{sec:pomdp} as a dual dynamic.
+The action floor $\bar I_A$ is concave rather than linear in $d$ and enters through its variational form, which we leave open and set $\lambda_A = 0$ throughout.
+\add{Kept exact rather than majorised, it still leaves each round a majoriser, since the round objective is $\Lcal(\pi) + \KL(p_\pi \,\|\, q_k) \ge \Lcal(\pi)$ with equality at $\pi_k$, and with the action floor the inner step is the entropy regularised MDP of \citet{Neu-unified17} at temperature $\mu_A$, solved by soft dynamic programming.}
+Any solver fits the inner step, exact dynamic programming, planning, or a policy gradient, and the outer step refits $q_k = p_{\pi_k}$.
+\add{Unlike convex RL we do not average the iterates, since for a concave criterion the tangent lies above it, so each best response already descends, and averaging would mix deterministic policies and raise the outcome entropy.}
+Theorem~\ref{thm:criterion} says the regulator is deterministic in the belief, so the method plans on the belief with the information rewards computed exactly from the posterior, and Thompson sampling, which replaces the information reward by a posterior draw, is a baseline rather than the method.
+
+Two approximations separate \eqref{eq:game} from what runs, the refit uses an estimate $\hat q_k$ of $p_{\pi_k}$, and the criterion is a marginal over trials while a run gives a handful of them.
+\begin{proposition}[Plug-in and finite trials]
+\label{prop:plugin}
+Let $\hat q_k$ be any law with $\dd\hat q_k / \dd\nu > 0$, and let $\pi_{k+1}$ minimise the inner problem of \eqref{eq:game} exactly with $\hat q_k$ in place of $q$.
+Then
+\begin{equation}
+  \Lcal(\pi_{k+1}) \;\le\; \Lcal(\pi_k) + \KL(p_{\pi_k} \,\|\, \hat q_k) - \KL(p_{\pi_{k+1}} \,\|\, \hat q_k).
+  \label{eq:plugin}
+\end{equation}
+For counting $\lambda$ and the empirical outcome law $\hat p_n$ of $n$ trials, $\E[H_\nu(\hat p_n)] = H_\nu(p_\pi) - I(Z; \hat p_n)$, with $Z$ drawn from the realised empirical law.
+\end{proposition}
+\noindent Proof in Supplementary~\ref{sup:proof-plugin}.
+The first part says each refit is a descent step up to the estimation gap, so a poor $\hat q_k$ where the policy has mass is what breaks monotonicity, and mixing a fixed share $\epsilon$ of a high-entropy law into $\hat q_k$ caps the gap by $\ln(1/\epsilon)$ plus a constant.
+The second part is the finite-trial gap of \citet{Mutti-convex23} with our sign, the per-trial entropy is optimistic by exactly the information the trial carries about the outcome, which rewards randomising between trials, so we always score the marginal pooled over trials.
+
+\subsection{Examples}
+\intent{One claim per environment, each tied to a term of \eqref{eq:split-pomdp} or a floor of \eqref{eq:lagrangian}, one figure each. Setups and results are in the experiment reports, DeepSea in runs/exploration/REPORT.md, colour grid and cart-pole under code/good-regulator/experiments.}
+
+\paragraph{Colour grid, \add{regulation without reward}\del{identifiability before alignment}.}
+\intent{\add{$n \times n$ open grid packed with coloured polyomino tiles of many sizes and uneven shapes, single cells rare, colours not necessarily distinct so touching tiles of one colour form one region, slip dynamics, $Z$ the colour of the current cell, $\nu$ counting, so no change of measure and no reward, action floor $\lambda_A$ on.
+Claim: environment and policy noise cover the grid given enough samples, so no exploration or law floor is needed, and the criterion settles over the rounds on the most stable same-colour region, where the forced action entropy least often moves the outcome, which is the most compact region rather than the largest, since a long thin tile with more cells loses to a smaller blob.}}
+% Superseded colour-grid design (two regions, law floor), results in code/good-regulator/experiments/colour_grid:
+% $13 \times 13$ grid, 20\% slip, $Z$ the colour of the next cell, $\nu$ counting, a far $5 \times 5$ low-entropy region against a near $2 \times 2$ one, categorical posterior per cell, 32 seeds.
+% Claim: certainty-equivalent planning parks on its own support, Definition~\ref{def:confusing} in action, 0/32, while the full-belief law floor at $\lambda_\kappa \in \{1,2,4\}$ reaches the optimum 16/16, explore until identified then regulate; Thompson 32/32 as the baseline; the criterion's own sign on the law term 0/16; action empowerment at weight one is a random walk.
+% Figure: map with the two regions, occupancy before and after the floor goes slack, $\bar I_\kappa$ over episodes.
+\todo{Figure: occupancy over the grid early and late, share of time on each tile over the rounds.}
+
+\begin{figure}[h]
+\centering
+\begin{minipage}[c]{0.45\textwidth}\centering\input{figs/colourgrid}\end{minipage}\hfill
+\begin{minipage}[c]{0.5\textwidth}\centering\stubplot{round $k$}{$H(\psi_\# d^{\pi_k})$}\end{minipage}
+\caption{Colour grid. Left, a grid packed with polyomino tiles, where the thin orange tile has the most cells and the compact blue tile is the most stable. Right, outcome entropy over the rounds, placeholder.}
+\label{fig:colourgrid}
+\end{figure}
+
+\paragraph{Cart-pole, continuous outcomes.}
+\intent{Barto dynamics, $Z$ the pole angle on the circle, $\lambda$ Lebesgue, kicks on the angular velocity, MM with a kernel estimate $\hat q$ and MPPI, 8 seeds.
+Claim: the criterion balances with no reward and the spread grows with the kick, the dark room at $\nu = \lambda$ from hanging with the crossover $\beta_0 \approx 0.52$ of Proposition~\ref{prop:alignment}, and swing-up fails below $\beta \approx 16$ because the refit $\hat q$ builds a barrier at the start state, which is the estimation gap of Proposition~\ref{prop:plugin}.}
+\todo{Figure: angle histograms against $\nu$, success against $\beta$, the barrier in $-\ln \hat q$; test the $\epsilon$-mixing fix.}
+
+\begin{figure}[h]
+\centering
+\begin{minipage}[c]{0.45\textwidth}\centering\input{figs/cartpole}\end{minipage}\hfill
+\begin{minipage}[c]{0.5\textwidth}\centering\stubplot{$\beta$}{swing-up success}\end{minipage}
+\caption{Cart-pole. Left, the pole angle $\theta$ is the outcome on the circle, kicked on its angular velocity, with $\nu$ concentrated upright. Right, success against $\beta$, placeholder.}
+\label{fig:cartpole}
+\end{figure}
+
+\paragraph{DeepSea, the law floor.}
+\intent{DeepSea \citep{Osband-behaviour20} with $P$ known and the reward channel $\kappa$ unknown, exact DP on the DAG per episode, 16 seeds, $L \in \{10, 20, 30\}$.
+Claim: the bare criterion collapses on a finite belief, and the law floor with the seeking sign rescues it. Beta posterior never collapses, finite belief collapses at a single episode, averse law term 0/16, seeking $\lambda_\kappa = 5$ 16/16, capped $\lambda_\kappa \le 4$ no rescue, threshold between 4 and 5 unresolved. Action empowerment at either level only acts as a temperature.}
+\todo{Figure: depth reached per episode for bare, averse and seeking; resolve the $\lambda_\kappa$ threshold.}
+
+\begin{figure}[h]
+\centering
+\begin{minipage}[c]{0.45\textwidth}\centering\input{figs/deepsea}\end{minipage}\hfill
+\begin{minipage}[c]{0.5\textwidth}\centering\stubplot{episode}{depth reached}\end{minipage}
+\caption{DeepSea of depth $L$. Left, each step moves one row down and left or right, the reward sits at the far corner behind an unknown channel $\kappa$. Right, depth reached per episode for the bare, averse and seeking law terms, placeholder.}
+\label{fig:deepsea}
+\end{figure}
+
+\intent{Open examples from the planning notes, a two-goal maze, constrained permutation under random durations, and the SMiRL comparison, named in one line if space allows.}
