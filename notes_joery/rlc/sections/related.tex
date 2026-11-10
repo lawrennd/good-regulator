@@ -41,3 +41,10 @@
 \add{For $Z = (S,A,S')$ the identity gains the transition noise $\E_{\occ}[H(P(\cdot \mid S,A))]$ with a positive sign, so the criterion charges for noise, whereas exact inference backs up $\log \E[e^{V}]$ and is optimistic about it \citep[Sec.~2.3]{Levine-reinforcement18}, and the variational form with fixed dynamics restores the expected backup and is neutral \citep[Sec.~3.1]{Levine-reinforcement18}.}
 
 \intent{Discussion: which outcome to regulate as the abstraction question; limits; outlook.}
+
+\paragraph{\add{Conclusion.}}
+\add{We framed the good regulator of \citet{Conant-good70} as a concave program on the occupancy, the entropy of the outcome law under a goal measure $\nu$.}
+\add{The change of measure counters the dark room at the outcome level by tying predictability to good outcomes.}
+\add{At the learning level the entropy splits into empowerment and active learning and perception terms, and a floor on these terms must hold long enough for the regulator to identify a sufficient model.}
+\add{Inserted into convex RL, the floors give a constrained game whose inner step is an ordinary MDP, so any standard solver applies.}
+\add{Which outcome to regulate remains the designer's abstraction choice, one the criterion takes as given rather than makes.}

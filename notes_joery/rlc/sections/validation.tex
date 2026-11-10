@@ -34,7 +34,6 @@ Then
 \end{equation}
 For counting $\lambda$ and the empirical outcome law $\hat p_n$ of $n$ trials, $\E[H_\nu(\hat p_n)] = H_\nu(p_\pi) - I(Z; \hat p_n)$, with $Z$ drawn from the realised empirical law.
 \end{proposition}
-\noindent Proof in Supplementary~\ref{sup:proof-plugin}.
 The first part says each refit is a descent step up to the estimation gap, so a poor $\hat q_k$ where the policy has mass is what breaks monotonicity, and mixing a fixed share $\epsilon$ of a high-entropy law into $\hat q_k$ caps the gap by $\ln(1/\epsilon)$ plus a constant.
 The second part is the finite-trial gap of \citet{Mutti-convex23} with our sign, the per-trial entropy is optimistic by exactly the information the trial carries about the outcome, which rewards randomising between trials, so we always score the marginal pooled over trials.
 

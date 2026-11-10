@@ -1,7 +1,7 @@
 % !TEX root = ../main.tex
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Former Subsection 3.1, promoted to a section on 2026-10-26. Tracked edits up to commit e6f28df were accepted and the text compressed; superseded lines in sections/parked.tex.
-\section[Identifiability through empowerment]{Identifiability through empowerment}
+\section[Identifiability through empowerment]{Identifiability through empowerment (LLM below)}
 \label{sec:pomdp}
 
 Section~\ref{sec:objective} scores the regulator on the observable class, which merges the belief over the state and the posterior over the laws into one predictive law.
@@ -11,7 +11,7 @@ Here we split them on the true class $\tilde Z = \kappa(S,A)$, the kernel at the
 By Theorem~\ref{thm:criterion} the score of a regulator depends only on the law of its observable class, which is calibrated on the pairs the regulator visits.
 \begin{definition}[Confusing set]
 \label{def:confusing}
-Given a regulator $\pi$ and the true law $\theta$, the confusing set $\Theta_c(\pi)$ is the set of laws that agree with $\theta$ on the support of $\occ$ and under which $\pi$ is not a minimiser of \eqref{eq:objective}.
+Given a regulator $\pi$ and the true law $\theta$, the confusing set $\Theta_c(\pi)$ is the set of laws that agree with $\theta$ on the support of $\occ$ and under which $\pi$ is not a minimiser of \eqref{eq:classes}.
 \end{definition}
 \noindent Every law in $\Theta_c(\pi)$ gives $\pi$ the same criterion value as $\theta$, so from its own support the regulator cannot tell whether it is at the minimum, or at the minimum of a world that is not its own.
 A regulator calibrated on its own support is a fixed point of its posterior and of the criterion restricted to that support, so identifiability, emptying the confusing set, is a condition on the path that the criterion does not impose, and it has to be met before alignment can be.
@@ -30,7 +30,6 @@ Then
   \label{eq:split-pomdp}
 \end{equation}
 \end{proposition}
-\noindent Proof in Supplementary~\ref{sup:proof-split-pomdp}.
 The chain rule is taken in the order the regulator spends, the history it has, the action it chooses, what the outcome teaches about the dynamics and the outcome law, and last the hidden state, as what remains once the laws are known.
 The dynamics law comes before the state, since once the state and the outcome law are known it adds nothing to the class, and before the outcome law by convention.
 The fully observed case with a known law keeps only the first two terms.
@@ -45,13 +44,11 @@ Then
 \end{corollary}
 \noindent In \eqref{eq:split-pomdp}, $\bar I_P$ and $\bar I_\kappa$ vanish because $\theta$ is a point mass, $\bar I_S$ vanishes because the state is a function of the history, and for a Markov policy $X$ is independent of $\tilde Z$ given $S$, so $I(X;\tilde Z) = I(S;\tilde Z)$ and $I(A;\tilde Z \mid X) = I(A;\tilde Z \mid S)$.
 Because $\tilde Z = \kappa(S,A)$ is a sufficient statistic of $(S,A)$ for the event, the noise term $H_\lambda(Z \mid \tilde Z) = H_\lambda(Z \mid S,A)$ is exactly the channel noise.
-Proof in Supplementary~\ref{sup:proof-split}.
 
 \begin{corollary}[Empowerment as free bits]
 \label{cor:freebits}
 $I(A;\tilde Z \mid S) = 0$ exactly when at every state all actions the policy uses share one outcome law $\kappa(s,a)$, and the action entropy $H(A \mid S, \tilde Z) = H(A \mid S) - I(A;\tilde Z \mid S)$ never enters the criterion.
 \end{corollary}
-\noindent Proof in Supplementary~\ref{sup:proof-freebits}.
 These bits are free at fixed occupancy, since two actions with the same outcome law may have different transition laws, and swapping between them moves $\occ$ and with it every term.
 The same holds on the hypothesis space, the posterior entropy $H(\theta \mid X,A,\tilde Z)$ never enters the criterion, so hypotheses that give the same class are free to stay unresolved.
 
@@ -81,7 +78,6 @@ If after $T$ steps the posterior decides $B$ with error at most $\delta < \tfrac
 \end{equation}
 with $h$ the binary entropy and $\bar I_{P,t}$, $\bar I_{\kappa,t}$ the per-step terms of \eqref{eq:split-pomdp}.
 \end{proposition}
-\noindent Proof in Supplementary~\ref{sup:proof-budget}.
 The middle term is the information the outcomes actually carry about the laws, spent rather than held, and the class terms bound it because the outcome is drawn from the class.
 So a floor $c$ on $\bar I_P + \bar I_\kappa$ has to hold for at least $(h(q) - h(\delta)) / c$ steps before the confusing set can be empty, the same accounting as the regret lower bound of \citet{Lai-asymptotically85}, where the cost of learning is the information needed to exclude the arms that could still be optimal.
 The bound is necessary but not sufficient, since the information has to be spent on the pairs that discriminate $\Theta_c$.

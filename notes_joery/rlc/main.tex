@@ -6,6 +6,7 @@
 
 % \usepackage{rlj}           % submission (anonymous)
 %\usepackage[accepted]{rlj} % camera-ready
+\let\origaddcontentsline\addcontentsline % rlj.sty disables contents entries, kept for the supplementary
 \usepackage[preprint]{rlj} % de-anonymised preprint
 
 \usepackage{amssymb}
@@ -29,6 +30,7 @@
 \newcommand{\Scal}{\mathcal S}
 \newcommand{\Acal}{\mathcal A}
 \newcommand{\Zcal}{\mathcal Z}
+\newcommand{\Ycal}{\mathcal Y}
 \providecommand{\Lcal}{\mathcal L}
 \newcommand{\Dcal}{\mathcal D}
 \newcommand{\E}{\mathbb E}
@@ -44,7 +46,6 @@
 \newtheorem{proposition}{Proposition}
 \newtheorem{lemma}{Lemma}
 \newtheorem{corollary}{Corollary}
-\theoremstyle{definition}
 \newtheorem{definition}{Definition}
 
 % Tracked edits. \add = red insertion, \del = red strikethrough. Remove before submission.
@@ -116,16 +117,15 @@ On simple reward-free, deep-exploration, and continuous control tasks we confirm
 \input{sections/validation}
 \input{sections/related}
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Appendices count toward the 8--12 page limit.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\appendix
-\input{sections/appendix}
+% No appendix in the main matter, all appendix material lives in the supplementary (2026-10-29).
 
 \bibliography{main}
 \bibliographystyle{rlj}
 
 \beginSupplementaryMaterials
+\appendix
+\let\addcontentsline\origaddcontentsline
+\tableofcontents
 \input{sections/supplementary}
 
 \end{document}

@@ -29,29 +29,55 @@ Extensions to POMDPs are studied in \citep{Zamboni-how24,Zamboni-limits24}.
 
 
 
-\paragraph{Primer on measure theory.}
-Measure theory generalises the notion of counting to volume over arbitrary mathematical spaces \citep{Billingsley-probability12}.
-A measure $m$ on a measurable space $\Zcal$ assigns a volume $m(B) \ge 0$ to each measurable set $B \subseteq \Zcal$, additively over disjoint sets.
-A probability measure is the special case of unit total volume, $m(\Zcal) = 1$.
-Two other common measures are the counting measure, which gives each point volume one on a countable $\Zcal$, and the Lebesgue measure, which extends length, area and volume to every measurable set in $\mathbb R^n$.
-We write $\lambda$ for the base measure on $\Zcal$.
-To compare two measures on the same space, $\nu$ is called absolutely continuous with respect to $\lambda$, written $\nu \ll \lambda$, if every set of $\lambda$-volume zero also has $\nu$-volume zero.
-The Radon--Nikodym theorem then gives a density $\dd\nu / \dd\lambda \ge 0$ with $\nu(B) = \int_B \tfrac{\dd\nu}{\dd\lambda} \, \dd\lambda$ for every measurable $B$.
-The density is a ratio of volumes that says how much $\nu$ stretches or shrinks the volume of $\lambda$ at $z$.
-A change of measure thus obeys $\int g \, \dd\nu = \int g \, \tfrac{\dd\nu}{\dd\lambda} \, \dd\lambda$ along with the chain rule $\dd p / \dd \nu = (\dd p / \dd \lambda)(\dd \lambda / \dd \nu)$ whenever all measures are mutually absolutely continuous.
-We can also combine two spaces with the product measure $m \otimes m'$ on $\mathcal X \times \Zcal$, which gives each rectangle the volume ${(m \otimes m')(C \times B) = m(C)\, m'(B)}$.
-To move between spaces, a measurable map $\psi\colon \mathcal X \to \Zcal$ pulls a set $B \subseteq \Zcal $ back to its pre-image $\psi^{-1}(B) \subseteq \mathcal X$ and a function $g$ on $\Zcal$ back to $x \mapsto (g \circ \psi)(x)$ on $\mathcal X$.
-The pushforward of a measure $m$ on $\mathcal X$ is the measure on $\Zcal$ that gives each set $B \subseteq \Zcal$ the $m$-volume of its pre-image, $\psi_\# m(B) = m(\psi^{-1}(B))$, so that $\int g \, \dd(\psi_\# m) = \int g \circ \psi \, \dd m$.
+\paragraph{Information theory with measures\footnote{For unfamiliar readers, Appendix~\ref{sup:primer} gives an extended primer on the relevant measure-theoretic concepts.}.}
+A measure $m$ on a measurable space $\Zcal$ assigns a volume $m(B) \ge 0$ to each measurable set $B \subseteq \Zcal$ additively over disjoint sets~\citep{Billingsley-probability12}.
+A probability measure is the special case where the total volume $m(\Zcal) = 1$.
+A measure $\nu$ is absolutely continuous with respect to $\lambda$, written $\nu \ll \lambda$, if every set of $\lambda$-volume zero also has $\nu$-volume zero.
+For a $\sigma$-finite $\lambda$ the Radon--Nikodym theorem then guarantees a density $\tfrac{\dd\nu}{\dd\lambda} \ge 0$ as a ratio of volumes through which we express a change of measure as $\int g\,\dd\nu = \int g\,\tfrac{\dd\nu}{\dd\lambda}\,\dd\lambda$.
+A measurable map $\psi\colon \mathcal X \to \Zcal$ pushes a measure $m$ on $\mathcal X$ forward to $\psi_\# m(B) = m(\psi^{-1}(B))$ such that $\int g\,\dd(\psi_\# m) = \int g \circ \psi\,\dd m$.
+We can then define entropy against a base $m$ as $H_m(p) = -\int \ln \tfrac{\dd p}{\dd m}\,\dd p$ for a probability measure $p \ll m$~\citep{Cover-elements06,Gray-entropy11}.
+For example, counting $m$ gives the Shannon entropy $-\sum_z p(z) \ln p(z)$.
+Against a second base $q$ with $p \ll q \ll m$, applying the chain rule to the Radon--Nikodym derivatives/ densities gives the quotient $\tfrac{\dd p}{\dd q} = \tfrac{\dd p}{\dd m} / \tfrac{\dd q}{\dd m}$ and the resulting change of base $H_q(p) = H_m(p) + \E_p[\ln \tfrac{\dd q}{\dd m}]$.
+For a probability measure $q$ this turns the entropy into a divergence, $H_q(p) = -\KL(p \,\|\, q)$.
+On a product space $\mathcal X \times \Zcal$, a probability measure $p$ has the marginals $p_{\mathcal X}(C) = p(C \times \Zcal)$ on $\mathcal X$ and $p_{\Zcal}(B) = p(\mathcal X \times B)$ on $\Zcal$.
+It splits into $p_{\mathcal X}$ and a conditional law $p(\cdot \mid x)$ on $\Zcal$ for each $x \in \mathcal X$, such that $p(C \times B) = \int_C p(B \mid x)\,\dd p_{\mathcal X}(x)$.
+Averaging the entropy of the conditional law gives the conditional entropy $H_m(p \mid \mathcal X) = \int H_m(p(\cdot \mid x))\,\dd p_{\mathcal X}(x)$.
+Then, the mutual information of $p$ over the product space is its negative entropy against the product of its marginals, $I(p) = -H_{p_{\mathcal X} \otimes p_{\Zcal}}(p)$.
+Here $p_{\mathcal X} \otimes p_{\Zcal}$ is the law with the marginals of $p$ whose volumes factorise, $(p_{\mathcal X} \otimes p_{\Zcal})(C \times B) = p_{\mathcal X}(C)\,p_{\Zcal}(B)$.
+Finally, random variables $X$ and $Z$ are maps on a shared sample space, and their joint law $p$ on $\mathcal X \times \Zcal$ is the pushforward of the probability measure on that space.
+Their entropies and mutual information follow from this law, $H_m(Z) = H_m(p_{\Zcal})$, $H_m(Z \mid X) = H_m(p \mid \mathcal X)$ and $I(X;Z) = I(p)$.
+The rules on the measure $p$ therefore give the familiar algebra for random variables, as in $I(p) = H_m(p_{\Zcal}) - H_m(p \mid \mathcal X) = H_m(Z) - H_m(Z \mid X)$.
 
 
-\paragraph{Information theoretical quantities with measures.}
-Relevant to us is the measure theoretic definition of information theoretical objects for probability distributions.
-In this language, entropy must be defined against a base $m$, $H_m(p) = -\int \ln \tfrac{\dd p}{\dd m} \, \dd p$ for a probability measure $p \ll m$, taking $p$ as the base gives $H_p(p) = 0$.
-Through the change of measure, $H_m(p) = -\int \tfrac{\dd p}{\dd m} \ln \tfrac{\dd p}{\dd m} \, \dd m$, the entropy is an integral over the reference of the Radon--Nikodym derivative $\tfrac{\dd p}{\dd m}$ alone.
-For example, for counting $m$ this derivative is the probability $p(z) = \frac{\dd p(\{z\})}{\dd m(\{z\})}$ since $\dd m(\{z\}) = 1$, giving Shannon entropy $-\sum_z p(z) \ln p(z)$.
-Against a second measure $q$ with $p \ll q$, the chain rule $\tfrac{\dd p}{\dd q} = \tfrac{\dd p}{\dd m} / \tfrac{\dd q}{\dd m}$ gives the change of base $H_q(p) = H_m(p) + \E_p[\ln \tfrac{\dd q}{\dd m}]$, which for a probability measure $q$ yields $H_q(p) = -\int \ln \tfrac{\dd p}{\dd q} \, \dd p = -\KL(p \,\|\, q) \le 0$, which expresses the KL-divergence.
-Note that, normalisation of the reference shifts the entropy by a constant, since a finite $m = m(\Zcal)\, \bar m$ with $\bar m$ a probability measure gives $H_m(p) = \ln m(\Zcal) - \KL(p \,\|\, \bar m)$.
-We can similarly express the mutual information of a probability measure $p$ on a product space $\mathcal X \times \Zcal$, where $p$ has marginals $p_{\mathcal X}$\add{$(C) = p(C \times \Zcal)$} and $p_{\Zcal}$\add{$(B) = p(\mathcal X \times B)$} whose product measure $p_{\mathcal X} \otimes p_{\Zcal}$ \del{draws the two coordinates independently}\add{gives each rectangle the volume $p_{\mathcal X}(C)\, p_{\Zcal}(B)$ rather than $p(C \times B)$}.
-The mutual information is then the negative entropy of $p$ using the product measure as the base, $I(p) = \KL(p \,\|\, p_{\mathcal X} \otimes p_{\Zcal}) = -H_{p_{\mathcal X} \otimes p_{\Zcal}}(p) \ge 0$ for $p \ll p_{\mathcal X} \otimes p_{\Zcal}$.
-Moreover, against a product of bases $m \otimes m'$ the change of base splits it as $I(p) = H_m(p_{\mathcal X}) + H_{m'}(p_{\Zcal}) - H_{m \otimes m'}(p)$.
+% \paragraph{Primer on measure theory.}
+% Measure theory generalises the notion of counting to volume over arbitrary mathematical spaces \citep{Billingsley-probability12}\add{, and we keep here only what the main text uses, with a self-contained primer in Supplementary~\ref{sup:primer}}.
+% A measure $m$ on a measurable space $\Zcal$ assigns a volume $m(B) \ge 0$ to each measurable set $B \subseteq \Zcal$, additively over disjoint sets\add{, and a probability measure has unit total volume $m(\Zcal) = 1$}.
+% \del{A probability measure is the special case of unit total volume, $m(\Zcal) = 1$.}
+% \del{Two other common measures are the counting measure, which gives each point volume one on a countable $\Zcal$, and the Lebesgue measure, which extends length, area and volume to every measurable set in $\mathbb R^n$.}
+% \del{We write $\lambda$ for the base measure on $\Zcal$.}
+% \add{We write $\lambda$ for the base measure on $\Zcal$, typically the counting measure on a countable $\Zcal$ or the Lebesgue measure on $\mathbb R^n$.}
+% \del{To compare two measures on the same space, $\nu$ is called absolutely continuous with respect to $\lambda$, written $\nu \ll \lambda$, if every set of $\lambda$-volume zero also has $\nu$-volume zero.}
+% \add{A measure $\nu$ is absolutely continuous with respect to $\lambda$, written $\nu \ll \lambda$, if every set of $\lambda$-volume zero also has $\nu$-volume zero.}
+% \del{The Radon--Nikodym theorem then gives a density $\dd\nu / \dd\lambda \ge 0$ with $\nu(B) = \int_B \tfrac{\dd\nu}{\dd\lambda} \, \dd\lambda$ for every measurable $B$.}
+% \del{The density is a ratio of volumes that says how much $\nu$ stretches or shrinks the volume of $\lambda$ at $z$.}
+% \del{A change of measure thus obeys $\int g \, \dd\nu = \int g \, \tfrac{\dd\nu}{\dd\lambda} \, \dd\lambda$.}
+% \add{The Radon--Nikodym theorem then gives a density $\tfrac{\dd\nu}{\dd\lambda} \ge 0$, a ratio of volumes, with $\int g\,\dd\nu = \int g\,\tfrac{\dd\nu}{\dd\lambda}\,\dd\lambda$.}
+% \del{We can also combine two spaces with the product measure $m \otimes m'$ on $\mathcal X \times \Zcal$, which gives each rectangle the volume ${(m \otimes m')(C \times B) = m(C)\, m'(B)}$.}
+% \del{To move between spaces, a measurable map $\psi\colon \mathcal X \to \Zcal$ pulls a set $B \subseteq \Zcal $ back to its pre-image $\psi^{-1}(B) \subseteq \mathcal X$ and a function $g$ on $\Zcal$ back to $x \mapsto (g \circ \psi)(x)$ on $\mathcal X$.}
+% \del{The pushforward of a measure $m$ on $\mathcal X$ is the measure on $\Zcal$ that gives each set $B \subseteq \Zcal$ the $m$-volume of its pre-image, $\psi_\# m(B) = m(\psi^{-1}(B))$, so that $\int g \, \dd(\psi_\# m) = \int g \circ \psi \, \dd m$.}
+% \add{A measurable map $\psi\colon \mathcal X \to \Zcal$ pushes a measure $m$ on $\mathcal X$ forward to $\psi_\# m(B) = m(\psi^{-1}(B))$, the $m$-volume of the pre-image, so that $\int g\,\dd(\psi_\# m) = \int g \circ \psi\,\dd m$.}
+% \del{Information theoretical quantities with measures.}
+% \del{Relevant to us is the measure theoretic definition of information theoretical objects for probability distributions.}
+% \del{In this language, entropy must be defined against a base $m$, $H_m(p) = -\int \ln \tfrac{\dd p}{\dd m} \, \dd p$ for a probability measure $p \ll m$, taking $p$ as the base gives $H_p(p) = 0$.}
+% \add{Entropy is defined against a base $m$, $H_m(p) = -\int \ln \tfrac{\dd p}{\dd m}\,\dd p$ for a probability measure $p \ll m$, which for counting $m$ is the Shannon entropy $-\sum_z p(z) \ln p(z)$.}
+% \del{Through the change of measure, $H_m(p) = -\int \tfrac{\dd p}{\dd m} \ln \tfrac{\dd p}{\dd m} \, \dd m$, the entropy is an integral over the reference of the Radon--Nikodym derivative $\tfrac{\dd p}{\dd m}$ alone.}
+% \del{For example, for counting $m$ the density is the probability $p(z)$, giving Shannon entropy $-\sum_z p(z) \ln p(z)$.}
+% \del{Against a second measure $q$ with $p \ll q$, the chain rule $\tfrac{\dd p}{\dd q} = \tfrac{\dd p}{\dd m} / \tfrac{\dd q}{\dd m}$ gives the change of base $H_q(p) = H_m(p) + \E_p[\ln \tfrac{\dd q}{\dd m}]$, which for a probability measure $q$ yields $H_q(p) = -\int \ln \tfrac{\dd p}{\dd q} \, \dd p = -\KL(p \,\|\, q) \le 0$, which expresses the KL-divergence.}
+% \add{Against a second measure $q$ with $p \ll q$, the quotient $\tfrac{\dd p}{\dd q} = \tfrac{\dd p}{\dd m} / \tfrac{\dd q}{\dd m}$ gives the change of base $H_q(p) = H_m(p) + \E_p[\ln \tfrac{\dd q}{\dd m}]$, and for a probability measure $q$ the divergence $H_q(p) = -\KL(p \,\|\, q) \le 0$.}
+% \del{Note that, normalisation of the reference shifts the entropy by a constant, since a finite $m = m(\Zcal)\, \bar m$ with $\bar m$ a probability measure gives $H_m(p) = \ln m(\Zcal) - \KL(p \,\|\, \bar m)$.}
+% \del{We can similarly express the mutual information of a probability measure $p$ on a product space $\mathcal X \times \Zcal$ with bases $m$ and $m'$ through its entropy $H_{m \otimes m'}(p)$ against the product measure.}
+% \del{The special case where the bases are the marginals of $p$, $m = p_{\mathcal X}$ and $m' = p_{\Zcal}$, gives the mutual information $I(p) = -H_{p_{\mathcal X} \otimes p_{\Zcal}}(p)$, which carries no base.}
+% \add{On a product space $\mathcal X \times \Zcal$ the product measure gives each rectangle the volume ${(m \otimes m')(C \times B) = m(C)\, m'(B)}$, and the mutual information of a probability measure $p$ is its negative entropy against the product of its marginals, $I(p) = -H_{p_{\mathcal X} \otimes p_{\Zcal}}(p)$, which carries no base.}
+% \add{For random variables, $H_m(Z)$ is the entropy of the law of $Z$, and the conditional entropy $H_m(Z \mid X) = \E_X\big[H_m(p(\cdot \mid X))\big]$ averages that of the conditional law, so only the variable left of the bar carries a base.}
+% \add{The two combine in the chain rule $I(X;Z) = H_m(Z) - H_m(Z \mid X)$ for every base $m$, and the conditional $I(X;Z \mid Y)$ averages over $Y$ in the same way, with $I(X;Z,Y) = I(X;Y) + I(X;Z \mid Y)$.}
 

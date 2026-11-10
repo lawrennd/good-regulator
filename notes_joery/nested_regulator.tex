@@ -1,0 +1,176 @@
+\documentclass[10pt]{article}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{Working Note: Consolidation, Proofs Checked Numerically Only}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\usepackage[margin=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm,mathtools}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[colorlinks=true,linkcolor=blue!55!black,urlcolor=blue!55!black]{hyperref}
+
+\setlist{nosep,leftmargin=1.3em}
+
+\theoremstyle{plain}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+
+\newcommand{\occ}{d^{\pi}}
+\newcommand{\E}{\mathbb E}
+\newcommand{\Scal}{\mathcal S}
+\newcommand{\Acal}{\mathcal A}
+\newcommand{\Zcal}{\mathcal Z}
+\newcommand{\Ccal}{\mathcal C}
+\newcommand{\dd}{\mathrm d}
+\newcommand{\open}[1]{\textcolor{red!70!black}{[Open: #1]}}
+
+\title{The error-controlled regulator is a cause-controlled regulator on its own model of the cause}
+\author{Working note for the RLC draft, 2026-11-04}
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{The frame}
+An error-controlled regulator reads effects, infers a cause, and acts on the inferred cause as if it had read it.
+It therefore splits into two maps, inference from histories to beliefs and control from beliefs to actions, and the good regulator theorem applies to their composition.
+The belief is the regulator's own event set, the set $R$ of Conant and Ashby, so the mapping $h\colon S \to R$ of their theorem sends system states to belief states and the belief is the literal object of the aphorism.
+The policy acts on the whole belief and not on a point estimate of the cause, so the right object is cause control on the belief, never on a predicted value.
+
+A disturbance is whatever enters between what the regulator reads and what it controls, and the same structure recurs one level up.
+Each level has two floors of different kinds, what it cannot read and what it reads but cannot counter.
+
+\begin{center}
+\footnotesize
+\begin{tabularx}{\linewidth}{lXXXXX}
+\toprule
+level & reads & infers & acts on & cannot read & cannot counter \\
+\midrule
+C\&A cause control & $D$ & nothing & $D$ & nothing & variety of $A$ against $D$ \\
+policy in the POMDP & $X$ & belief over $S$ and $\theta$ & belief & $\varepsilon$, the noise term & variety of $A$ against the inferred cause \\
+learner & outcomes, own updates & law of the policy, drift & policy parameters & exogenous drift, through effects only & capacity of the policy class \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+The level above is cause-controlled on what it can read before it takes effect, which is why endogenous disturbances admit cause control and exogenous ones do not.
+Requisite variety bounds the model from below, since the representation must keep the distinctions in the inferred cause that the actions have to counter.
+Minimality bounds it from above, since nothing of the cause is kept beyond what changes the action.
+The simplest optimal regulator sits on the lower bound, which turns Conant and Ashby's simplest into a representation criterion.
+
+The two statements below make the policy row exact.
+The first splits the noise term of Theorem~1 of the draft into what a cause reader would still face and the price of inferring the cause instead of reading it.
+The second is requisite variety with the noise floor and the invariants of $\psi^{-1}$ accounted for.
+
+\section{Setting}
+The cause is $C = (S, \theta)$, the hidden state and the law, with the regular part of the disturbance folded into it.
+The regulator reads the history $X$, holds the belief $b = b(X)$ over $C$, and chooses $A$ from $X$ and independent randomness.
+The irregular part $\varepsilon$ of the disturbance is what no history reveals, and the outcome is $Z = \psi((S,\varepsilon), A)$ with channel $\kappa(c,a)$ the law of $Z$ given $(C,A) = (c,a)$.
+The one structural assumption is that $\varepsilon$ is drawn independently of the past given the pair, so that
+\begin{equation}
+  Z \perp X \mid (C, A).
+  \label{eq:irregular}
+\end{equation}
+The observable class is $\hat Z = \E[\kappa(C,A) \mid X, A]$, which by \eqref{eq:irregular} equals $\bar\kappa(b, A)$ with $\bar\kappa(b,a) = \int \kappa(c,a)\, b(\dd c)$, the channel of the belief MDP.
+Bases are $\lambda$ on $\Zcal$, a reference on $\Ccal$ where needed, and counting on finite sets, and $\ell = \ln \tfrac{\dd\nu}{\dd\lambda}$.
+
+\section{The price of inferring the cause}
+\begin{proposition}[Noise split]
+\label{prop:noise-split}
+For any history policy, under \eqref{eq:irregular} and finite entropies,
+\begin{equation}
+  H_\nu(Z) = \underbrace{H_\lambda(Z \mid C, A)}_{\text{irreducible noise}} + \underbrace{I(C; Z \mid X, A)}_{\text{hidden cause}} + \underbrace{I(\hat Z; Z)}_{\text{control net of ambiguity}} + \E[\ell(Z)],
+  \label{eq:noise-split}
+\end{equation}
+and the noise term of Theorem~1 is $H_\lambda(Z \mid \hat Z) = H_\lambda(Z \mid X, A) = H_\lambda(Z \mid b, A) = H_\lambda(Z \mid C,A) + I(C; Z \mid X, A)$.
+\end{proposition}
+\begin{proof}
+The chain rule gives $H_\lambda(Z) = H_\lambda(Z \mid X,A) + I(X,A; Z)$.
+Since $\hat Z$ is the law of $Z$ given $(X,A)$, the pair $(X,A)$ is independent of $Z$ given $\hat Z$, so $H_\lambda(Z \mid X,A) = H_\lambda(Z \mid \hat Z)$ and $I(X,A;Z) = I(\hat Z; Z)$.
+Since $\hat Z$ is a function of $(b,A)$ and $(b,A)$ is a function of $(X,A)$, also $H_\lambda(Z \mid b,A) = H_\lambda(Z \mid X,A)$.
+The chain rule on $C$ gives $H_\lambda(Z \mid X,A) = H_\lambda(Z \mid X,A,C) + I(C;Z \mid X,A)$, and \eqref{eq:irregular} gives $H_\lambda(Z \mid X,A,C) = H_\lambda(Z \mid C,A)$.
+Part~1 of the alignment proposition adds $\E[\ell(Z)]$ to pass from $\lambda$ to $\nu$.
+\end{proof}
+
+\begin{remark}
+A cause-controlled regulator reads $C$ before acting, so for it $X$ contains $C$ and the hidden-cause term is zero.
+The error-controlled regulator pays $I(C; Z \mid X, A)$ in the noise term for inferring the cause instead of reading it, and the belief MDP treats this price as channel noise of $\bar\kappa$.
+This is the exact form of the sentence in paragraph~3 of the draft, that in general the noise term also holds the hidden state and the unknown law.
+\end{remark}
+
+\begin{remark}
+With $\tilde Z = \kappa(C,A)$ the true class, $Z$ depends on $C$ only through $\tilde Z$ given $A$, so by data processing $I(C; Z \mid X, A) \le I(C; \tilde Z \mid X, A) = \bar I_P + \bar I_\kappa + \bar I_S$ of the split proposition, with gap $I(C; \tilde Z \mid X, A, Z)$.
+The hidden-cause term of \eqref{eq:noise-split} is therefore the part of those three floors that the outcome draw itself reveals.
+\end{remark}
+
+\section{Requisite variety with noise and invariants}
+\begin{proposition}[Requisite variety]
+\label{prop:variety}
+For finite $\Ccal$, $\Acal$ and $\Zcal$ with counting bases,
+\begin{equation}
+  H(Z) \;\ge\; \big[H(C) - H(C \mid Z, A)\big] - H(A) + H(Z \mid C, A).
+  \label{eq:variety}
+\end{equation}
+For a deterministic policy on a finite belief alphabet, $A = \pi(b)$ gives $H(A) \le H(b)$, hence
+\begin{equation}
+  H(b) \;\ge\; \big[H(C) - H(C \mid Z, A)\big] - H(Z) + H(Z \mid C, A).
+  \label{eq:variety-model}
+\end{equation}
+\end{proposition}
+\begin{proof}
+$H(Z) \ge H(Z \mid A) = H(C, Z \mid A) - H(C \mid Z, A) = H(C \mid A) + H(Z \mid C, A) - H(C \mid Z, A)$, and $H(C \mid A) = H(C) - I(C;A) \ge H(C) - H(A)$.
+For $A = \pi(b)$ the data processing inequality gives $H(A) \le H(b)$.
+\end{proof}
+
+\begin{remark}
+The bracket $H(C) - H(C \mid Z, A) = I(C; Z, A)$ is the variety of the cause that the outcome and the action together reflect.
+The invariant part $H(C \mid Z, A)$, the distinctions in the cause that $\psi$ does not pass to the outcome under any action, is exempt from the bound, which is the pre-image $\psi^{-1}(z)$ of the walk read as a discount on requisite variety.
+Ashby's form $H(Z) \ge H(D) - H(R)$ is the case of no invariants and no noise.
+\end{remark}
+
+\begin{remark}
+Inequality \eqref{eq:variety-model} is requisite variety on the model.
+The belief must carry at least the variety of the cause that reaches the outcome, less the entropy the regulator tolerates in the outcome, plus the noise it cannot remove.
+This bounds the representation from below, and minimality bounds it from above.
+\end{remark}
+
+\section{The nested regulator}
+\begin{corollary}
+For every history policy the outcome law equals that of the Markov policy on the belief with the same marginal laws of $(b_t, A_t)$, and by Theorem~1 the minimum over history policies is attained by a deterministic policy on the belief.
+That policy is a cause-controlled regulator on the belief MDP with channel $\bar\kappa$, whose criterion value exceeds the irreducible noise of a cause reader by the hidden-cause term of \eqref{eq:noise-split}.
+The class of regulators that read $C$ contains the history policies, so $\min_{\Pi} H_\nu(Z) \ge \min_{\Pi_C} H_\nu(Z)$.
+\end{corollary}
+The first sentence is the belief part of the proof of Theorem~1, the second is Proposition~\ref{prop:noise-split}, and the third is set inclusion.
+
+\section{Model criteria as properties of the inference map}
+Each criterion of the draft is a property of inferring the cause well enough to be cause-controlled on it.
+\begin{itemize}
+  \item Sufficiency, the belief carries everything the history says about the cause, which is $H_\lambda(Z \mid b,A) = H_\lambda(Z \mid X,A)$ in Proposition~\ref{prop:noise-split}.
+  \item Closure, the inferred cause updates from itself and the next effect, which is the filter.
+  \item Consistency, the predicted law equals the true one, so acting on the inferred cause is acting on the cause.
+  \item Identifiability, the effects reveal the cause distinctions that matter, which is the bracket of \eqref{eq:variety} being attainable from $X$.
+  \item Minimality, nothing of the cause is kept beyond what changes the action.
+\end{itemize}
+The two coarse-grainings of the supplementary are the two ends of this map, the history coarse-grained to the belief and the belief coarse-grained to the outcome laws it selects.
+The goal measure $\nu$ decides which distinctions in the inferred cause matter, and the information floor says the regulator must keep at least the cause distinctions that reach $G$ while laziness drops the rest.
+
+\section{Open points}
+\begin{itemize}
+  \item \open{the vertex argument of Theorem~1 needs a finite belief alphabet, and \eqref{eq:variety-model} uses counting entropy of $b$.}
+  \item \open{for continuous $C$ the identities hold with product bases as in the primer, and \eqref{eq:variety} needs the base on $\Ccal$ made explicit.}
+  \item \open{the learner row of the table is a frame, not a result. The claim that an endogenous disturbance admits cause control one level up needs its own statement with the learner's objective.}
+  \item \open{Conant and Ashby's residual variation under error control is a temporal argument, the error must occur before it is corrected. Proposition~\ref{prop:noise-split} formalises a different mechanism, that the regulator never reads $\varepsilon$, and the draft should say so where it claims to formalise their frame.}
+\end{itemize}
+Both identities were checked numerically on random finite laws, script \texttt{nested\_check.py} in the session scratchpad.
+
+\end{document}
