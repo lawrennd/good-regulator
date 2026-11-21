@@ -39,7 +39,7 @@ These mutual information terms reveal a decomposition of the entropy into well-k
 
 
 Our paper is organized as follows.
-Following preliminaries in \S\ref{sec:prelim}, \S\ref{sec:objective} states the good regulator as an RL criterion on the occupancy and splits it into control, noise, goal and ambiguity terms, which impose the conditions for a sufficient model.
+Following preliminaries in \S\ref{sec:prelim}, \S\ref{sec:objective} states the good regulator as an RL criterion on the occupancy that splits into control, residual, goal and ambiguity terms, which impose the conditions for a sufficient model.
 In \S\ref{sec:pomdp}, we show that the entropy decomposes into well-known mutual information terms, which must preserve a floor to ensure identifiability of the good-regulator criterion.
 We thus cast this as a constrained program and derive a necessary budget on the free information constraint to ensure the model is grounded.
 In \S\ref{sec:experiments}, we insert the resulting Lagrangian into the convex RL objective to obtain an algorithm, and test it on environments with reward-free learning, continuous control, or deep exploration.

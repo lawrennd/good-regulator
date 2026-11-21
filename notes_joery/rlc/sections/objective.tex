@@ -102,8 +102,8 @@ This latter part is determined by the affordances.
 \begin{definition}[Affordances \citep{Gibson-ecological79, Khetarpal-what20}]\label{def:affordances}
   The affordances of an agent are the effects that its environment permits as a consequence of the agent, which influences the environment strictly through actions produced by an internal mapping from observations over time.
 \end{definition}
-Affordances thus induce the set of outcome laws that the agent can reach.
-The definition is also relative to the boundary that is drawn between agent and environment.
+Affordances are thus conceptually similar to the set of admissible occupancies $\Occ$ as they induce the set of outcome laws that the agent can reach.
+We introduce the term to impose structure on the policy class, akin to how the belief does with $\Pi_b \subset \Pi$, so that we can express modelling conditions.
 The outcome law imposes a necessary lower bound on the affordances, whereas the affordances impose an upper bound on what the agent can achieve of that outcome.
 Between these bounds, the criterion pushes the model down until it just satisfies the law of requisite variety \citep{Ashby-introduction56}.
 Thus, an agent with too limited affordances sits below this bound and must coarse-grain the outcome law.
@@ -111,15 +111,15 @@ Both parts matter for goal-reaching behaviour because entropy depends on the spa
 We express goal-seeking through the agent's affordances in the algebra of entropy on measurable spaces, where the pushforward to a coarse-grained law and a change of measure and base give the following theorem.
 \begin{theorem}[The good regulator criterion for RL]
 \label{thm:criterion}
-Let $\nu \ll \lambda$ be a goal and a base measure on $\Zcal$ with $\psi_\# \occ \ll \nu, \forall \pi$, and let $Y = \hat\psi(\hat b, A)$ be the agent's outcome prediction from an approximate belief $\hat b$ on a space $\Ycal$ with reference $\rho$ such that $\E_\pi[\delta_Y] \ll \rho$ and $H_\rho(Y)$ is finite, $\forall \pi$, consistent in that $Z \mid Y \sim \iota(Y)$ for a fixed $\iota\colon \Ycal \to \Delta(\Zcal)$.
-The criterion on the law $Z \sim \psi_\# \occ$ decomposes as
-\begin{equation}
-  \inf_{\pi \in \Pi} H_\nu(Z), \quad \mathrm{where} \quad H_\nu(Z) = \underbrace{H_\rho(Y)}_{\text{predictive}} + \underbrace{H_\lambda(Z \mid Y)}_{\text{noise}} + \underbrace{\E\big[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)\big]}_{\text{goal}} - \underbrace{H_\rho(Y \mid Z)}_{\text{ambiguity}},
-  \label{eq:classes}
-  \vspace{-0.5em}
-\end{equation}
-where every term is a functional of the $Y$ law.
-The infimum over $\Pi$ is attained by a deterministic policy in $\Pi_b$ when the belief is closed and sufficient, and finite-valued for the long-run occupancy.
+    Let $\nu \ll \lambda$ be a goal and a base measure on $\Zcal$ with $\psi_\# \occ \ll \nu, \forall \pi$, and let $Y = \hat\psi(\hat b, A)$ be the agent's outcome prediction from an approximate belief $\hat b$ on a space $\Ycal$ with reference $\rho$ such that $\E_\pi[\delta_Y] \ll \rho$ and $H_\rho(Y)$ is finite, $\forall \pi$, consistent in that $Z \mid Y \sim \iota(Y)$ for a fixed $\iota\colon \Ycal \to \Delta(\Zcal)$.
+    The criterion on the law $Z \sim \psi_\# \occ$ decomposes as
+    \begin{equation}
+      \inf_{\pi \in \Pi} H_\nu(Z), \quad \mathrm{where} \quad H_\nu(Z) = \underbrace{H_\rho(Y)}_{\text{predictive}} + \underbrace{H_\lambda(Z \mid Y)}_{\text{residual}} + \underbrace{\E\big[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)\big]}_{\text{goal}} - \underbrace{H_\rho(Y \mid Z)}_{\text{ambiguity}},
+      \label{eq:classes}
+      % \vspace{-0.5em}
+    \end{equation}
+    where every term is a functional of the $Y$ law.
+    The infimum over $\Pi$ is attained by a deterministic policy in $\Pi_b$ when the belief is closed and sufficient, and finite-valued for the long-run occupancy.
 \end{theorem}
 
 The theorem implies sufficient conditions on the agent's affordances, since an overly strong coarse-graining can shift the regulator below requisite variety, which may force it to randomise \citep{Singh-learning94}.
@@ -153,7 +153,7 @@ Our Prop.~\ref{prop:hidden-volume} says that the environment can carry the struc
 This is a precise formulation of the premise behind SMiRL \citep{Berseth-smirl21}.
 This echoes the consistency of Theorem~\ref{thm:criterion} at the level of the environment, where we require a fixed law of the fine state within each outcome, similar to how $\iota$ is a fixed law of the outcome within each prediction.
 In both cases, the coarse-graining translates into a change of measure, which for the outcome accumulates the volume of the underlying fine states into the outcome measure and its corresponding goal.
-For the prediction, the outcomes accumulate similarly into the noise and goal terms of Theorem~\ref{thm:criterion}.
+For the prediction, the outcomes accumulate similarly into the residual and goal terms of Theorem~\ref{thm:criterion}.
 Note that both conditions also fail similarly, as an agent that can choose the fine states behind an outcome or the outcomes behind a prediction can lower the entropy of the underlying law while the law of the outcome or the prediction stays trivially unaffected.
 
 \begin{figure}[t]
@@ -163,36 +163,38 @@ Note that both conditions also fail similarly, as an agent that can choose the f
 Two coarse-grainings on a setup with six lamps where one to three lamps are always lit.
 (a) The fine space contains 41 light mixtures, each counted once by the measure $\mu$ and grouped by colour $Z$ through the map $J$, inducing the goal measure $\nu = J_\#\mu$.
 (b) The prediction $Y$ represents the colour class, with a fixed law $\iota(y)$ that is uniform over the colours of that class.
-(c) The volume behind each class is the product of the noise and goal volumes from Theorem~\ref{thm:criterion}, and the right part shows how $H_\nu(Z)$ determines which classes are optimal as the reset rate $\eta$ of the disturbance varies.
+(c) The volume behind each class is the product of the residual and goal volumes from Theorem~\ref{thm:criterion}, and the right part shows how $H_\nu(Z)$ determines which classes are optimal as the reset rate $\eta$ of the disturbance varies.
 }
 \label{fig:lamps}
 \end{figure}
 
-Figure~\ref{fig:lamps} gives an example of how a coarse-graining expresses a reward.
+Figure~\ref{fig:lamps} gives an example of how a coarse-graining expresses a reward, using simplified mixing of light.
 The environment is an MDP over six lamps, of which one to three are always lit.
 The state $S$ is one of 41 combinations of lit lamps, and the agent's action is a binary choice to keep the current combination or reshuffle the state for a new one.
 Similarly, the disturbance $D$ redraws the combination uniformly at random at every step with probability $\eta$.
 The outcome $Z$ is the colour that the mixture of light blends into.
 The criterion minimises $H_\nu(Z) = H_\lambda(Z) - \E[r(Z)]$, the entropy of the colour law minus the expected reward $r(z) = -\ln \tfrac{\dd\nu}{\dd\lambda}(z)$ of Prop.~\ref{prop:alignment}.
-The disturbance pushes the agent towards the common colours, while the reward pushes it towards the rarer, more rewarding ones.
-\add{Panel (a) illustrates the counting measure over the combinations that produce each colour, which gives the reward $r(z) = -\ln \tfrac{\dd\nu}{\dd\lambda}(z)$ of Proposition~\ref{prop:alignment} as $0$ for a primary, $-\ln 5$ for a secondary and $-\ln 23$ for white, so a colour is rewarded for how rare the disturbance makes it.}
-\add{Panel (b) shows that the agent observes only whether the colour is a primary, a secondary or white, so its prediction $Y$ is this class and $\iota$ spreads it evenly over the colours of the class, which stays fixed since neither action can favour a colour within a class.}
-\add{Panel (c) combines both terms, where behind each class lie the colours the agent cannot tell apart times the combinations behind each colour, which gives 3 for the primaries, 15 for the secondaries and 23 for white.}
-\add{The agent therefore keeps the rare primaries where plain entropy would keep white, and as $\eta$ grows it settles for the secondaries and then for any colour but white, since a rare colour that is lost takes long to find again.}
-\add{We keep the affordances deliberately simple, with two actions and an observation of the class, where an agent that observes the colour itself could keep a single primary.}
+Panel (a) shows how the goal measure is constructed, where $\mu$ counts each combination of lit lamps once and $J$ groups them by the colour they blend into, such that $\tfrac{\dd\nu}{\dd\lambda}$ gives the number of combinations behind each colour.
+As a consequence, the disturbance pushes the agent towards the common colours, while the reward pushes it towards the rarer, more rewarding ones.
+Panel (b) shows the agent's side, where we assume it observes only whether the colour is a primary, a secondary or white, so its prediction $Y$ is this class under the counting reference $\rho$.
+None of the actions can favour a colour within these classes, so $Y$ is the simplest sufficient model for this agent and $\iota(y)$ maps the classes back to their colours with fixed and equal weight.
+To the agent this spread over colours is indistinguishable from noise on $\Zcal$, and is thus referred to as the residual.
+Panel (c) combines (a) and (b) through Eq.~\eqref{eq:classes} without the ambiguity term, as it is zero in this example.
+The right side of panel (c) also shows that, as the disturbance resets the environment state more frequently, the criterion $H_\nu(Z)$ shifts the optimal regulator from the rare primaries to the secondaries, and finally to any colour except white.
 
-\add{The disturbance $D$ is what the regulator counters, yet it meets $D$ only through the state and its history.}
-\add{What the belief can recover of $D$ the policy can counter, and what no history reveals stays as the residual entropy of \citet{Conant-good70}.}
-\add{Error control is thus cause control on the belief, even a coarse one, where the agent does the best it can over the policies its model can express.}
-\add{The requisite-variety floor is where this stops, as a model that merges outcomes the actions can still choose among loses its fixed $\iota$, which is the failure of consistency noted above.}
-\add{Above the floor, a miscalibrated $\iota$ adds the gap $\E[\KL(p(Z \mid Y) \,\|\, \iota(Y))]$ to the noise term.}
+% Move to section 4?
+% \add{The disturbance $D$ is what the regulator counters, yet it meets $D$ only through the state and its history.}
+% \add{What the belief can recover of $D$ the policy can counter, and what no history reveals stays as the residual entropy of \citet{Conant-good70}.}
+% \add{Error control is thus cause control on the belief, even a coarse one, where the agent does the best it can over the policies its model can express.}
+% \add{The requisite-variety floor is where this stops, as a model that merges outcomes the actions can still choose among loses its fixed $\iota$, which is the failure of consistency noted above.}
+% \add{Above the floor, a miscalibrated $\iota$ adds the gap $\E[\KL(p(Z \mid Y) \,\|\, \iota(Y))]$ to the noise term.}
 
 \begin{tcolorbox}[colback=gray!4, colframe=gray!60, boxrule=0.5pt, arc=2pt, left=6pt, right=6pt, top=4pt, bottom=4pt]
 \small
 \textbf{Takeaway on the Recipe.}
 The good regulator frames an RL objective as minimizing the entropy of an outcome law in Eq.\eqref{eq:classes}.
-The measure of this entropy must encode goal-seeking behavior, and the affordances of the agent determine how the outcome law is influenced, represented, and coarse-grained.
-The law of requisite variety and the agent's affordances are what lead to the necessary modelling criterion of \citet{Conant-good70}, since unmodelled aspects of the regulation problem within the agent's affordances show up as residual noise.
+The measure of this entropy must encode goal-seeking behavior, and the agent's affordances (Def.\ref{def:affordances}) determine how the outcome law is affected and represented.
+The law of requisite variety and the agent's affordances are what lead to the necessary modelling criterion of \citet{Conant-good70}, since unmodelled aspects of the regulation problem within the agent's affordances show up as residual entropy.
 An optimal policy is deterministic for an agent with a sufficient belief, whereas for an insufficient agent, whose affordances sit below the requisite variety, it may have to randomize.
 \end{tcolorbox}
 

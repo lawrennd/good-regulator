@@ -4,10 +4,10 @@
 
 \documentclass[10pt]{article}
 
-% \usepackage{rlj}           % submission (anonymous)
+\usepackage{rlj}           % submission (anonymous)
 %\usepackage[accepted]{rlj} % camera-ready
 \let\origaddcontentsline\addcontentsline % rlj.sty disables contents entries, kept for the supplementary
-\usepackage[preprint]{rlj} % de-anonymised preprint
+% \usepackage[preprint]{rlj} % de-anonymised preprint
 
 \usepackage{amssymb}
 \usepackage{mathtools}
@@ -47,6 +47,7 @@
 \newtheorem{lemma}{Lemma}
 \newtheorem{corollary}{Corollary}
 \newtheorem{definition}{Definition}
+\newtheorem{assumption}{Assumption}
 
 % Tracked edits. \add = red insertion, \del = red strikethrough. Remove before submission.
 \usepackage[normalem]{ulem}
@@ -80,6 +81,14 @@ $^{2}$\textbf{Computer Laboratory, University of Cambridge, Cambridge, United Ki
     {
     The criterion is stated as ergodic sensory entropy by \citet{Friston-free12c} and minimised open loop by \citet{Adurthi-minimum14}.
     The deterministic optimum follows from the concave-occupancy results of \citet{Derman-finite70ch7} and \citet{Piunovskiy-controlled98}, and the variance line has it already \citep{Filar-variance89,Sobel-meanvariance94}.
+    }
+
+\contribution{
+    We relate our entropy criterion to the free energy principle and expected free energy, and show that it derives the information gain with an opposite sign.
+    We bound this term at a floor for identifiability, whereas the expected free energy rewards it indefinitely.
+    }
+    {
+    The expected free energy of \citet{Friston-active15} rewards information gain heuristically, and how the good regulator theorem relates exactly to the free energy principle was mentioned as open by \citet{Virgo-good25}.
     }
 
 \keywords{good regulator, homeostasis, convex reinforcement learning}

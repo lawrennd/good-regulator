@@ -7,8 +7,8 @@
 \paragraph{(Partially observable) Markov decision processes.}
 A Markov decision process (MDP) has finite sets $\Scal$ and $\Acal$, a kernel $P(s' \mid s,a)$, an initial law $s \sim \rho_0$, and a reward $r(s,a)$ \citep{Puterman-markov94}.
 A policy $\pi(a \mid s)$ must maximize the expected discounted return $\E_\pi\big[\sum_{t} \gamma^t r(S_t,A_t)\big]$ with discount $\gamma \in [0, 1)$, or the average reward $\lim_{T \to \infty} \frac1T \E_\pi\big[\sum_{t<T} r(S_t,A_t)\big]$ \citep{Mahadevan-average96}.
-A partially observable MDP (POMDP) adds a finite observation set $\Omega$ and a kernel $p(o \mid s)$, and the policy $\pi(a \mid x)$ reads the history $X_t = (O_0, A_0, O_1, A_1, \ldots, O_t)$ instead of $S_t$, since the optimal action depends on it.
-The belief $b_t(s) = \Pr(S_t = s \mid X_t)$ is a sufficient statistic of the history for the hidden state and is updated by the Bayes filter $b_{t+1}(s') \propto p(O_{t+1} \mid s') \sum_s P(s' \mid s, A_t)\, b_t(s)$.
+A partially observable MDP (POMDP) adds a finite observation set $\Omega$ and a kernel $\omega(o \mid s)$, and the policy $\pi(a \mid x)$ reads the history $X_t = (O_0, A_0, O_1, A_1, \ldots, O_t)$ instead of $S_t$, since the optimal action depends on it.
+The belief $b_t(s) = \Pr(S_t = s \mid X_t)$ is a sufficient statistic of the history for the hidden state and is updated by the Bayes filter $b_{t+1}(s') \propto \omega(O_{t+1} \mid s') \sum_s P(s' \mid s, A_t)\, b_t(s)$. % observation kernel renamed from p to \omega, 2026-11-20
 This reduces the POMDP to an MDP on the belief with reward $\sum_s b(s)\, r(s,a)$ \citep{Kaelbling-planning98}.
 
 
