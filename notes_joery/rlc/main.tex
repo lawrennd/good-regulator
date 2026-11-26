@@ -5,7 +5,7 @@
 \documentclass[10pt]{article}
 
 \usepackage{rlj}           % submission (anonymous)
-%\usepackage[accepted]{rlj} % camera-ready
+% \usepackage[accepted]{rlj} % camera-ready
 \let\origaddcontentsline\addcontentsline % rlj.sty disables contents entries, kept for the supplementary
 % \usepackage[preprint]{rlj} % de-anonymised preprint
 
@@ -89,6 +89,16 @@ $^{2}$\textbf{Computer Laboratory, University of Cambridge, Cambridge, United Ki
     }
     {
     The expected free energy of \citet{Friston-active15} rewards information gain heuristically, and how the good regulator theorem relates exactly to the free energy principle was mentioned as open by \citet{Virgo-good25}.
+    }
+
+\contribution{
+    We show that this floor has a necessary information lower-bound to classify whether a converged policy is in a dark room.
+    This is a law of requisite variety applied at the learning level, where the learner acts as a regulator to ground its model.
+    }
+    {
+    The law of requisite variety is due to \citet{Ashby-introduction56}, and its information-theoretic form for control to \citet{Touchette-information00,Touchette-information04}.
+    Prior answers to the dark room assumed innate priors under which dark-rooms are surprising \citep{Friston-dark12}, which \citet{Sun-dark20} argued could accommodate any behaviour.
+    Alternative directions add an information-gain term that does not follow from minimising free energy \citep{Millidge-whence21}.
     }
 
 \keywords{good regulator, homeostasis, convex reinforcement learning}

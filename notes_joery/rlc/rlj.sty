@@ -1,22 +1,23 @@
-% RLC rlj.sty Version 2026.1
+% RLJ rlj.sty Version 2026.8.11
+
+% AI tools assisted with the generation of this file
 
 % This style file was adapted from previous style files in the following reverse-chronological order:
-% Adapted by Marlos C. Machado and Philip Thomas for RLJ/RLC 2026
-% Adapted by Philip Thomas and Glen Berseth for RLJ/RLC 2024
+% Adapted by Marlos C. Machado and Philip Thomas for further RLJ use, August 2026
+% Adapted by Marlos C. Machado and Philip Thomas for RLJ 2025
+% Adapted by Philip Thomas and Glen Berseth for RLJ 2024
 % Adapted by Hugo Larochelle and Fabian Pedregosa for TMLR
 % Adapted by ICLR, borrowing from JMLR.
-
-% Last edited, October 2026 by Marlos C. Machado and Philip Thomas
-%   - Implemented several changes for RLJ/RLC 2026
 
 % First, include the packages we require
 \RequirePackage{fancyhdr}   % For modifying the header
 \RequirePackage{natbib}     % For formatting references
-\RequirePackage{enumitem}   % For removing the indentetion in an enumerate block
+\RequirePackage{enumitem}   % For removing the indentation in an enumerate block
 \RequirePackage[T1]{fontenc}% T1 font encoding for hyphenation and accents
 \RequirePackage{times}      % Set the font to times new roman
 \RequirePackage{ragged2e}   % For justifying text on the title page
 \RequirePackage{tcolorbox}  % For the colored box on the title page
+\RequirePackage{trimclip}   % For clipping cover-page content to the permitted margins
 \RequirePackage{hyperref}   % For hyperlinks (e.g., clicking references)
 \RequirePackage{xcolor}     % For setting the color of links and boxes
 \RequirePackage{lineno}     % For line numbers when in-submission
@@ -50,22 +51,31 @@
     \@acceptedtrue
 }
 
-% Create another conditional flag called '@preprint' and set its default value to 'false'
-\newif\if@preprint\@preprintfalse
-
-% Define an option 'preprint' that sets both '@preprint' and '@accepted' flags to 'true'
-% The 'preprint' option can be used to create a version ready for preprint uploads (e.g., to arXiv)
-\DeclareOption{preprint}{
-  \@preprinttrue
-  \@acceptedtrue
-}
-
 % If an unrecognized option is passed to the 'rlj' package, issue a warning message.
 \DeclareOption*{\PackageWarning{rlj}{Unknown ‘\CurrentOption’}}
 
 % Process all the options that were passed to the 'rlj' package.
-% This applies the declared options ('accepted', 'preprint', etc.) or triggers the fallback warning for unknown options.
+% This applies the declared options ('accepted', etc.) or triggers the fallback warning for unknown options.
 \ProcessOptions\relax
+
+% Populate basic PDF metadata. Affiliation superscripts should not appear
+% in the PDF author field.
+\AtBeginDocument{%
+    \begingroup
+    \def\textsuperscript#1{}%
+    \if@accepted
+        \hypersetup{%
+            pdftitle={\@title},
+            pdfauthor={\@author},
+            pdfkeywords={\@keywords}}%
+    \else
+        \hypersetup{%
+            pdftitle={\@title},
+            pdfauthor={Anonymous},
+            pdfkeywords={\@keywords}}%
+    \fi
+    \endgroup
+}
 
 % New commands to store emails and affiliations
 \newcommand{\emails}[1]{\def\@emails{#1}}
@@ -94,8 +104,6 @@
 \clubpenalty=10000              % Prevent single lines (orphans) at the bottom of a page by assigning a high penalty.
 \flushbottom                    % Align the text at the bottom of each page to give pages a consistent length.
 \sloppy                         % Allow LaTeX more flexibility in line-breaking to reduce overfull lines (long lines extending into the margins).
-\def\addcontentsline#1#2#3{}    % Disable the creation of table of contents entries to save space, as they are not needed for this document.
-
 
 \definecolor{customBoxColor}{HTML}{F1F4F7}  % Custom color for cover page boxes
 
@@ -143,6 +151,11 @@
   \endgroup                             % End the local group, restoring the original definition of '\textsuperscript'
 }
 
+% Storage used to measure and clip the cover-page contents.
+\newsavebox{\rlj@coverbox}
+\newlength{\rlj@coverheight}
+\newlength{\rlj@covertrim}
+
 % Define \makeCover to create the title page
 \newcommand{\makeCover}{
     % Turn off line numbers
@@ -170,30 +183,31 @@
     \fi
     
     % Reproduce the start of the title page
+    \hypersetup{pageanchor=false}
     \begin{titlepage}
-        %% Set up the header and footer
-        \fancyhf{}                                                  % Clear all header and footer fields
-        \fancyhead[R]{\textbf{\big |} \textbf{Cover Page}}          % Set the header
+                %% Set up the header and footer.
+        %% Camera-ready PDFs contain no publisher-supplied
+        %% header or page number. RLJ adds those after final pagination.
+        \fancyhf{}
+        \renewcommand{\footrulewidth}{0pt}
 
-        % Set left side of the header based on the conditional options
         \if@accepted
-            \if@preprint
-                % Preprint: No text on left side
-                \fancyhead[L]{}
-            \else
-                % Accepted
-                \fancyhead[L]{Reinforcement Learning Journal 2026}
-            \fi
+            % Accepted versions: no cover-page header or rule.
+            \renewcommand{\headrulewidth}{0pt}
         \else
-            % Under review
-            \fancyhead[L]{Under review for RLC 2026, to be published in RLJ}
+            % Under-review version
+            \renewcommand{\headrulewidth}{0.4pt}
+            \fancyhead[L]{In submission -- Do not distribute}
+            \fancyhead[R]{\textbf{\big |} \textbf{Cover Page}}
         \fi
         \thispagestyle{fancy}   % Apply the header and footer
         \setcounter{page}{1}    % Ensure page number starts from 1 after the cover page
 
-        %% Enclose the entire content in a minipage of fixed height
+        %% Typeset the cover into a box so its natural size can be measured.
+        %% The measured box is clipped below to the permitted page area.
         \centering
-        \begin{minipage}[t][\dimexpr\textheight - \topskip]{\textwidth} % We can't just use \textheight for the height since that doesn't fit with the header / any other spacing. Instead we dynamically compute the height the minipage can be.
+        \begin{lrbox}{\rlj@coverbox}
+        \begin{minipage}[t]{\textwidth}
 
             % Center content
             \begin{center}
@@ -258,18 +272,45 @@
             % End the centering of content
             \end{center}
         \end{minipage}
+        \end{lrbox}
+
+        % This is the vertical space available below the cover-page header.
+        \setlength{\rlj@coverheight}{%
+            \dimexpr\textheight-\topskip\relax}
+
+        % Compute how much of the bottom must be removed if the cover is
+        % taller than the available area.
+        \setlength{\rlj@covertrim}{%
+            \dimexpr
+            \ht\rlj@coverbox+\dp\rlj@coverbox-\rlj@coverheight
+            \relax}
+
+        \ifdim\rlj@covertrim>0pt
+            \PackageError{rlj}
+                {Cover page content exceeds the permitted text area by
+                 \the\rlj@covertrim}
+                {Shorten the Summary or Contribution(s).
+                 The overflowing material has been clipped.}%
+        \else
+            \setlength{\rlj@covertrim}{0pt}%
+        \fi
+
+        % The trim values are left, bottom, right, and top. The box itself
+        % has width \textwidth, so applying the clipping rectangle also
+        % prevents horizontally overfull material from entering the margins.
+        \edef\rlj@clipcover{%
+            \noexpand\clipbox{%
+                0pt \the\rlj@covertrim\space 0pt 0pt}}
+        \rlj@clipcover{\mbox{\usebox{\rlj@coverbox}}}
     \end{titlepage}
+    \hypersetup{pageanchor=true}
 
     % Turn line numbers back on only if appropriate
     \if@accepted
         % Accepted papers: Do not display line numbers
     \else
-        \if@preprint
-            % Preprint papers: Do not display line numbers
-        \else
-            % Under submission: Activate line numbers
-            \linenumbers
-        \fi
+        % Under submission: Activate line numbers
+        \linenumbers
     \fi
     
     \setcounter{page}{1}        % Reset the page number to 1 for the following content
@@ -291,23 +332,25 @@
 \pagestyle{fancy}
 \fancyhead{}
 
+% Turn on the header and footer
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\footrulewidth}{0pt}
+
 \if@accepted
-    \if@preprint
-        \lhead{}
-    \else
-        \fancyhf{} % Clear all header and footer fields
-        \fancyhead[L]{\ifodd\value{page}\relax \therunningtitle \else Reinforcement Learning Journal \hfill2026\fi}
-        \fancyfoot{}
-    \fi
+    % Accepted versions contain no publisher metadata.
+    % RLJ adds the journal header and final page numbers after pagination.
+    \renewcommand{\headrulewidth}{0pt}
 \else
-    \if@preprint
-            \lhead{}
-            \fancyfoot[C]{\thepage} % Add this line to show page numbers centrally
+    % Under-review version: retain the review header and page numbers.
+    \renewcommand{\headrulewidth}{0.4pt}
+    \fancyhead[L]{%
+        \ifodd\value{page}\relax
+            \therunningtitle
         \else
-            \fancyhf{} % Clear all header and footer fields
-            \fancyhead[L]{\ifodd\value{page}\relax \therunningtitle \else Under review for RLC 2026, to be published in RLJ 2026\fi}
-            \fancyfoot[C]{\thepage}
-        \fi
+            In submission -- Do not distribute
+        \fi}
+    \fancyfoot[C]{\thepage}
 \fi
 
 \def\maketitle{\vbox{\hsize\textwidth
@@ -315,7 +358,7 @@
 {\LARGE \bfseries\@title\par}
 
 \if@accepted
-    % Accepted or preprint: Show authors
+    % Accepted: Show authors
     \vskip 0.2in
     {\large\textbf{%
         \begingroup
@@ -379,13 +422,10 @@ plus      -0.5ex minus -.2ex}{0.5ex plus
 \if@accepted
   % Accepted papers: Do not display line numbers
 \else
-  \if@preprint
-    % Preprint papers: Do not display line numbers
-  \else
-    % Under submission: Activate line numbers
-    \linenumbers
-  \fi
+  % Under submission: Activate line numbers
+  \linenumbers
 \fi
+
 % Restyle line numbers:
 \setlength\linenumbersep{11pt} % Adjust the space between line numbers and text
 \renewcommand\linenumberfont{\normalfont\small\sffamily\color{gray}} % Style line numbers

@@ -16,6 +16,7 @@
 \add{Determinism is assumed there, while Theorem~\ref{thm:criterion} derives it from the concavity of the criterion.}
 \add{Active inference plans with the expected free energy instead, which penalises the ambiguity of outcomes given hidden states but rewards the information outcomes carry about those states, the opposite sign to our criterion on both the outcome entropy and the information terms \citep{Friston-active15}.}
 \add{Our floors take the place of that reward, they buy the information that identifiability needs and go slack after it, where the expected free energy keeps seeking it.}
+\add{Entropy search \citep{Hennig-entropy12, HernandezLobato-predictive14} selects each query in Bayesian optimisation to maximise the expected information gained about the optimum, which is the per-step term of Eq.~\eqref{eq:budget} when $f$ in Proposition~\ref{prop:budget} is the optimal policy.}
 
 \paragraph{\add{Cybernetics and control.}}
 \add{Ashby framed regulation as keeping the essential variables within limits \citep{Ashby-design60} and quantified it in the law of requisite variety, whose Shannon form $H(E) \ge H(D) + H_D(R) - H(R)$ bounds how far the regulator's own variety can lower that of the outcome and is tightest when the regulator's move is a function of the disturbance \citep[ch.~11]{Ashby-introduction56}.}
@@ -54,4 +55,7 @@ They leave the stochastic case and a measure of how trivial the attributed model
 \add{The change of measure counters the dark room at the outcome level by tying predictability to good outcomes.}
 \add{At the learning level the entropy splits into empowerment and active learning and perception terms, and a floor on these terms must hold long enough for the regulator to identify a sufficient model.}
 \add{Inserted into convex RL, the floors give a constrained game whose inner step is an ordinary MDP, so any standard solver applies.}
+\add{The floors are statements of the learner's own model, so the dark-room test certifies $\pi^\star$ only among the policies that this model can express, and it carries over to an environment inside the model at the cost of a factor of one over its prior mass (Supp.~\ref{sup:proof-residual}).}
+\add{A miscalibrated or too coarse model may sit below requisite variety and reach a dark room that the test cannot see, and the floor is sharpened only for a stationary hypothesis and not for the latent state.}
+\add{We leave these cases and a sufficient floor to future work.}
 \add{Which outcome to regulate remains the designer's abstraction choice, one the criterion takes as given rather than makes.}

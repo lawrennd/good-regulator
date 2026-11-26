@@ -1,0 +1,102 @@
+\documentclass[10pt]{article}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{Working Note: Tightness and Evaluation of the Learner's Requisite Variety}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\usepackage[margin=2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{booktabs}
+\usepackage{enumitem}
+
+\setlist{nosep,leftmargin=1.3em}
+\newcommand{\E}{\mathbb E}
+
+\begin{document}
+
+\noindent\textbf{Parked note, 2026-11-26.}
+Written to revisit much later.
+It records what is known about how tight Corollary 1 of the RLC paper is (\texttt{notes\_joery/rlc/sections/split.tex}, Eq.~6 in the build of this date) and how $R(\delta)$ could be evaluated.
+Nothing here is in the paper.
+
+\section{The statement}
+With $W_t = f(\hat\theta_t, \hat S_t)$ a hyperstate statistic that determines the within-tolerance regulators $\Pi^\circ$, a fixed point $\pi^\star$ with $\Pr(\pi^\star \notin \Pi^\circ(W_\tau)) \le \delta$ requires
+\begin{align*}
+  \E[\tau]\, \big(I_{\hat\theta} + I_{\hat S}\big) \;&\ge\; R(\delta) + \E[\tau]\, \bar\Delta - \big(H(W_\tau) - H(W_0)\big), \\
+  R(\delta) \;&=\; \inf\nolimits_{p(\pi \mid W_\tau)} \big\{ I(W_\tau; \pi) \,:\, \Pr\big(\pi \notin \Pi^\circ(W_\tau)\big) \le \delta \big\}.
+\end{align*}
+The bound is necessary and not sufficient.
+
+\section{Is it tight?}
+It is sharp, since equality is attained in some models, and it is not tight for a typical learner.
+The proof chains three inequalities, each with its own slack.
+\begin{enumerate}
+  \item \textbf{Proposition 4.}
+  $\E[\tau](I_{\hat\theta} + I_{\hat S}) \ge H(W_0) - H(W_\tau \mid X_\tau) + \E[\tau]\bar\Delta$, with equality when $f$ is the identity.
+  For a smaller $W_t$ the left side also counts information about the rest of the hyperstate.
+  \item \textbf{History to policy.}
+  $I(W_\tau; X_\tau) \ge I(W_\tau; \pi^\star)$ by data processing.
+  Equality needs the history to say nothing about $W_\tau$ beyond what the choice of $\pi^\star$ reveals.
+  \item \textbf{Policy to optimum.}
+  $I(W_\tau; \pi^\star) \ge R(\delta)$, since $\pi^\star$ is one feasible channel.
+  Equality needs the learner's choice to be the least informative one that reaches error $\delta$.
+\end{enumerate}
+\textbf{Equality case.}
+Two equally likely stationary hypotheses, each with its own single regulator, $\delta = 0$, $\tau = 1$, and one outcome that reveals the hypothesis.
+Both sides equal $\ln 2$.
+
+\noindent\textbf{Where the slack comes from.}
+Mostly steps 1 and 2, a learner learns things that the decision does not need.
+This is the same gap as on the sufficient side, where a floor on $I_{\hat\theta} + I_{\hat S}$ cannot force its information to be about $W_t$.
+
+\section{Evaluating $R(\delta)$}
+$R(\delta)$ is a rate--distortion function with the 0/1 distortion $\mathbf 1\{\pi \notin \Pi^\circ(w)\}$.
+It depends only on the learner's model, the law of $W_\tau$ and the tolerance $\varepsilon_\pi$.
+\begin{itemize}
+  \item \textbf{Properties.}
+  $0 \le R(\delta) \le R(0) \le H(W_\tau)$ for discrete $W_\tau$, non-increasing and convex in $\delta$, zero from $\delta = 1 - p_{\max}$ on, with $p_{\max} = \sup_\pi \Pr(\pi \in \Pi^\circ(W_\tau))$ the largest belief mass that one policy regulates.
+  It is an infimum in general and a minimum for finite $W_\tau$ and finite policy sets.
+  \item \textbf{Exact.}
+  Blahut--Arimoto on the membership table of policies against hyperstates.
+  \item \textbf{Sampled.}
+  Draw $w_1, \dots, w_n$ from $\hat b_0$, solve each for a regulator, evaluate every regulator on every sample, and run Blahut--Arimoto on the $n \times n$ table.
+  \item \textbf{Upper bound.}
+  $R(\delta) \le H(\pi(W_\tau))$ for any assignment $w \mapsto \pi(w) \in \Pi^\circ(w)$.
+  \item \textbf{Lower bound.}
+  $R(\delta) \ge d(1 - \delta \,\|\, p_{\max})$ for $1 - \delta \ge p_{\max}$, with $d$ the binary KL divergence, by data processing of the KL between the joint law of $(W_\tau, \pi)$ and the product of its marginals on the event $\pi \in \Pi^\circ(W_\tau)$.
+  \item \textbf{Zero error.}
+  $R(0) = \inf_m \E\big[-\ln m(\Pi^\circ(W_\tau))\big]$ over priors $m$ on policies, with the optimal channel $p(\pi \mid w) \propto m(\pi)\, \mathbf 1\{\pi \in \Pi^\circ(w)\}$.
+  For $\delta > 0$ the indicator softens to $\exp(-\beta\, \mathbf 1\{\pi \notin \Pi^\circ(w)\})$.
+\end{itemize}
+
+\section{Verification status}
+\begin{center}
+\begin{tabular}{p{0.52\linewidth}p{0.4\linewidth}}
+\toprule
+Claim & Status \\
+\midrule
+The inequality of Section 1, stationary and drifting $W_t$ & Checked on 500 random finite models each, no violations. \\
+Continuous hypothesis class & Checked by quadrature on 12 models. \\
+Equality case & By hand. \\
+Typical size of the gap & Not measured. \\
+Lower bound through $p_{\max}$ & Standard argument, checked only on the three-hypothesis tie example ($\log_2 \tfrac32 = 0.585$ bits, exact). \\
+Formula for $R(0)$ & Standard, checked only on the same example. \\
+Zero difference $H(W_\tau) - H(W_0)$ for a stationary latent state with a history-dependent stopping time & Believed false in general, not run. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{To revisit}
+\begin{enumerate}
+  \item Measure the gap of the three steps separately on random models, to see which dominates.
+  \item A floor on $I_W$ in place of $I_{\hat\theta} + I_{\hat S}$ removes step 1 and is what the sufficient side needs, estimated by posterior sampling.
+  \item Verify the $p_{\max}$ bound and the $R(0)$ formula numerically, then decide whether $p_{\max}$ belongs in the text as the practical scale for $c_{\hat\theta}$.
+  \item Whether a learner can be built that attains step 3, a policy choice that is the rate--distortion optimum, and whether that relates to posterior sampling over regulators.
+\end{enumerate}
+
+\end{document}

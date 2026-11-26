@@ -29,14 +29,14 @@ We connect the empowerment terms to Bayesian exploration and active perception.
 
 \paragraph{Identifiability and the MI-constrained program.}
 Assume the iteration of Eq.~\eqref{eq:gibbs_criterion} has converged to a fixed point $(\pi^\star, q^\star)$, where $\pi^\star$ minimises the entropy of the outcome law $q^\star$ that its endogenous cause-control model predicts.
-To define identifiability, we ask which environments are consistent with this model under $\pi^\star$, which means that they produce the same outcome law $q^\star$ under the policy.
-Such environments obtain equal outcome entropy and are thus indistinguishable to the criterion.
+To define identifiability, we ask which environments are consistent with this model under $\pi^\star$, which means that they produce the same outcome law $q^\star$ under the policy up to an $\varepsilon_q,\varepsilon_\pi \ge 0 $ tolerance.
+Such environments are thus indistinguishable in terms of entropy.
 \begin{definition}[Confusing and consistent set]
 \label{def:confusing}
     Let $d^{\pi}_\theta$ be the occupancy of $\pi$ in a (reward-free) POMDP $\theta$ as defined by $(P, \omega, \rho_0)$ of \S\ref{sec:prelim}.
-    The consistent set of a fixed point $(\pi^\star, q^\star)$ is $\Theta(\pi^\star) = \{ \theta : \psi_\# d^{\pi^\star}_\theta = q^\star \}$, and its confusing set is $\Theta_c(\pi^\star) = \big\{ \theta \in \Theta(\pi^\star) \;:\; H_\nu(q^\star) > \min_{\pi} H_\nu(\psi_\# d^{\pi}_\theta) \big\}.$
+    The consistent set of a fixed point $(\pi^\star, q^\star)$ is $\Theta(\pi^\star) = \{ \theta : \KL(\psi_\# d^{\pi^\star}_\theta \,\|\, q^\star) \le \varepsilon_q \}$, and its confusing set is $\Theta_c(\pi^\star) = \big\{ \theta \in \Theta(\pi^\star) \;:\; \pi^\star \notin \Pi^\circ(\theta) \big\}$, where $\Pi^\circ(\theta) = \{ \pi : H_\nu(\psi_\# d^{\pi}_\theta) \le \inf_{\pi'} H_\nu(\psi_\# d^{\pi'}_\theta) + \varepsilon_\pi \}$ are the regulators within $\varepsilon_\pi \ge 0$.
 \end{definition}
-We say that the solution to our good regulator recipe is optimal when a fixed point $(\pi^\star, q^\star)$ satisfies $\Theta_c(\pi^\star) = \emptyset$.
+We say that the solution to our good regulator recipe is optimal up to $\varepsilon_\pi$ when a fixed point $(\pi^\star, q^\star)$ satisfies $\Theta_c(\pi^\star) = \emptyset$.
 Any other fixed point with a non-empty $\Theta_c$ sits on a dark-room spectrum.
 Due to the coarse-graining of $\hat q$, $\Theta(\pi^\star)$ need not be a singleton, so an empty $\Theta_c$ identifies the environment only up to equivalence under the criterion similar to bisimulation methods \citep{Givan-equivalence03}.
 
@@ -87,275 +87,45 @@ The information terms act as bonuses weighted by $\mu$ next to the reward $\ln \
 They are also similar to the expected free energy \citep{Friston-active15}, which uses fixed weights for the learner bonuses, whereas ours are a constraint derived from the criterion.
 The final steps are then choosing $c_i$ so that we converge to an optimal regulator, and an algorithm for Eq.~\eqref{eq:lagrangian}.
 
-% Old budget paragraph on $(P, \kappa)$ and prior mass $q$, replaced 2026-11-20:
-% \paragraph{The budget (LLM BELOW).}
-% How much has to be bought depends on the laws alone, and it has a lower bound.
-% \begin{proposition}[Budget for identifiability]
-% \label{prop:budget}
-% Let $\Theta_c$ be any set of laws of prior mass $q$, let $B = \mathbf 1\{\theta \in \Theta_c\}$, and let the history grow by the action and the outcome, $X_{t+1} = (X_t, A_t, Z_t)$.
-% If after $T$ steps the posterior decides $B$ with error at most $\delta < \tfrac12$, then
-% \begin{equation}
-%   \add{\sum_{t < T} I_{P,t} \;=\;} \sum_{t < T} I(\theta; Z_t \mid X_t, A_t) \;\ge\; h(q) - h(\delta), % was \sum (I_{P,t} + I_{\kappa,t}) \ge before the middle sum, replaced 2026-11-19
-%   \label{eq:budget}
-% \end{equation}
-% with $h$ the binary entropy and $I_{P,t}$\del{, $I_{\kappa,t}$} the per-step \del{terms}\add{term} of \eqref{eq:split-pomdp}.
-% \end{proposition}
-% The middle term is the information the outcomes actually carry about the laws, spent rather than held, \del{and the class terms bound it because the outcome is drawn from the class}\add{and it is the law term itself}.
-% So a floor $c$ on \del{$I_P + I_\kappa$}\add{$I_P$} has to hold for at least $(h(q) - h(\delta)) / c$ steps before the confusing set can be empty, the same accounting as the regret lower bound of \citet{Lai-asymptotically85}, where the cost of learning is the information needed to exclude the arms that could still be optimal.
-% The bound is necessary but not sufficient, since the information has to be spent on the pairs that discriminate $\Theta_c$.
-% A sufficient condition needs assumptions on the components, the hypothesis class, the prior and the policy's reach, which we leave to future work, here we only identify the floor.
-% By the chain rule in both orders, \del{$I(\kappa;\tilde Z \mid X,P) + I(A;\tilde Z \mid X,P,\kappa) = I(A;\tilde Z \mid X,P) + I_\kappa$}\add{$I(P;Z \mid X) + I(A;Z \mid X,P) = I(A;Z \mid X) + I_P$}, so \del{$I_\kappa$}\add{$I_P$} is positive only where actions make the \del{class}\add{outcome} depend on the hypothesis.
-% A floor on the law term can be reached only through empowerment, which is the sense of the title, and the action term is not a target but what the law floor consumes.
-\paragraph{\add{A necessary floor. LLM BELOW, looks ok but need to double check}}
-% Budget version with a belief-mass condition and a step count, replaced 2026-11-20 by the information balance:
-% \add{The Lagrangian leaves open how large each floor $c_i$ must be, and for the hypothesis term the belief alone gives a lower bound.}
-% \add{Let $\hat\Theta_c$ be the hypotheses that reproduce $q^\star$ under $\pi^\star$ but under which another policy attains a lower entropy, which is the regulator's own counterpart of the confusing set of Definition~\ref{def:confusing}.}
-% \begin{proposition}[Budget for identifiability]
-% \label{prop:budget}
-% \add{Under the regulator's model, let the history grow by the action and the outcome, $X_{t+1} = (X_t, A_t, Z_t)$, and let the initial belief put mass $p_c$ on $\hat\Theta_c$.}
-% \add{If after $T$ steps the belief puts mass at most $\delta < \tfrac12$ or at least $1 - \delta$ on $\hat\Theta_c$, then}
-% \begin{equation}
-% \color{red}
-%   \sum\nolimits_{t < T} I(\hat\theta; Z_t \mid X_t, A_t) \;\ge\; h(p_c) - h(\delta),
-%   \label{eq:budget}
-% \end{equation}
-% \add{with $h$ the binary entropy and the summand the term $I_{\hat\theta}$ of Eq.~\eqref{eq:split-pomdp} at step $t$.}
-% \end{proposition}
-% \add{The left side is the information that the outcomes carry about the hypothesis, and the right side is what the belief must learn to rule $\hat\Theta_c$ in or out.}
-% \add{A regulator that gathers this information at the rate of its floor $c_{\hat\theta}$ thus needs at least $(h(p_c) - h(\delta)) / c_{\hat\theta}$ steps, which is the same accounting as the regret lower bound of \citet{Lai-asymptotically85}, where the cost of learning is the information needed to exclude the arms that could still be optimal.}
-% \add{The same sum is bounded above by the entropy of the initial belief, so the floor cannot hold forever and acts as a budget that is spent.}
-% \add{This bound is necessary but not sufficient, and a sufficient floor is not known to us.}
-% \add{The floor fixes how much information is gathered but not what it is about, and the hypotheses in $\hat\Theta_c$ reproduce the outcome law of $\pi^\star$, so what separates them may lie where $\pi^\star$ does not go.}
-% \add{Whether the floor on $I_A$ carries the policy there depends on the environment.}
-% \add{The budget is also counted under the regulator's own belief, so it carries over to the confusing set of Definition~\ref{def:confusing} only when the hypothesis class is well specified.}
-% \add{A sufficient condition therefore needs assumptions on the hypothesis class, the belief and the policy's reach, which we leave to future work, and we treat the floors $c_i$ as parameters of the algorithm.}
-\add{We now ask how large the floors $c_i$ must be, starting with the learner.}
-\add{Fix a fixed point $(\pi^\star, q^\star)$ and let each hypothesis $\hat\theta$ predict an outcome law $q^\pi_{\hat\theta}$ for every policy $\pi$.}
-\add{Definition~\ref{def:confusing} applied to these hypotheses gives the regulator's own consistent set $\hat\Theta(\pi^\star) = \{ \hat\theta : q^{\pi^\star}_{\hat\theta} = q^\star \}$ and confusing set $\hat\Theta_c = \{ \hat\theta \in \hat\Theta(\pi^\star) : H_\nu(q^\star) > \min_\pi H_\nu(q^\pi_{\hat\theta}) \}$.}
-\add{Let the target $W_t$ be what the regulator must resolve, a finite-valued function of $(\hat\theta, \hat S_t)$ such as membership of $\hat\Theta_c$ or the optimal policy under $\hat\theta$.}
-\add{We call $D_t = H(W_t \mid X_t)$ the doubt at step $t$.}
-\begin{proposition}[Information budget]
-\label{prop:budget}
-\add{Let the regulator observe only the outcome, $X_{t+1} = (X_t, A_t, Z_t)$, with an exact Bayes belief over $(\hat\theta, \hat S_t)$, and let the run end at a time $\tau$ of finite mean decided by the history and independent randomness.}
-\add{Under the occupancy of the run, every policy satisfies}
-\begin{equation}
-\color{red}
-  \E[\tau]\, \big(I_{\hat\theta} + I_{\hat S}\big) \;\ge\; \E[\tau]\, I(W; Z \mid X, A) \;=\; D_0 - D_\tau + \E[\tau]\, \bar\Delta,
-  \label{eq:budget}
-\end{equation}
-\add{where $D_\tau$ is the doubt when the run ends and $\bar\Delta$ is the doubt that a transition of $\hat S_t$ adds per step on average.}
-\add{Equality holds for $W_t = (\hat\theta, \hat S_t)$, and for a target of $\hat\theta$ alone $\bar\Delta = 0$ and $I_{\hat\theta}$ alone bounds the middle term.}
-\add{Thus, a regulator that gathers no more than its floors ends the run with $D_\tau \le d$ only if $c_{\hat\theta} + c_{\hat S} \ge (D_0 - d) / \E[\tau] + \bar\Delta$.}
+
+\paragraph{Necessary empowerment floors.}
+To partly give guidance to choosing $c_i$, we first show that the learner's belief $\hat b(\hat\theta, \hat S)$ contracts at an expected pace bounded by its empowerment terms $I_{\hat\theta} + I_{\hat S}$.
+The belief summarises all of the regulator's affordances, since we assume that every (amortised) estimate computed from the history, such as $\pi$, $\hat q$ or $\iota$, passes through it and so these cannot concentrate faster than the belief itself.
+Overload the history $X_{t+1} = (X_t, A_t, Z_t)$ to observe outcomes and write the joint belief as the posterior under the learner's own model over the hyperstate $(\hat\theta_t, \hat S_t)$.
+Taking expectations under the learner's generative model, belief contraction obeys a conservation law.
+\begin{proposition}[Information conservation]\label{prop:budget}
+    Let a policy terminate at a time $\tau$ of finite mean\footnote{For discounted problems this gives $\E [\tau] = 1/(1-\gamma)$.} and $W_t = f(\hat\theta_t, \hat S_t)$ for any finite-valued $f$.
+    The learner empowerment then bounds the entropy change,
+    \begin{equation}
+      \E[\tau]\, \big(I_{\hat\theta} + I_{\hat S}\big) \;\ge\; D_0 - D_\tau + \E[\tau]\, \bar\Delta, \qquad \text{with equality when $f$ is the identity,}
+      \label{eq:budget}
+    \end{equation}
+    where $D_t = H(W_t \mid X_t)$ and $\bar\Delta = \tfrac{1}{\E[\tau]}\, \E\big[\sum_{t<\tau} H(W_{t+1} \mid x_{t+1}) - H(W_t \mid x_{t+1})\big]$.
 \end{proposition}
-\add{In other words, the information that a run carries to the belief must pay for the doubt it removes and for the doubt that the transitions add.}
-\add{\emph{This is the budget of entropy search} \citep{Hennig-entropy12, HernandezLobato-predictive14}, which picks each query to maximise the information gained about the optimum \citep{Lindley-measure56}, here summed over the run when the target is the optimal policy under $\hat\theta$.}
-\add{The run length generalises the discount, where ending with probability $1-\gamma$ at each step gives $\E[\tau] = 1/(1-\gamma)$, and it also covers absorbing outcomes.}
-\add{For a run that never ends the first term vanishes, so a floor on $I_{\hat\theta}$ cannot hold forever, whereas a floor on $I_{\hat S}$ can since the latent state keeps moving.}
-\add{A drifting environment or a forgetting learner enters through $\bar\Delta$ in the same way.}
-
-\add{The confusing set sharpens this budget, since its hypotheses cannot be told apart at the fixed point.}
-\add{We say that the hypotheses of $\hat\Theta(\pi^\star)$ agree along $\pi^\star$ when they predict the same outcome law at every history for every action that $\pi^\star$ takes.}
-\begin{corollary}[Residual doubt]
+It shows that in order to reduce the entropy of the internal hyperstate from $D_0$ to $D_\tau \le d$, the empowerment on the l.h.s.\ needs to be at least the reduction $D_0 - d$, accounting for the entropy $\E[\tau]\,\bar\Delta$ injected by nonstationarity of the hyperstate.
+Thus, in order to resolve the entropy down to $d$ we need $c_{\hat\theta} + c_{\hat S} \ge (D_0 - d)/\E[\tau] + \bar\Delta$.
+Rearranged as $D_\tau \ge D_0 + \E[\tau]\,\bar\Delta - \E[\tau]\,(I_{\hat\theta} + I_{\hat S})$, this turns into a requisite variety inequality \citep{Ashby-introduction56} with the learner as the regulator, the remaining hyperstate entropy is at least the disturbance's minus entropy gathered by the learner \citep{Touchette-information00,Touchette-information04}, note that an approximate learner increases drift $\bar\Delta$.
+The criterion however, does not need full contraction, $d \rightarrow 0$, so long as some fixed point $(\pi^\star, q^\star)$ is not a dark room.
+\begin{theorem}[Learner requisite variety]
 \label{cor:residual}
-\add{Under Proposition~\ref{prop:budget}, let the hypotheses of $\hat\Theta(\pi^\star)$ agree along $\pi^\star$ and let the target be $B = \mathbf 1\{\hat\theta \in \hat\Theta_c\}$.}
-\add{Then every policy that only takes actions of $\pi^\star$ has $D_t \ge H\big(B \mid \mathbf 1\{\hat\theta \in \hat\Theta(\pi^\star)\}\big)$ at every step $t$, with the right side under the initial belief.}
-\end{corollary}
-\add{Thus, the doubt between the confusing and the other consistent hypotheses is only removed by an action that $\pi^\star$ does not take, which the criterion never pays for and the floors must buy.}
-\add{The action floor has no such budget, since a deterministic policy that deviates has $I_A = 0$ and still removes doubt.}
-\add{However, the budget is only necessary for an approximate belief, which may misjudge where the information lies, so $c_A$ keeps support on the data.}
-\add{We temper it with the doubt, $c_A = \max\big(c_{\min}, (c_{\hat\theta} + c_{\hat S})\, D_t / D_0\big)$, so that the policy stops wandering once the belief is resolved.}
-\add{These bounds are necessary but not sufficient, since the floors fix how much information is gathered but not what it is about, and they are counted under the regulator's own belief.}
-\add{A sufficient condition needs assumptions on the hypothesis class, the belief and the policy's reach, which we leave to future work.}
-\intent{\add{Stub, 2026-11-20, how an algorithm could set and use the floor of Proposition~\ref{prop:budget}, with a numerical check by exact enumeration, script in scratchpad/floor\_check/floor.py.
-Setting the floor. The worst case is $D_0 = \ln 2$, so $c_{\hat\theta} = (1-\gamma)(\ln 2 - d)$ needs only the discount and a target doubt $d$, and no estimate of $\hat\Theta_c$.
-Estimating the term. With an ensemble or posterior samples, $I_{\hat\theta}$ is the entropy of the averaged outcome prediction minus the average entropy of the members' predictions.
-Estimating the doubt is costly, since it needs a plan under each sampled hypothesis to test whether a better policy exists, so the default floor is the practical route.
-Using it. Dual ascent on $\mu_{\hat\theta}$ against the floor, released once the doubt is below $d$, and a $\mu_{\hat\theta}$ that diverges signals an infeasible floor.
-Check. A regulator chooses each step between a constant outcome and a noisy binary probe and probes when $\mu$ times the information exceeds the outcome entropy, with $\gamma = 0.9$, $D_0 = \ln 2$ and $d = 0.199$, so the necessary floor is $0.0495$.
-The balance $\bar D = D_0 - I_B/(1-\gamma)$ holds exactly in every run.
-Two hypotheses with probe rates $0.3$ and $0.7$, always probing gives only $I_{\hat\theta} = 0.038$ and $\bar D = 0.312$, so the target is infeasible in this environment, the floor is capped by the information the outcomes can carry per step and not only by $(1-\gamma) H(\hat\theta)$.
-Four hypotheses with the confusing ones interleaved in the probe rate, the floor is met at $I_{\hat\theta} = 0.0495$ but only $I_B = 0.010$ of it is about membership and $\bar D = 0.589$, necessary but far from sufficient.
-Four hypotheses with the confusing ones separated in the probe rate, $I_B = 0.045$ of $0.0495$ and $\bar D = 0.242$.
-So the missing constant for a sufficient floor is the share $I_B / I_{\hat\theta}$, which depends on the environment and the hypothesis class.
-Run form. The check above is the discounted case, $\E[\tau] = 10$. Script scratchpad/floor\_check/absorbing.py checks $\E[\tau]\, I_B = D_0 - D_\tau$ exactly for runs that end by a rule on the history, by independent randomness after a constant outcome, and by an absorbing outcome whose rate depends on the hypothesis, for two and four hypotheses.
-Corollary~\ref{cor:residual}. Script scratchpad/floor\_check/darkroom.py confirms the bound of Corollary~\ref{cor:residual} on 200 random models by enumeration, and that the doubt falls further once the policy deviates.
-General form. Script scratchpad/floor\_check/general.py enumerates every history of 120 random models with a latent state, a random policy and a random end of the run, and confirms to $10^{-14}$ the equality of \eqref{eq:budget} for random targets, equality of both sides for the pair, $\bar\Delta = 0$ for targets of the hypothesis alone, and the action identity.
-Long run. A general drift needs the rate $\varepsilon$ as an assumption, as a discount is assumed, and the drift case is not yet checked numerically.}}
+    Let $\hat\Theta_c$ and $\Pi^\circ$ be as in Def.~\ref{def:confusing} over the hyperstates $(\hat\theta_t, \hat S_t)$, and let $W_t$ of Prop.~\ref{prop:budget} determine $\Pi^\circ$.
+    Write $R(\delta)$ for the learner's requisite variety at error level $\delta \in [0, 1]$, then finding a fixed point $\pi^\star$ with dark-room error ${\Pr(\pi^\star \notin \Pi^\circ(W_\tau))} \le \delta$ requires
+    \begin{equation} \label{eq:requisite}
+        \begin{aligned}
+          I_{\hat\theta} + I_{\hat S} \;&\ge\; \tfrac{1}{\E[\tau]} \big( R(\delta) - H(W_\tau) + H(W_0) \big) + \bar\Delta, \\
+          R(\delta) \;&=\; \inf\nolimits_{p(\pi \mid W_\tau)} \big\{ I(W_\tau; \pi) \,:\, \Pr\big(\pi \notin \Pi^\circ(W_\tau)\big) \le \delta \big\},
+        \end{aligned}
+    \end{equation}
+    where $H(W_\tau) - H(W_0)$ and $\bar\Delta$ vanish for a constant $W_t$.
+    When $\hat b_\tau$ is supported on the consistent set $\hat\Theta(\pi^\star)$ this error is $\E[\hat b_\tau(\hat\Theta_c)]$, which exceeds $\delta$ when less information than Eq.~\eqref{eq:requisite} is gathered.
+    Under a converged belief (whose hypotheses agree on outcomes $Z$ of $\pi^\star$), $\pi^\star$ is uninformative for $\hat\theta$.
+\end{theorem}
+So, to determine whether a converged policy sits in some dark room with error probability at most $\delta$, the empowerment floors $c_{\hat\theta} + c_{\hat S}$ must at least match the per-step requisite variety plus the persistent entropy drift.
+Supp.~\ref{sup:proof-residual} gives an example procedure to compute Eq.~\eqref{eq:requisite} under the model.
+These floors cannot force gathered information to be about the regulator's criterion, so Eq.~\eqref{eq:requisite} is necessary but not sufficient.
+Moreover, an approximate belief $\tilde b_\tau$ differs from the exact posterior $\hat b_\tau$ invisibly to the learner, so its self-evaluation of the dark-room error has a gap of up to $\mathrm{TV}(\tilde b_\tau, \hat b_\tau)$.
+Since $\pi^\star$ is uninformative under a converged (wrong) belief, information must come from actions that $\pi^\star$ would not take.
+The action empowerment $I_A \ge c_A$ supplies these by keeping the policy stochastic and its actions dependent on the predicted outcome.
+An example is $c_A = \max\big(c_{\min}, \bar c_A\, D_t / D_0\big)$, with an initial scale $\bar c_A$ (bounded above by $\sup_\pi I_A$) and a tempering constant $c_{\min} > 0$.
+These floors are transient, and once $\hat b_\tau(\hat\Theta_c) \le \delta$, $c_A$ can go to zero and $c_{\hat\theta} + c_{\hat S}$ to the drift terms of Eq.~\eqref{eq:requisite}.
 
-
-
-% OLD CONTENT 20-Nov-2026
-% \paragraph{What the criterion cannot see.}
-% By Theorem~\ref{thm:criterion} the score of a regulator depends only on the law of its \del{observable class}\add{prediction $Y$}, which is calibrated on the pairs the regulator visits.
-% \begin{definition}[Confusing set]
-% \label{def:confusing}
-% Given a regulator $\pi$ and the true law $\theta$, the confusing set $\Theta_c(\pi)$ is the set of laws that \del{agree with $\theta$ on the support of $\occ$}\add{induce the same law of $Y$ as $\theta$ under $\pi$} and under which $\pi$ is not a minimiser of \eqref{eq:classes}.
-% \end{definition}
-% \noindent Every law in $\Theta_c(\pi)$ gives $\pi$ the same criterion value as $\theta$, so from its own support the regulator cannot tell whether it is at the minimum, or at the minimum of a world that is not its own.
-% A regulator calibrated on its own support is a fixed point of its posterior and of the criterion restricted to that support, so identifiability, emptying the confusing set, is a condition on the path that the criterion does not impose, and it has to be met before alignment can be.
-
-% \begin{assumption}[\add{Prediction kernel}]
-% \label{ass:kernel}
-% \add{Under the belief-state occupancy, the prediction $Y$ of Theorem~\ref{thm:criterion} is generated from the history and the action $(X,A)$ by a kernel that has a density against $\rho$ and is independent of the dynamics $P$, the hidden state $S$ and the outcome $Z$ given $(X,A)$.}
-% \add{The outcome $Z$ given $(S,A)$ has a density against $\lambda$, and the entropies that appear are finite.}
-% \end{assumption}
-% \begin{proposition}[Split under partial observation and learning]
-% \label{prop:split-pomdp}
-% Let $(X,A,S,\theta,Z)$ have the law of the belief-state occupancy, with \del{$\theta = (P,\kappa)$}\add{the dynamics $\theta = P$} drawn from the prior, discounted from $\rho_0$ or its long-run limit where that exists, and let \del{$\tilde Z = \kappa(S,A)$ be the true class with $\rho$ counting on classes}\add{Assumption~\ref{ass:kernel} hold}.
-% Then \add{the predictive and residual terms of \eqref{eq:classes} split as}
-% % Old statement on the class $\tilde Z = \kappa(S,A)$, replaced 2026-11-19:
-% % H_\nu(Z) = I(X;\tilde Z) + I(A;\tilde Z \mid X) + I(P;\tilde Z \mid X,A) + I(\kappa;\tilde Z \mid X,A,P) + I(S;\tilde Z \mid X,A,P,\kappa) + H_\lambda(Z \mid \tilde Z) + \E[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)] - H_\rho(\tilde Z \mid Z).
-% \begin{equation}
-% \color{red}
-% \begin{split}
-%   H_\rho(Y) &= I(X;Y) + \underbrace{I(A;Y \mid X)}_{\bar I_A} + H_\rho(Y \mid X,A), \\
-%   H_\lambda(Z \mid Y) &= \underbrace{I(X,A;Z \mid Y)}_{\bar I_Y} + \underbrace{I(P;Z \mid X,A)}_{\bar I_P} + \underbrace{I(S;Z \mid X,A,P)}_{\bar I_S} + H_\lambda(Z \mid S,A).
-% \end{split}
-%   \label{eq:split-pomdp}
-% \end{equation}
-% \end{proposition}
-% \add{The policy's terms sit on the prediction and the learner's terms sit in the residual, since given $(X,A)$ the prediction carries nothing about the hidden causes.}
-% \add{The term $\bar I_Y$ is what the prediction discards of the history and the action, and it is zero for a sufficient model.}
-% \add{Assumption~\ref{ass:kernel} is what makes $\bar I_A$ a mutual information, and we call it the empowerment term.}
-% \add{The term $H_\rho(Y \mid X,A)$ is the log volume of a single prediction, the resolution of the agent's representation, and it is zero for a deterministic prediction on a countable $\Ycal$ with counting $\rho$.}
-% \add{A deterministic prediction into a continuum has no such split, which we discuss with the other caveats in the supplementary material.}
-% \add{With $U = (P,S)$ the two learner terms group to $I(U;Z \mid X,A) = H_\lambda(Z \mid X,A) - H_\lambda(Z \mid S,A)$, the same entropy advantage as $I(A;Y \mid X) = H_\rho(Y \mid X) - H_\rho(Y \mid X,A)$ one level up.}
-% The chain rule is taken in the order the regulator spends, the history it has, the action it chooses, what the outcome teaches about the dynamics\del{ and the outcome law}, and last the hidden state, as what remains once the laws are known.
-% The dynamics law comes before the state, since once the state \del{and the outcome law are}\add{is} known it adds nothing to the \del{class}\add{outcome}\del{, and before the outcome law by convention}.
-
-
-% Suppose we turn the recipe from \S\ref{sec:objective} directly into an algorithm.
-% We take the entropy criterion of Theorem~\ref{thm:criterion}, with its coarse-graining steps supplying both the reward and the modelling conditions.
-% These conditions are structural assumptions on the affordances, which fix the occupancies $\Pi \to \Occ$ the policy can reach, and they let us read error-controlled regulation as cause-controlled regulation on a predictive model.
-% Plugging this objective into the convex RL machinery from \S\ref{sec:prelim} introduces the dark room problem \citep{Friston-dark12}.
-% This means that the policy finds a trajectory into a stable state where nothing rewarding happens, or the learner collapses the representation so that everything looks `dark' to the agent.
-% At both levels this is a pathology of finite data and of the estimated criterion, and this section addresses it through empowerment at each level.
-% Empowerment is a mutual information (MI) term that the criterion drives down, we (temporarily) bound it explicitly at a floor such that the regulator maintains an exploration budget until the models are properly grounded and stable.
-% These MI terms come from decomposing the criterion over its random variables, this section also interprets what each of these terms mean.
-
-
-% Before moving on, we remark on one gap between the criterion and what a practical algorithm must estimate.
-% The affordance structure and its modelling conditions give the usual model components $\hat b$, $\hat\psi$, $\iota$ and $\hat P$.
-% If we rewrite the criterion as $\min_\pi H_\nu(\psi_\#\occ) = \min_\pi \min_q -\E_{Z \sim \psi_\#\occ}\big[\ln \tfrac{\dd q}{\dd\nu}(Z)\big]$, we see that it splits into an outer and an inner minimisation, where the inner minimum is attained at $q = \psi_\#\occ$.
-% So, as in the convex RL machinery of \S\ref{sec:prelim}, we reduce the full criterion to an iterative problem, where the outer problem with $q$ held fixed is ordinary RL with reward $\ln \tfrac{\dd q}{\dd\nu}(Z)$, and the inner problem is to estimate the outcome law $\psi_\#\occ$ of the current policy.
-% A practical algorithm therefore carries an estimate $\hat q$ of the regulator's own outcome law.
-% The first four model the environment and do not depend on the policy, whereas $\hat q$ models the closed loop and moves with $\pi$.
-% We treat $\hat q$ as part of the affordances for the learner under Definition~\ref{def:affordances}, however the contrast to e.g., $\hat b$ or $\hat \psi$, is that $\hat q$ is not a free component but induced by both the environment and policy.
-% It is an affordance because the policy only meets the entropy through the reward $\ln \tfrac{\dd \hat q}{\dd\nu}(Z)$, so the capacity and possible priors on $\hat q$ bound which outcome laws the policy can at best experience and be rewarded for.
-% \todo{Also add that q-value estimation or policy networks, anythign really are also part of these affordances, however they sit outside the necessary conditions that are being listed here, though it might make sense to list the policy too (policy class). but things like reward models, explicit belief models, anythign really is part of the affordance and up to the designer, but they should appear here and also as part of the second learner regulator.}
-
-% \intent{\add{Stub, parked 2026-11-16, narrative for this section from the discussion on affordances and derived estimates.
-% The section in three sentences.
-% What the policy sees as noise is $H(\tilde Z \mid H)$ with $H = (X,A)$.
-% The learner treats that noise as its own entropy and reduces it through its model.
-% The floor stops either level from reducing it the cheap way, so what is left to reduce is the part that aligns with the goal.
-% Opening.
-% Merge the two opening paragraphs, so that turning the recipe into an algorithm means minimising jointly over the policy and the learner's estimates, with $\min_\pi \min_q$ as the visible instance.
-% Two players then share one objective on finite on-policy data and each has a trivial way to lower it, which is where both dark rooms come from, and empowerment is the floor on each.
-% It is a team game, so the failure is collusion and not conflict.
-% Removing the gap between $\hat q$ and the model does not remove the dark room, since a model that predicts a quiet world still scores itself at zero entropy, so the pathology needs finite data.
-% Derived estimates.
-% Given $\hat b$, $\hat\psi$, $\iota$, $\hat P$ and a policy the outcome law is determined, so $\hat q$ and likewise a Q-value are derived objects that an agent only carries separately because it cannot compute them.
-% Keep the term bounded reasoning out of this section and let estimates carry it, with a mention in related work.
-% $\hat q$ is the law of $Y = \hat\psi(\hat b, A)$, so it lives on $\Ycal$ and cannot be finer than $\hat\psi$, and the law on $\Zcal$ follows through $\iota$.
-% A restricted class for $\hat q$ is a restriction on the learner's class like $\Pi_b \subset \Pi$, the inner minimum then returns the entropy plus the smallest KL to the class, and this pulls the policy toward outcome laws the class can fit.
-% The prior on $\hat q$ is the initial reward and decides which basin the policy falls into.
-% Affordance is used on two levels, at the learner level the model outputs are the actions and the policy is part of the environment, and the text must say which level it means.
-% Validation.
-% Estimate $\hat q$ by counts of $Y$ on recent on-policy data and relabel when $\hat\psi$ or $\hat b$ changes, so that no gap to the channel or belief exists by construction.
-% The prior over the channel is a choice among a small family of partitions, $\hat q$ updates fastest, the policy slower and the representation slowest.
-% In DeepSea the belief is over the outcome channel as part of the hyperstate, so $\bar I_\kappa$ is the live term, and a partially observed state is a later extension.
-% If the learner may move $\hat\psi$ to lower $-\ln \hat q(Y)$ the cheapest move sends every input to the class where $\hat q$ is high, which is the collapse the floor has to block.
-% Confusing set.
-% Restate it as laws that agree on what the regulator observes on its support, the law of $Y$, and note that it grows when $Z$ is unobserved since any $\iota$ fits.
-% The criterion does shrink the set of $\iota$, but toward low residual and not toward the truth, so the floor has to keep the true $\iota$ in it.
-% All laws in the set give the same $\hat q$, so a non-empty confusing set at a stationary point of the alternation is the formal dark room.
-% The class $\tilde Z = \kappa(S,A)$ and the consistency gap with $\hat\kappa$ are stale against $Y$, $\hat\psi$ and $\iota$ of Section~\ref{sec:objective}.
-% Grouping in Proposition~\ref{prop:split-pomdp}.
-% With $U = (P,\kappa,S)$ the three learner terms sum to $I(U;\tilde Z \mid H) = H(\tilde Z \mid H) - H(\tilde Z \mid H,U) = H(\tilde Z \mid H)$, the same entropy advantage as $I(A;\tilde Z \mid S) = H(\tilde Z \mid S) - H(\tilde Z \mid S,A)$ one level up.
-% Present regulation, then policy empowerment, then the grouped learner term, and zoom into the components after that.
-% The split is a choice of structure, the chain rule allows many orders and we take the one that follows who decides what.
-% Hypothesis, not yet shown.
-% $U$ is what nature holds and the learner decides an estimate $\hat U$, so the grouped term reads as empowerment of the learner only once the learner's choice can stand in for $U$, for instance when a calibrated sampled model is interchangeable with the true one given the history.
-% It may instead come out as the first regulator's noise being the second regulator's entropy, which splits again into regulation and empowerment.}}
-
-
-
-% \paragraph{The split (LLM BELOW).}
-% Assumption and proposition moved up to the paragraph on identifiability, 2026-11-20.
-% \begin{assumption}[\add{Prediction kernel}]
-% \label{ass:kernel}
-% \add{Under the belief-state occupancy, the prediction $Y$ of Theorem~\ref{thm:criterion} is generated from the history and the action $(X,A)$ by a kernel that has a density against $\rho$ and is independent of the dynamics $P$, the hidden state $S$ and the outcome $Z$ given $(X,A)$.}
-% \add{The outcome $Z$ given $(S,A)$ has a density against $\lambda$, and the entropies that appear are finite.}
-% \end{assumption}
-% \begin{proposition}[Split under partial observation and learning]
-% \label{prop:split-pomdp}
-% Let $(X,A,S,\theta,Z)$ have the law of the belief-state occupancy, with \del{$\theta = (P,\kappa)$}\add{the dynamics $\theta = P$} drawn from the prior, discounted from $\rho_0$ or its long-run limit where that exists, and let \del{$\tilde Z = \kappa(S,A)$ be the true class with $\rho$ counting on classes}\add{Assumption~\ref{ass:kernel} hold}.
-% Then \add{the predictive and residual terms of \eqref{eq:classes} split as}
-% Old statement on the class $\tilde Z = \kappa(S,A)$, replaced 2026-11-19:
-% H_\nu(Z) = I(X;\tilde Z) + I(A;\tilde Z \mid X) + I(P;\tilde Z \mid X,A) + I(\kappa;\tilde Z \mid X,A,P) + I(S;\tilde Z \mid X,A,P,\kappa) + H_\lambda(Z \mid \tilde Z) + \E[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)] - H_\rho(\tilde Z \mid Z).
-% \begin{equation}
-% \color{red}
-% \begin{split}
-%   H_\rho(Y) &= I(X;Y) + \underbrace{I(A;Y \mid X)}_{\bar I_A} + H_\rho(Y \mid X,A), \\
-%   H_\lambda(Z \mid Y) &= \underbrace{I(X,A;Z \mid Y)}_{\bar I_Y} + \underbrace{I(P;Z \mid X,A)}_{\bar I_P} + \underbrace{I(S;Z \mid X,A,P)}_{\bar I_S} + H_\lambda(Z \mid S,A).
-% \end{split}
-%   \label{eq:split-pomdp}
-% \end{equation}
-% \end{proposition}
-% \add{The policy's terms sit on the prediction and the learner's terms sit in the residual, since given $(X,A)$ the prediction carries nothing about the hidden causes.}
-% \add{The term $I_Y$ is what the prediction discards of the history and the action, and it is zero for a sufficient model.}
-% \add{Assumption~\ref{ass:kernel} is what makes $I_A$ a mutual information, and we call it the empowerment term.}
-% \add{The term $H_\rho(Y \mid X,A)$ is the log volume of a single prediction, the resolution of the agent's representation, and it is zero for a deterministic prediction on a countable $\Ycal$ with counting $\rho$.}
-% \add{A deterministic prediction into a continuum has no such split, which we discuss with the other caveats in the supplementary material.}
-% \add{With $U = (P,S)$ the two learner terms group to $I(U;Z \mid X,A) = H_\lambda(Z \mid X,A) - H_\lambda(Z \mid S,A)$, the same entropy advantage as $I(A;Y \mid X) = H_\rho(Y \mid X) - H_\rho(Y \mid X,A)$ one level up.}
-% The chain rule is taken in the order the regulator spends, the history it has, the action it chooses, what the outcome teaches about the dynamics\del{ and the outcome law}, and last the hidden state, as what remains once the laws are known.
-% The dynamics law comes before the state, since once the state \del{and the outcome law are}\add{is} known it adds nothing to the \del{class}\add{outcome}\del{, and before the outcome law by convention}.
-% The fully observed case with a known law keeps only the first two \add{information} terms\add{ and an undivided residual}.
-% \begin{corollary}[Split of the criterion, fully observed, \del{$\kappa$ and }$P$ known]
-% \label{prop:split}
-% Let \del{$\tilde Z = \kappa(S,A)$ be the regulator's class}\add{$Y = \hat\psi(S,A)$ be the prediction} under $O_t = S_t$, a point prior\add{, counting $\rho$} and a Markov policy.
-% Then
-% \begin{equation}
-%   H_\nu(Z) = \underbrace{I(S;\add{Y})}_{\text{regulation}} + \underbrace{I(A;\add{Y} \mid S)}_{\text{empowerment}}  + \underbrace{\E\big[\ln \tfrac{\dd\nu}{\dd\lambda}(Z)\big]}_{\text{goal}} + \underbrace{H_\lambda(Z \mid \add{Y})}_{\text{\del{noise}\add{residual}}} - \underbrace{H_\rho(\add{Y} \mid Z)}_{\text{ambiguity}}.
-%   \label{eq:split}
-% \end{equation}
-% \end{corollary}
-% \noindent In \eqref{eq:split-pomdp}, $I_P$ \del{and $I_\kappa$ vanish}\add{vanishes} because $\theta$ is a point mass, $I_S$ vanishes because the state is a function of the history, and for a Markov policy $X$ is independent of \del{$\tilde Z$}\add{$Y$} given $S$, so \del{$I(X;\tilde Z) = I(S;\tilde Z)$ and $I(A;\tilde Z \mid X) = I(A;\tilde Z \mid S)$}\add{$I(X;Y) = I(S;Y)$ and $I_A = I(A;Y \mid X) = I(A;Y \mid S)$, while $I_Y$ and the channel noise sum back to $H_\lambda(Z \mid Y)$}.
-% \del{Because $\tilde Z = \kappa(S,A)$ is a sufficient statistic of $(S,A)$ for the event,}\add{When $Y$ is a sufficient statistic of $(S,A)$ for the outcome, $I_Y = 0$ and} the \del{noise}\add{residual} term \del{$H_\lambda(Z \mid \tilde Z) = H_\lambda(Z \mid S,A)$}\add{$H_\lambda(Z \mid Y) = H_\lambda(Z \mid S,A)$} is exactly the channel noise.
-
-% \begin{corollary}[Empowerment as free bits]
-% \label{cor:freebits}
-% \del{$I(A;\tilde Z \mid S) = 0$}\add{$I(A;Y \mid S) = 0$} exactly when at every state all actions the policy uses share one \del{outcome law $\kappa(s,a)$}\add{prediction $\hat\psi(s,a)$}, and the action entropy \del{$H(A \mid S, \tilde Z) = H(A \mid S) - I(A;\tilde Z \mid S)$}\add{$H(A \mid S, Y) = H(A \mid S) - I(A;Y \mid S)$} never enters the criterion.
-% \end{corollary}
-% These bits are free at fixed occupancy, since two actions with the same \del{outcome law}\add{prediction} may have different transition laws, and swapping between them moves $\occ$ and with it every term.
-% The same holds on the hypothesis space, the posterior entropy \del{$H(\theta \mid X,A,\tilde Z)$}\add{$H(\theta \mid X,A,Z)$} never enters the criterion, so hypotheses that give the same \del{class}\add{outcome law} are free to stay unresolved.
-
-% \paragraph{The second regulator.}
-% The first regulator sees \del{$\bar I_P + \bar I_\kappa + \bar I_S$}\add{$\bar I_P + \bar I_S$} as one noise\add{ inside its residual}, since \del{the three}\add{both} marginalise into the law it can observe.
-% The learner reads them as a regulation problem of its own, with the belief as its state, the drift in $P$\del{ and $\kappa$} as its disturbance, and its surprises about the \del{class}\add{outcome} as its events, the consistency gap \del{$\KL(p(Z \mid X,A) \,\|\, \hat\kappa(X,A))$ of Section~\mbox{\ref{sec:objective}}, which is zero on a calibrated model}\add{$\E[\KL(p(Z \mid X,A) \,\|\, \iota(Y))] = \bar I_Y$, which is zero on a sufficient model}.
-% In its terms, $\bar I_P$ \del{and $\bar I_\kappa$ are}\add{is} what its posterior still has to resolve about the laws, $\bar I_S$ is what its filter still has to resolve about the state, and $\bar I_A$ is its reach, how far its actions change the \del{class}\add{prediction} at all.
-% This is the ``time-varying model'' that Conant and Ashby ask for under a slowly changing $p(S)$ \citep[p.~96]{Conant-good70}.
-% On a fixed law it has nothing left to regulate at stationarity, since the posterior concentrates on every pair that is visited infinitely often, while on a drifting law its terms keep a stationary residual.
-% \todo{The second-regulator reading is stated in prose through drift, formalise it if it stays.}
-% \intent{\add{Stub, parked 2026-11-11, the predictive estimate as a closed-loop affordance.
-% The criterion needs an estimate $\hat q$ of the regulator's own outcome law, since $H(p_\pi) = \min_q -\E_{p_\pi}[\ln q]$.
-% For a sufficient model the residual and goal terms are fixed rewards on $\Ycal$, so $\hat q$ lives on $\Ycal$ and is the predictive term $H_\rho(Y)$ of Theorem~\ref{thm:criterion}.
-% It differs from $\hat b$, $\hat\psi$, $\iota$ and $\hat P$, which model the environment and do not depend on the policy, whereas $\hat q$ models the closed loop and moves with $\pi$.
-% Present it as four environment terms plus one closed-loop term, an affordance of the learner under Definition~\ref{def:affordances}, not a fifth primitive.
-% Policy and learner minimise one target $F(\pi, q)$ with different affordances.
-% With $q$ fixed the target is linear in the outcome law, so the policy step is ordinary RL with reward $\ln q$.
-% With the data fixed it is a log loss, convex in $q$, so the learner step is maximum likelihood, and the concavity of the entropy only comes from tying $q$ to $p_\pi$.
-% This is policy iteration with $-\ln \hat q$ in the role of the value estimate, so there is no circularity in the target and the regress stops at the second level.
-% Consistency is the same bound, the estimate is the entropy plus $\KL(p_\pi \,\|\, \hat q)$, and likewise for $\iota$, so the estimate is an upper bound and the learner cannot cheat below the true entropy while the samples are real.
-% The goal term is constant for the learner at fixed data, and returns through the policy, since the learner's outputs move $\pi$ and $\pi$ moves $p_\pi$.
-% Two dangers to discuss here and not in Section~\ref{sec:objective}.
-% First, scoring under the model's own occupancy lets a model that predicts a deterministic world reach zero entropy, the learner's analogue of a policy that lowers entropy on the fine space.
-% Second, when $Z$ is unobserved $\iota$ is held up by assumption alone, and a miscalibrated $\iota$ then moves both the residual and the goal per class.
-% What remains is the on-policy, self-confirming fixed point, which is the exploration problem that empowerment on the affordances has to break.}}
-
-% \paragraph{Sign and collapse.}
-% Every information term \del{enters \mbox{\eqref{eq:split-pomdp}}}\add{of \eqref{eq:split-pomdp} enters the criterion} with a positive sign, so the criterion on its own lowers each of them, which for the law terms means visiting pairs whose outcome law agrees under every plausible $\theta$.
-% This is the dark room of the second regulator, the first keeps the laws unidentified wherever identifying them would cost class entropy.
-% Expected free energy enters the same terms with the opposite sign and seeks what the criterion avoids \citep{Friston-free12c}, and both pay the \del{noise}\add{residual} term with the same sign.
-% So the criterion does not empty the confusing set of Definition~\ref{def:confusing} but protects it, and the information that empties it has to be bought.

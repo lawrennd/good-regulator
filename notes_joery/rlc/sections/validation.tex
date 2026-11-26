@@ -1,11 +1,9 @@
 % !TEX root = ../main.tex
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Merged from sections/algorithm.tex and sections/experiments.tex on 2026-10-26; their stubs are parked in sections/parked.tex.
-\section[Empirical validation]{Empirical validation \budget{3.5 pp}}
+\section[Empirical validation]{Empirical validation (LLM BELOW)}
 \label{sec:experiments}
 
-\subsection{Mechanism}
-\label{sec:algorithm}
 The Lagrangian \eqref{eq:lagrangian} is a function of the history-action occupancy $d(x,a)$, and three facts turn it into a problem that convex reinforcement learning already solves \citep{Zahavy-reward21,Mutti-convex23}.
 First, $H_\nu(Z)$ is concave in $d$, and by Gibbs' inequality $H_\nu(p) = \min_q \E_p[-\ln \tfrac{\dd q}{\dd\nu}]$ with the minimum at $q = p$, so for a fixed $q$ the criterion is ordinary reinforcement learning with the per-pair cost $r_q(x,a) := \E_{Z \sim \hat\kappa(x,a)}[-\ln \tfrac{\dd q}{\dd\nu}(Z)]$.
 Second, the floors on $P$\del{, $\kappa$} and $S$ are linear in $d$, since each is conditioned on $(X,A)$ and the posterior given a history does not depend on the policy, so $I_i = \E_d[r_i]$ with $r_i(x,a)$ the information the pair's outcome carries about the law or the state, a reward the regulator computes from its own belief.

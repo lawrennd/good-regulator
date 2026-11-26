@@ -172,63 +172,180 @@ Among the vertices that attain $g^\star$ the second term is the same constant, s
 % \hfill$\square$
 \subsection{Proof of Proposition~\ref{prop:budget}}
 \label{sup:proof-budget}
-\add{All laws are those of the regulator's model, in which the hypothesis and the initial latent state $(\hat\theta, \hat S_0)$ follow the initial belief, the latent state moves by the transition of the hypothesis, each outcome $Z_t$ follows the likelihood given $(\hat S_t, \hat\theta, A_t)$, the history holds only actions and outcomes, and the initial history carries no information.}
-\add{The policy chooses the action from the history and independent randomness, which covers every policy that acts on the belief, since the belief is a function of the history.}
-\add{The target $W_t = f(\hat\theta, \hat S_t)$ takes finitely many values, entropies are in nats, and where the target refers to $\hat\Theta_c$ that set is fixed in advance for a candidate $(\pi^\star, q^\star)$.}
-\add{The rate $\bar\Delta$ of the proposition is the average over the run of $\Delta_t = H(W_{t+1} \mid X_{t+1}) - H(W_t \mid X_{t+1})$, the doubt that a transition of the latent state adds.}
-\add{Write $h_t = H(W_t \mid X_t = x)$ for the entropy of the target under the belief at a history, so that the doubt is $D_t = \E[h_t]$ with the expectation over the histories.}
-
-\add{\emph{One step.} Write $i_W(x,a) = I(W_t; Z_t \mid X_t = x, A_t = a)$ for the information at a given history and action.}
-\add{The action carries no information about the target given the history, so the definition of mutual information gives $\E\big[H(W_t \mid X_{t+1} = \cdot\,) \mid X_t, A_t\big] = h_t - i_W(X_t, A_t)$.}
-\add{With $\delta_t = H(W_{t+1} \mid X_{t+1} = \cdot\,) - H(W_t \mid X_{t+1} = \cdot\,)$ the entropy that the transition adds at the new history, $\E[h_{t+1} \mid X_t, A_t] = h_t - i_W(X_t, A_t) + \E[\delta_t \mid X_t, A_t]$.}
-
-\add{\emph{The run.} By the previous step, $M_t = h_t + \sum_{s<t} \big(i_W(X_s, A_s) - \delta_s\big)$ is a martingale with respect to the history and the independent randomness, with bounded increments because the target is finite-valued.}
-\add{The time $\tau$ is a stopping time of finite mean, so optional stopping gives $\E[M_\tau] = M_0$, that is $\E\big[\sum_{t<\tau} i_W(X_t, A_t)\big] = D_0 - D_\tau + \E\big[\sum_{t<\tau} \delta_t\big]$ with $D_\tau = \E[h_\tau]$.}
-\add{An end of the run that depends on the hidden state must be visible in the outcome, so that it is decided by the history, and what it reveals is then counted in $i_W$.}
-\add{The occupancy of the run is the law of the visited $(X_t, A_t, Z_t, \hat\theta, \hat S_t)$ for $t < \tau$, normalised by $\E[\tau]$.}
-\add{The history determines the step, so a conditional mutual information given $(X,A)$ under this occupancy is the average of the per-history terms, $I(W; Z \mid X, A) = \E\big[\sum_{t<\tau} i_W(X_t, A_t)\big] / \E[\tau]$, and $\bar\Delta = \E\big[\sum_{t<\tau} \delta_t\big] / \E[\tau]$.}
-\add{This gives the equality of \eqref{eq:budget}.}
-
-\add{\emph{The learner terms.} The target is a function of $(\hat\theta, \hat S_t)$, so data processing gives $i_W \le I(\hat\theta, \hat S_t; Z_t \mid X_t = x, A_t = a)$, with equality when the target is the pair.}
-\add{The chain rule splits the right side into the per-history terms of $I_{\hat\theta}$ and $I_{\hat S}$, which gives the inequality of \eqref{eq:budget}, and by the paragraph above it is the expected shift of the belief.}
-\add{For a target of the hypothesis alone, $W_{t+1} = W_t$ and $\delta_t = 0$, and data processing gives $i_W \le I(\hat\theta; Z_t \mid X_t = x, A_t = a)$, so $\E[\tau]\, I_{\hat\theta} \ge D_0 - D_\tau$.}
-
-\add{\emph{The floor.} Rearranging, $D_\tau \ge D_0 + \E[\tau]\,\bar\Delta - \E[\tau]\,(I_{\hat\theta} + I_{\hat S})$.}
-\add{If $I_{\hat\theta} + I_{\hat S} \le c_{\hat\theta} + c_{\hat S}$ and $D_\tau \le d$, then $c_{\hat\theta} + c_{\hat S} \ge (D_0 - d)/\E[\tau] + \bar\Delta$, and for a target of the hypothesis alone $c_{\hat\theta} \ge (D_0 - d)/\E[\tau]$.}
-\add{The rate $\bar\Delta$ belongs to the policy that is run and can be negative, for instance when the transitions send the latent state to a known value.}
-
-\add{\emph{Discount.} Let the run end with probability $1-\gamma$ after each step, independently of everything else.}
-\add{Then $\Pr(\tau > t) = \gamma^t$ and $\E[\tau] = 1/(1-\gamma)$, the occupancy of the run is the discounted occupancy over histories, and $D_\tau = (1-\gamma) \sum_t \gamma^t D_{t+1}$ is the discounted average of the doubt after each step.}
-\add{If runs repeat, each from the initial belief and an empty history, the long-run occupancy is the occupancy of one run by the renewal theorem.}
-
-\add{\emph{Ceilings.} For a countable hypothesis class the total information about the hypothesis is at most the entropy of the initial belief, $\E[\tau]\, I_{\hat\theta} \le H(\hat\theta)$, so no floor on $I_{\hat\theta}$ above $H(\hat\theta)/\E[\tau]$ can be met.}
-\add{Each term is also at most the largest per-history information, which is what one outcome can carry.}
-\add{For a run that never ends, the average of the per-history terms of $I_{\hat\theta}$ over the first $T$ steps is at most $H(\hat\theta)/T$ and goes to zero.}
-
-\add{\emph{Disturbance.} For a run of $T$ steps the equality reads $\tfrac1T \sum_{t<T} I(W_t; Z_t \mid X_t, A_t) = \bar\Delta + (D_0 - D_T)/T$, and the last term vanishes as $T$ grows because the doubt is bounded.}
-\add{The same holds when the hypothesis $\hat\theta_t$ itself changes between steps, with $\Delta_t$ then counting that change as well.}
-\add{One case is a hypothesis that is redrawn from the initial belief with probability $\varepsilon$ after each step, independently of the history and unseen by the regulator, with membership of a set as the target.}
-\add{Given $X_{t+1}$ the mass on the set moves from $p_t^+$ to $(1-\varepsilon)\,p_t^+ + \varepsilon\,p_0$, and the binary entropy $h$ is concave, so $\Delta_t \ge \varepsilon\,(D_0 - D_t^+)$ with $D_t^+ = H(W_t \mid X_{t+1})$ the doubt after the outcome.}
-\add{The long-run average then satisfies $I_{\hat\theta} \ge \varepsilon\,(D_0 - \bar D)$ with $\bar D$ the long-run average of $D_t^+$, which is the floor of the proposition with $1/\varepsilon$ for the expected length.}
-
-\add{\emph{The action.} Under the occupancy of the run, the chain rule on $I(\hat\theta, A; Z \mid X)$ in both orders gives $I(A; Z \mid X) + I(\hat\theta; Z \mid X, A) = I(\hat\theta; Z \mid X) + I(A; Z \mid X, \hat\theta)$.}
-\add{For a deterministic policy the action is a function of the history, so $I_A = 0$ and both action terms vanish, while $I_{\hat\theta} = I(\hat\theta; Z \mid X)$ can be positive.}
-
-\add{\emph{Entropy search.} With the target the optimum under the hypothesis, $i_W(x,a)$ is the expected information that the outcome of action $a$ gives about the optimum at the history $x$, which is the quantity that entropy search maximises over $a$, and the middle term of \eqref{eq:budget} is its sum over the run.}
+Expectations in the proof are taken under the learner's own model, this means that the hyperstates follow from the approximated belief and each outcome follows the model's prediction.
+Therefore, this is a Bayesian statement about what the learner expects and can at best capture (and does not hold in general under misspecified models).
+We assume that $W_t$ is finite-valued and that the actions and the termination are functions of the history and independent randomness.
+\add{For the identity, a finite-valued $W_t$ means a finite hypothesis class and latent state, and a continuous hypothesis, such as a parameter with a density, is not covered, since the argument below needs the entropy of the belief to change by a bounded amount per step.}
+At a realised history $x_t$ and action $a_t$, write $h_t = H(W_t \mid x_t)$ for the entropy of the belief over the hidden $W_t$ and $i_t = I(W_t; Z_t \mid x_t, a_t)$ for the mutual information between $W_t$ and the next outcome.
+Write $\delta_t = H(W_{t+1} \mid x_{t+1}) - H(W_t \mid x_{t+1})$ for the uncertainty delta of the $W_t \rightarrow W_{t+1}$ transition.
+We denote the expected values of these terms as $D_t = \E[h_t]$ and $\bar\Delta = \E\big[\sum_{t<\tau} \delta_t\big] / \E[\tau]$.
+Then,
+\begin{align*}
+  \E\big[H(W_t \mid x_{t+1}) \mid x_t, a_t\big] &= h_t - i_t, & h_{t+1} &= H(W_t \mid x_{t+1}) + \delta_t, \\
+  \E[h_{t+1} \mid x_t, a_t] &= h_t - i_t + \E[\delta_t \mid x_t, a_t].
+\end{align*}
+\add{Let $M_t = h_t + \sum_{s<t} (i_s - \delta_s)$, whose step $M_{t+1} - M_t = h_{t+1} - h_t + i_t - \delta_t$ has mean zero by the line above and is bounded since $W_t$ is finite-valued.}
+\add{Its mean therefore stays at $D_0$, a conservation law in which the entropy left and the information gathered so far, corrected for the transitions, add up to the initial entropy, also at the time $\tau$,}
+\begingroup\color{red}
+\begin{align*}
+  \E[M_{t+1} - M_t \mid x_t, a_t] &= 0 && \text{so $M_t$ is a martingale,} \\
+  \E[M_\tau] &= \E[M_0] = D_0 && \text{optional stopping with $\E[\tau] < \infty$,} \\
+  \E\big[\textstyle\sum_{t<\tau} i_t\big] &= D_0 - D_\tau + \E[\tau]\, \bar\Delta && \text{rearranging, with $D_\tau = \E[h_\tau]$.}
+\end{align*}
+\endgroup
+\add{The occupancy pools the visited steps $t < \tau$ with weight $1/\E[\tau]$, and each pair $(x, a)$ belongs to one step, so $I(W; Z \mid x, a)$ under the occupancy is $i_t$ and}
+\begin{align*}
+  I(W; Z \mid X, A) &= \tfrac{1}{\E[\tau]}\, \E\big[\textstyle\sum_{t<\tau} i_t\big] && \text{average of $i_t$ under the occupancy,} \\
+  \E[\tau]\, I(W; Z \mid X, A) &= D_0 - D_\tau + \E[\tau]\, \bar\Delta, \\
+  I(W; Z \mid X, A) &\le I_{\hat\theta} + I_{\hat S} && \text{data processing inequality.}
+\end{align*}
 \hfill$\square$
 
-\subsection{Proof of Corollary~\ref{cor:residual}}
+\subsection{Proof of Theorem~\ref{cor:residual}}
 \label{sup:proof-residual}
-\add{Write $E = \mathbf 1\{\hat\theta \in \hat\Theta(\pi^\star)\}$, with all laws those of the regulator's model as in the proof above.}
-\add{Conditioning cannot raise entropy, so $D_t = H(B \mid X_t) \ge H(B \mid X_t, E)$.}
-\add{Outside the consistent set $B = 0$, because $\hat\Theta_c \subseteq \hat\Theta(\pi^\star)$, so $H(B \mid X_t, E) = \Pr(E = 1)\, H(B \mid X_t, E = 1)$.}
-\add{The probability of a history under a hypothesis is the product over its steps of the probability of each action given the history, which does not depend on the hypothesis, and of each outcome given the history and the action.}
-\add{The policy takes only actions that $\pi^\star$ takes, and the hypotheses of $\hat\Theta(\pi^\star)$ agree on the outcome law of those actions at every history, so every history has the same probability under each of them.}
-\add{Hence given $E = 1$ the history is independent of the hypothesis, and $H(B \mid X_t, E = 1) = H(B \mid E = 1)$.}
-\add{Together, $D_t \ge \Pr(E = 1)\, H(B \mid E = 1) = H(B \mid E)$ under the initial belief, which we call the residual doubt.}
-\add{Agreement along $\pi^\star$ is stronger than Definition~\ref{def:confusing}, which asks only that the outcome law of the occupancy matches, and it is what a regulator that learns from histories needs.}
-\add{The bound does not say that a deviation removes the doubt, only that nothing else can.}
+\add{Expectations are as in the proof of Proposition~\ref{prop:budget}, the run starts from an empty history, and the candidate $\pi^\star$ is a function of the history $X_\tau$ and independent randomness.}
+\begingroup\color{red}
+\begin{align*}
+  \E[\tau]\, \big(I_{\hat\theta} + I_{\hat S}\big) &\ge D_0 - D_\tau + \E[\tau]\, \bar\Delta && \text{Proposition~\ref{prop:budget},} \\
+  D_0 - D_\tau &= I(W_\tau; X_\tau) - \big(H(W_\tau) - H(W_0)\big) && \text{$D_0 = H(W_0)$, $D_\tau = H(W_\tau \mid X_\tau)$,} \\
+  I(W_\tau; X_\tau) &\ge I(W_\tau; \pi^\star) && \text{data processing inequality,} \\
+  I(W_\tau; \pi^\star) &\ge R(\delta) && \text{$\Pr(\pi^\star \notin \Pi^\circ(W_\tau)) \le \delta$, so $\pi^\star$ is feasible.}
+\end{align*}
+\endgroup
+\add{Chaining the four lines and dividing by $\E[\tau]$ gives Eq.~\eqref{eq:requisite}.}
+\add{A constant $W_t = W_{t+1}$ has $\delta_t = 0$ at every step and $W_\tau = W_0$, so $\bar\Delta = 0$ and $H(W_\tau) = H(W_0)$.}
+
+\add{By Definition~\ref{def:confusing} a consistent hyperstate lies in $\hat\Theta_c$ exactly when $\pi^\star \notin \Pi^\circ$ for it.}
+\add{When $\hat b_\tau$ is supported on the consistent set, the posterior probability of this event is therefore the mass on the confusing set, and the tower rule gives the error,}
+\begingroup\color{red}
+\begin{align*}
+  \Pr\big(\pi^\star \notin \Pi^\circ(W_\tau) \mid X_\tau\big) = \hat b_\tau(\hat\Theta_c), \qquad \Pr\big(\pi^\star \notin \Pi^\circ(W_\tau)\big) = \E\big[\hat b_\tau(\hat\Theta_c)\big].
+\end{align*}
+\endgroup
+\add{If the information gathered is below Eq.~\eqref{eq:requisite}, the premise fails, so this mean exceeds $\delta$.}
+
+\add{Let all hypotheses in the support of the belief predict the same outcome law for the actions of $\pi^\star$ at every history.}
+\add{Each such outcome then has the same likelihood under all of them, so Bayes' rule leaves the belief unchanged, $I(\hat\theta; Z \mid x, a) = 0$ for these actions, and a posterior keeps the support of its prior, so this holds at every later history.}
 \hfill$\square$
+
+\paragraph{\add{Evaluating Eq.~\eqref{eq:requisite} under the model.}}
+\add{Every term of Eq.~\eqref{eq:requisite} is a property of the learner's model, so it can be estimated without interaction.}
+\add{The following is one example procedure, for a stationary hypothesis $W_t = \hat\theta$, where $\bar\Delta = 0$ and $H(W_\tau) = H(W_0)$.}
+\begingroup\color{red}
+\begin{enumerate}
+  \item Draw hypotheses $w_1, \dots, w_n$ from the initial belief $\hat b_0$.
+  \item Solve each $w_i$ for a regulator $\pi_i$ in the model, and add the candidate $\pi^\star$ as $\pi_0$.
+  \item Evaluate $h_{ij} = H_\nu(\psi_\# d^{\pi_j}_{w_i})$ for every pair and set $G_{ij} = \mathbf 1\{h_{ij} \le \min_k h_{ik} + \varepsilon_\pi\}$, the table of which policy is within tolerance for which hypothesis.
+  \item Estimate $R(\delta)$ as the rate--distortion function of the table, with weight $1/n$ per hypothesis and distortion $1 - G_{ij}$, by the Blahut--Arimoto iteration \citep{Cover-elements06}.
+  \item The right side of Eq.~\eqref{eq:requisite} is this estimate divided by $\E[\tau]$, which is $1/(1-\gamma)$ for a discounted problem.
+  \item The left side is $I_{\hat\theta}$ under the occupancy of the deployed policy, the entropy of the outcome prediction averaged over the sampled hypotheses minus the average entropy of their predictions, averaged over the visited pairs $(x, a)$.
+  \item With hypotheses drawn from the final belief $\hat b_\tau$ instead, the share with $G_{i0} = 0$ estimates the mass $\hat b_\tau(\hat\Theta_c)$ on the confusing set.
+\end{enumerate}
+\endgroup
+\add{Two closed forms from the same table avoid the iteration.}
+\add{Let $p_{\max} = \max_j \tfrac1n \sum_i G_{ij}$ be the largest share of the hypotheses that one policy regulates and $d(a \,\|\, b)$ the KL divergence between two coins.}
+\add{The event $\pi \in \Pi^\circ(W)$ has probability at least $1 - \delta$ under the joint law of $(W, \pi)$ and at most $p_{\max}$ under the product of its marginals, and $I(W; \pi)$ is the KL divergence between the two, so data processing gives the lower bound, while any assignment $w \mapsto \pi(w)$ of a regulator to each hypothesis is feasible at $\delta = 0$ and gives the upper bound,}
+\begingroup\color{red}
+\begin{align*}
+  d(1 - \delta \,\|\, p_{\max}) \;\le\; R(\delta) \;\le\; H(\pi(W)), \qquad \text{the first for $1 - \delta \ge p_{\max}$.}
+\end{align*}
+\endgroup
+\add{If one policy regulates almost every hypothesis then $p_{\max} \approx 1$ and nothing needs to be learned, and if each regulates a sliver the requirement approaches the entropy of the belief.}
+\add{The table holds only the sampled regulators, so the estimate of $R(\delta)$ is biased upward and that of $p_{\max}$ downward, and the cost is $n$ planning problems and $n^2$ policy evaluations.}
+\add{A drifting $W_t$ needs in addition $\bar\Delta$ and the entropies of $W_0$ and $W_\tau$, estimated from rollouts of the model.}
+
+\paragraph{\add{Converse.}}
+\add{A law $p$ on finitely many values with largest mass $m$ has $H(p) \ge 2 \ln 2 \cdot (1 - m)$.}
+\add{For $m \ge \tfrac12$, grouping the other values gives $H(p) \ge H_2(m)$, and the binary entropy is concave with $H_2(\tfrac12) = \ln 2$ and $H_2(1) = 0$, so it lies above the chord $2 \ln 2 \cdot (1 - m)$.}
+\add{For $m \le \tfrac12$ every value has mass at most $m$, so $H(p) \ge -\ln m \ge 2 \ln 2 \cdot (1 - m)$, since $-\ln m - 2 \ln 2 \cdot (1 - m)$ decreases on $(0, \tfrac12]$ and is zero at $m = \tfrac12$.}
+\add{Now let $W$ name one regulator in $\Pi^\circ(\hat\theta)$ for each stationary hypothesis, and let $\pi^\star$ be the most probable value of $W$ under an exact posterior $\hat b_\tau$, with mass $m$.}
+\add{A hypothesis in $\hat\Theta_c$ has $\pi^\star \notin \Pi^\circ(\hat\theta)$ and hence $W \ne \pi^\star$, and the proof of Proposition~\ref{prop:budget} with $\delta_t = 0$ gives the mean of the entropy left, with $I_W = I(W; Z \mid X,A) \le I_{\hat\theta}$,}
+\begingroup\color{red}
+\begin{align*}
+  \hat b_\tau(\hat\Theta_c) \;\le\; 1 - m \;\le\; \frac{H(W \mid x_\tau)}{2 \ln 2}, \qquad \E\big[\hat b_\tau(\hat\Theta_c)\big] \;\le\; \frac{H(W) - \E[\tau]\, I_W}{2 \ln 2}.
+\end{align*}
+\endgroup
+\add{The same holds for a regulator named from the whole hyperstate, where $H(W_\tau \mid X_\tau) \le D_\tau$ for $f$ the identity, so the error is at most $d / (2 \ln 2)$ when $D_\tau \le d$.}
+\add{A floor on $I_{\hat\theta}$ cannot force $I_W$. Let $\hat\theta = (W, J)$ with $J$ independent of $W$ under $\hat b_0$, and let every outcome reveal $J$ and nothing about $W$, then $\E[\tau]\, I_{\hat\theta}$ reaches $H(J)$ while $I_W = 0$ and the mass on the confusing set never moves.}
+
+\paragraph{\add{Approximate belief and forgetting.}}
+\add{Let $\tilde b$ be an approximate and $\hat b$ the exact belief over $W$ at a history, with most probable values $\tilde w$ and $w^\star$.}
+\add{Since $\tilde b(\tilde w) \ge \tilde b(w^\star)$,}
+\begingroup\color{red}
+\begin{align*}
+  \hat b(w^\star) - \hat b(\tilde w) \;\le\; \big(\hat b(w^\star) - \tilde b(w^\star)\big) + \big(\tilde b(\tilde w) - \hat b(\tilde w)\big) \;\le\; \textstyle\sum_w |\hat b(w) - \tilde b(w)| \;=\; 2\, \mathrm{TV}(\tilde b, \hat b),
+\end{align*}
+\endgroup
+\add{so the candidate $\tilde w$ adds $2\, \E[\mathrm{TV}(\tilde b_\tau, \hat b_\tau)]$ to the bound of the converse.}
+\add{Eq.~\eqref{eq:requisite} itself needs no exact belief, since an approximate belief or a lossy memory is a function of the history and the data processing step holds as before.}
+\add{A learner that keeps a memory $M_{t+1} = g(M_t, A_t, Z_t)$ in place of the history, and acts, stops and holds its posterior from it, satisfies Proposition~\ref{prop:budget} with $m_t$ in place of $x_t$ and one more term per step, whose mean $I(W_t; M_t, A_t, Z_t \mid M_{t+1}) \ge 0$ is the information that the update discards and adds to $\bar\Delta$.}
+
+\paragraph{\add{Hypotheses with a density.}}
+\add{For a stationary hypothesis the chain rule of mutual information over the steps of the run gives $\E[\tau]\, I_{\hat\theta} = I(\hat\theta; X_\tau)$ without an entropy of the belief, so $\E[\tau]\, I_{\hat\theta} \ge R(\delta)$ also holds for a hypothesis with a density, with the data processing and feasibility steps unchanged.}
+
+\paragraph{\add{Error in the environment.}}
+\add{Let the environment be a hypothesis $\theta^\star$ with $\hat b_0(\theta^\star) > 0$, so that histories in the environment follow the model given $\hat\theta = \theta^\star$, and let $e(\hat\theta)$ be the probability that $\pi^\star \notin \Pi^\circ$ given the hypothesis.}
+\add{Then $\Pr(\pi^\star \notin \Pi^\circ(W_\tau)) = \sum_{\hat\theta} \hat b_0(\hat\theta)\, e(\hat\theta) \ge \hat b_0(\theta^\star)\, e(\theta^\star)$, so the error in the environment is at most $\delta / \hat b_0(\theta^\star)$, written for a countable class.}
+
+% Superseded proof material for Corollary 1 (binary case, explicit floors), commented out 2026-11-26 and kept for reference.
+% \add{Write $p_t = \hat b_t(\hat\Theta_c)$ for the belief mass on the confusing set at a history $x_t$, so that $H(B \mid x_t) = H_2(p_t)$.}
+%
+% \add{\emph{Requirement.} Take $W_t = f(\hat\theta_t, \hat S_t)$ and an initial history that carries no information about it. The proof of Proposition~\ref{prop:budget} gives $\E[\tau]\, I(W; Z \mid X,A) = D_0 - D_\tau + \E[\tau]\, \bar\Delta$ with $D_0 = H(W_0)$ and $D_\tau = H(W_\tau \mid X_\tau)$, and $I(W; Z \mid X,A) \le I_{\hat\theta} + I_{\hat S}$.}
+% \add{Since $I(W_\tau; X_\tau) = H(W_\tau) - H(W_\tau \mid X_\tau)$, with $H(W_\tau)$ the entropy of the law of $W_t$ at the end of the run, this is $\E[\tau]\, (I_{\hat\theta} + I_{\hat S}) \ge I(W_\tau; X_\tau) + \E[\tau]\, \bar\Delta - \big(H(W_\tau) - H(W_0)\big)$.}
+% \add{For a stationary hypothesis $W_t = \hat\theta$ the data processing step is an equality, $\bar\Delta = 0$ and $H(W_\tau) = H(W_0)$, so $\E[\tau]\, I_{\hat\theta} = I(\hat\theta; X_\tau)$, and for a hypothesis with a density the same identity is the chain rule of mutual information over the steps of the run, which needs no entropy of the belief.}
+% \add{The candidate $\pi^\star$ is a function of the history and independent randomness, also when the learner names it through an approximate belief or a lossy memory, which are themselves functions of the history, so $I(W_\tau; \pi^\star) \le I(W_\tau; X_\tau)$ by the data processing inequality.}
+% \add{Under the premise the joint law of $(W_\tau, \pi^\star)$ satisfies the constraint of Eq.~\eqref{eq:requisite}, so $R(\delta) \le I(W_\tau; \pi^\star)$, which gives the bound.}
+% \add{By Definition~\ref{def:confusing} a consistent hyperstate lies in $\hat\Theta_c$ exactly when $\pi^\star \notin \Pi^\circ$ for it, so when every hyperstate in $\hat b_\tau$ is consistent, $\hat b_\tau(\hat\Theta_c)$ is the posterior probability of that event and its mean is the probability in the premise.}
+% \add{A regulator $W$ fixed per hypothesis is a feasible choice at $\delta = 0$ with $I(\hat\theta; W) = H(W)$, so $R(\delta) \le R(0) \le H(W)$.}
+%
+% \add{\emph{Approximate belief.} Let $\tilde b$ be an approximate and $\hat b$ the exact belief over $W$ at a history, with most probable values $\tilde w$ and $w^\star$. Since $\tilde b(\tilde w) \ge \tilde b(w^\star)$, we have $\hat b(w^\star) - \hat b(\tilde w) \le \big(\hat b(w^\star) - \tilde b(w^\star)\big) + \big(\tilde b(\tilde w) - \hat b(\tilde w)\big) \le \sum_w |\hat b(w) - \tilde b(w)|$, twice the total variation distance.}
+% \add{The candidate $\tilde w$ therefore has $1 - \hat b(\tilde w) \le 1 - \hat b(w^\star) + 2\, \mathrm{TV}(\tilde b, \hat b)$, and taking the mean adds $2\, \E[\mathrm{TV}(\tilde b_\tau, \hat b_\tau)]$ to the bound for the favoured candidate below.}
+%
+% \add{\emph{Forgetting.} Let the learner keep a memory $M_{t+1} = g(M_t, A_t, Z_t)$ in place of the history, choose its actions and the end of the run from it, and hold the posterior given it. The proof of Proposition~\ref{prop:budget} goes through with $m_t$ in place of $x_t$ and one more term per step, whose mean $I(W_t; M_t, A_t, Z_t \mid M_{t+1}) \ge 0$ is the information about the hyperstate that the update discards, and which adds to $\bar\Delta$.}
+%
+% \add{\emph{Confusing set.} By Definition~\ref{def:confusing} a hypothesis $\hat\theta$ lies in $\hat\Theta_c$ only if the criterion value of $\pi^\star$ under $\hat\theta$ exceeds the minimum under $\hat\theta$ by more than $\varepsilon_\pi$, and then $\pi^\star$ is not a regulator within $\varepsilon_\pi$ for $\hat\theta$, in particular $W \ne \pi^\star$.}
+% \add{Hence $\hat\Theta_c \subseteq \{W \ne \pi^\star\}$ and $\hat b_\tau(\hat\Theta_c) \le 1 - \hat b_\tau(W = \pi^\star)$ for every candidate.}
+% \add{A consistent hypothesis with a single regulator within $\varepsilon_\pi$ lies in $\hat\Theta_c$ exactly when $W \ne \pi^\star$, so the two sides are equal when this holds for every hypothesis in the belief.}
+% \add{For the candidate that the belief favours, the most probable value of $W$ with mass $m$, the bound $H(p) \ge 2 \ln 2 \cdot (1 - m)$ shown under the guarantee below gives $\hat b_\tau(\hat\Theta_c) \le H(W \mid x_\tau) / (2 \ln 2)$, and taking the mean with $\E[\tau]\, I_W = H(W) - H(W \mid X_\tau)$ from the requirement below gives the first bound.}
+% \add{For the second, the case of equality has $\E[\hat b_\tau(\hat\Theta_c)] = \Pr(W \ne \pi^\star)$, the error probability of $\pi^\star$ as a decision on $W$, so the requirement below applies with $P_e \le \delta$.}
+%
+% \add{The sufficient floor of the main text follows from the next two paragraphs, and the third gives the requirement in the case of a single regulator per hypothesis.}
+%
+% \add{\emph{Drift.} Assume $H(\hat S_{t+1} \mid \hat S_t, \hat\theta, A_t) \le \Delta_{\max}$ and take $f$ the identity in the proof of Proposition~\ref{prop:budget}, so that $W_t = (\hat\theta, \hat S_t)$ and $D_0 = H(\hat\theta) + H(\hat S_0 \mid \hat\theta)$ by the chain rule.}
+% \add{Adding a variable cannot lower the entropy, so $H(\hat\theta, \hat S_{t+1} \mid x_{t+1}) \le H(\hat\theta, \hat S_t, \hat S_{t+1} \mid x_{t+1}) = H(\hat\theta, \hat S_t \mid x_{t+1}) + H(\hat S_{t+1} \mid \hat\theta, \hat S_t, x_{t+1})$, which gives $\delta_t \le H(\hat S_{t+1} \mid \hat\theta, \hat S_t, x_{t+1})$.}
+% \add{Conditioning on the outcome lowers entropy on average, so the mean of the right side given $(x_t, a_t)$ is at most $H(\hat S_{t+1} \mid \hat\theta, \hat S_t, x_t, a_t)$, and under the model the next latent state depends on the history only through $(\hat S_t, \hat\theta, a_t)$, so this is at most $\Delta_{\max}$ and $\bar\Delta \le \Delta_{\max}$.}
+%
+% \add{\emph{Guarantee.} The identity of Proposition~\ref{prop:budget} gives $D_\tau = D_0 + \E[\tau]\, \bar\Delta - \E[\tau]\, (I_{\hat\theta} + I_{\hat S})$, which at the floor is at most $D_0 + \E[\tau]\, \Delta_{\max} - (D_0 - 2\delta \ln 2) - \E[\tau]\, \Delta_{\max} = 2\delta \ln 2$.}
+% \add{A law $p$ on finitely many values with largest mass $m$ has $H(p) \ge 2 \ln 2 \cdot (1 - m)$. For $m \ge \tfrac12$ grouping the other values gives $H(p) \ge H_2(m)$, which lies above its chord as shown below, and for $m \le \tfrac12$ every value has mass at most $m$, so $H(p) \ge -\ln m \ge 2 \ln 2 \cdot (1 - m)$, since $-\ln m - 2 \ln 2 \cdot (1 - m)$ decreases on $(0, \tfrac12]$ and is zero at $m = \tfrac12$.}
+% \add{Deciding the hyperstate by its largest belief mass is wrong with probability $1 - m$ given $X_\tau$, so its error probability is at most $D_\tau / (2 \ln 2) \le \delta$, and a function of the hyperstate, such as $B$ for any candidate, is decided correctly whenever the hyperstate is.}
+%
+% \add{\emph{Single regulator.} Take $W = f(\hat\theta)$ with $M$ values. Stationarity gives $\delta_t = 0$ and $\E[\tau]\, I(W; Z \mid X,A) = H(W) - H(W \mid X_\tau)$, and $I(W; Z \mid X,A) \le I_{\hat\theta}$ since $W$ is a function of $\hat\theta$.}
+% \add{Fano's inequality \citep{Cover-elements06} gives $H(W \mid X_\tau) \le H_2(P_e) + P_e \ln(M-1)$ for the error probability $P_e$ of any decision, and the right side increases in $P_e \le 1 - \tfrac1M$, so $P_e \le \delta$ requires $\E[\tau]\, I_{\hat\theta} \ge H(W) - H_2(\delta) - \delta \ln(M-1)$.}
+% \add{The remaining paragraphs treat the case $M = 2$ of $W = B$, the side of the confusing set of one candidate.}
+%
+% \add{\emph{Test.} Take $f = B$ in the proof of Proposition~\ref{prop:budget}, where $D_0 = H_2(p_0)$ under the belief at the start of the run and $D_\tau = \E[H_2(p_\tau)]$.}
+% \add{Stationarity gives $\delta_t = 0$, so the display before the data processing step reads $\E[\tau]\, I_B = H_2(p_0) - \E[H_2(p_\tau)]$, and since $B$ is a function of $\hat\theta$ that step gives $I_B \le I_{\hat\theta}$.}
+% \add{Deciding $B$ by the larger belief mass is wrong with probability $\min(p_\tau, 1-p_\tau)$ given $X_\tau$, so its error probability is $P_e = \E[\min(p_\tau, 1-p_\tau)]$.}
+% \add{The binary entropy is concave with $H_2(0) = 0$ and $H_2(\tfrac12) = \ln 2$, so it lies above its chord, $H_2(p) \ge 2 \ln 2 \cdot \min(p, 1-p)$, and taking the mean gives $2 \ln 2 \cdot P_e \le \E[H_2(p_\tau)]$.}
+% \add{Since $H_2(p) = H_2(\min(p, 1-p))$, Jensen's inequality gives $\E[H_2(p_\tau)] \le H_2(P_e)$, which is Fano's inequality for a binary variable.}
+%
+% \add{\emph{Floor.} Let $P_e \le \delta \le \tfrac12$. Since $H_2$ increases on $[0, \tfrac12]$, Fano's inequality gives $\E[H_2(p_\tau)] \le H_2(P_e) \le H_2(\delta)$, and the identity gives $\E[\tau]\, I_B \ge H_2(p_0) - H_2(\delta)$, which is at most $\ln 2$ because $H_2 \le \ln 2$.}
+% \add{Conversely, if $\E[\tau]\, I_B \ge H_2(p_0) - 2\delta \ln 2$ then the identity gives $\E[H_2(p_\tau)] \le 2\delta \ln 2$, and the chord bound gives $P_e \le \delta$.}
+% \add{Since $B$ is a function of $\hat\theta$, the chain rule gives $I_{\hat\theta} = I(B, \hat\theta; Z \mid X,A) = I_B + I(\hat\theta; Z \mid X,A,B)$, where the last term is the information about the hypothesis once $B$ is known.}
+%
+% \add{\emph{A floor on $I_{\hat\theta}$ alone.} Take $f$ to return the hypothesis in the proof of Proposition~\ref{prop:budget}, for a finite class. Stationarity gives $\delta_t = 0$ and the data processing step is an equality, so $\E[\tau]\, I_{\hat\theta} = H(\hat\theta) - H(\hat\theta \mid X_\tau)$ with $H(\hat\theta)$ the entropy of $\hat b_0$.}
+% \add{The chain rule over $(B, \hat\theta)$ gives $H(\hat\theta) = H(B) + H(\hat\theta \mid B) = H_2(p_0) + p_0\, H(\hat b_0(\cdot \mid \hat\Theta_c)) + (1 - p_0)\, H(\hat b_0(\cdot \mid \hat\Theta_c^{\,c}))$, since $B$ is a function of $\hat\theta$, with $\hat\theta \sim \hat b_0$ and no history involved.}
+% \add{Since $B$ is a function of $\hat\theta$, $\E[H_2(p_\tau)] = H(B \mid X_\tau) \le H(\hat\theta \mid X_\tau)$. If $\E[\tau]\, I_{\hat\theta} \ge H(\hat\theta) - 2\delta \ln 2$ then $\E[H_2(p_\tau)] \le 2\delta \ln 2$, so the identity gives $\E[\tau]\, I_B \ge H_2(p_0) - 2\delta \ln 2$ and the chord bound gives $P_e \le \delta$, so a floor on $I_{\hat\theta}$ is sufficient only at $H_2(p_0) + H(\hat\theta \mid B) - 2\delta \ln 2$, close to full identification.}
+% \add{No threshold on $I_{\hat\theta}$ alone can be sufficient below $H(\hat\theta \mid B) / \E[\tau]$. Let $\hat\theta = (B, J)$ with $J$ independent of $B$ under $\hat b_0$, and let every outcome reveal $J$ and nothing about $B$. Then $\E[\tau]\, I_{\hat\theta}$ reaches $H(J) = H(\hat\theta \mid B)$ while $I_B = 0$ and the belief mass on the confusing set never moves.}
+% \add{With the share $s = I_B / I_{\hat\theta}$ the sufficient condition on $I_B$ reads $s\, I_{\hat\theta} \ge \tfrac{1}{\E[\tau]}\big(H_2(p_0) - 2\delta \ln 2\big)$, which is how the share places the deciding floor between the two ends.}
+%
+% \add{\emph{Fixed belief mass.} The hypotheses of the belief agree on an action of $\pi^\star$ when, at every history, all hypotheses in the support of the belief predict the same outcome law for that action.}
+% \add{A posterior keeps the support of its prior, so the condition carries over to every later history, each outcome of such an action has the same likelihood under all these hypotheses, and Bayes' rule leaves the belief and with it $p_t$ unchanged.}
+% \add{These actions therefore have $I(B; Z \mid x, a) = 0$, while any other action carries at most $H_2(p_t) \le \ln 2$, so that $I_B \le \ln 2 \cdot \Pr_{\occ}\big(A \notin \operatorname{supp} \pi^\star(\cdot \mid X)\big)$ and all information about $B$ comes from actions that $\pi^\star$ does not take.}
+%
+% \add{\emph{Error in the environment.} Let the environment be a hypothesis $\theta^\star$ with $\hat b_0(\theta^\star) > 0$, so that histories in the environment follow the model given $\hat\theta = \theta^\star$, and let $e(\hat\theta)$ be the probability that the decision is wrong given the hypothesis.}
+% \add{Then $P_e = \sum_{\hat\theta} \hat b_0(\hat\theta)\, e(\hat\theta) \ge \hat b_0(\theta^\star)\, e(\theta^\star)$, so the decision errs in the environment with probability at most $P_e / \hat b_0(\theta^\star)$, written for a countable class.}
+% \hfill$\square$
 
 % \subsection{Proof of Proposition~\ref{prop:plugin}}
 % \label{sup:proof-plugin}

@@ -1,4 +1,6 @@
-% RLC rlc.bst Version 2026.1
+% RLJ rlj.bst Version 2026.8.11
+
+% AI tools assisted with the generation of this file
 
 %% A copy of tmlr.bst, which is a copy of iclm2010.bst, which is a modification of `plainnl.bst' for use with natbib package 
 %%
